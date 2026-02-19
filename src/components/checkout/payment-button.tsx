@@ -1,0 +1,116 @@
+"use client";
+
+import { useState } from "react";
+import Script from "next/script";
+import { Button } from "@/components/ui/button";
+import { createOrder, verifyPayment } from "@/app/(store)/checkout/actions";
+import { toast } from "sonner";
+import { Loader2, CreditCard } from "lucide-react";
+import { APP_NAME } from "@/lib/constants";
+
+declare global {
+  interface Window {
+    Razorpay: new (options: Record<string, unknown>) => {
+      open: () => void;
+    };
+  }
+}
+
+interface PaymentButtonProps {
+  addressId: string;
+  couponCode: string | null;
+  userEmail: string;
+  userName: string;
+  onSuccess: (orderId: string) => void;
+}
+
+export function PaymentButton({
+  addressId,
+  couponCode,
+  userEmail,
+  userName,
+  onSuccess,
+}: PaymentButtonProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+
+  async function handlePayment() {
+    setIsLoading(true);
+    try {
+      const { orderId, razorpayOrderId, amount } = await createOrder(
+        addressId,
+        couponCode
+      );
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: Math.round(amount * 100),
+        currency: "INR",
+        name: APP_NAME,
+        description: "Jewelry Purchase",
+        order_id: razorpayOrderId,
+        prefill: {
+          email: userEmail,
+          name: userName,
+        },
+        handler: async (response: {
+          razorpay_payment_id: string;
+          razorpay_order_id: string;
+          razorpay_signature: string;
+        }) => {
+          try {
+            await verifyPayment(
+              orderId,
+              response.razorpay_payment_id,
+              response.razorpay_order_id,
+              response.razorpay_signature
+            );
+            toast.success("Payment successful!");
+            onSuccess(orderId);
+          } catch {
+            toast.error("Payment verification failed");
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsLoading(false);
+            toast.info("Payment cancelled");
+          },
+        },
+        theme: {
+          color: "#18181b",
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to initiate payment"
+      );
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <>
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        onLoad={() => setScriptLoaded(true)}
+      />
+      <Button
+        size="lg"
+        className="w-full"
+        onClick={handlePayment}
+        disabled={isLoading || !scriptLoaded}
+      >
+        {isLoading ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <CreditCard className="mr-2 h-4 w-4" />
+        )}
+        Pay Now
+      </Button>
+    </>
+  );
+}
