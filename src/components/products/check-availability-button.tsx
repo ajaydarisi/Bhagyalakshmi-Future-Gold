@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { BUSINESS_INFO } from "@/lib/constants";
 import { MessageCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface CheckAvailabilityButtonProps {
   productName: string;
@@ -15,9 +16,12 @@ export function CheckAvailabilityButton({
   productSlug,
   size = "default",
 }: CheckAvailabilityButtonProps) {
+  const t = useTranslations("products");
+  const tw = useTranslations("wishlist");
+
   function handleClick() {
     const previewUrl = `${window.location.origin}/preview/${productSlug}`;
-    const message = `Hi, is this available?\n\n*${productName}*\n${previewUrl}`;
+    const message = `${t("whatsappMessage")}\n\n*${productName}*\n${previewUrl}`;
 
     const encoded = encodeURIComponent(message);
     const url = `https://wa.me/91${BUSINESS_INFO.whatsapp}?text=${encoded}`;
@@ -31,7 +35,7 @@ export function CheckAvailabilityButton({
       onClick={handleClick}
     >
       <MessageCircle className={size === "sm" ? "mr-1 h-3 w-3" : "mr-2 h-4 w-4"} />
-      Check Availability
+      {tw("checkAvailability")}
     </Button>
   );
 }

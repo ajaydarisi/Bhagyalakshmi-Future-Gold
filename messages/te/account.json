@@ -19,6 +19,7 @@
     "updateError": "ప్రొఫైల్ అప్‌డేట్ చేయడం విఫలమైంది"
   },
   "orders": {
+    "metaTitle": "నా ఆర్డర్‌లు",
     "title": "నా ఆర్డర్‌లు",
     "orderHistory": "ఆర్డర్ చరిత్ర",
     "noOrders": "ఇంకా ఆర్డర్‌లు లేవు",
@@ -27,6 +28,7 @@
     "view": "చూడండి"
   },
   "orderDetail": {
+    "metaTitle": "ఆర్డర్ వివరాలు",
     "title": "ఆర్డర్ {orderNumber}",
     "placedOn": "{date}న ఉంచబడింది",
     "items": "అంశాలు",
@@ -37,7 +39,16 @@
     "free": "ఉచితం",
     "total": "మొత్తం",
     "shippingAddress": "షిప్పింగ్ చిరునామా",
-    "phone": "ఫోన్: {phone}"
+    "phone": "ఫోన్: {phone}",
+    "orderStatuses": {
+      "pending": "పెండింగ్",
+      "paid": "చెల్లించబడింది",
+      "processing": "ప్రాసెసింగ్",
+      "shipped": "షిప్ చేయబడింది",
+      "delivered": "డెలివరీ అయింది",
+      "cancelled": "రద్దు చేయబడింది",
+      "refunded": "రీఫండ్ చేయబడింది"
+    }
   },
   "addresses": {
     "title": "షిప్పింగ్ చిరునామాలు",

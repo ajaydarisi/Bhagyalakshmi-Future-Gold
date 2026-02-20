@@ -7,6 +7,10 @@
   "moveToCart": "Move to Cart",
   "outOfStock": "Out of Stock",
   "removed": "Removed from wishlist",
+  "added": "Added to wishlist",
+  "signInRequired": "Please sign in to add items to your wishlist",
+  "button": "Wishlist",
+  "buttoned": "Wishlisted",
   "checkAvailability": "Check Availability",
   "noImage": "No Image"
 }

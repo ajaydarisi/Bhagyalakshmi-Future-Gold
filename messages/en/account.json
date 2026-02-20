@@ -19,6 +19,7 @@
     "updateError": "Failed to update profile"
   },
   "orders": {
+    "metaTitle": "My Orders",
     "title": "My Orders",
     "orderHistory": "Order History",
     "noOrders": "No orders yet",
@@ -27,6 +28,7 @@
     "view": "View"
   },
   "orderDetail": {
+    "metaTitle": "Order Details",
     "title": "Order {orderNumber}",
     "placedOn": "Placed on {date}",
     "items": "Items",
@@ -37,7 +39,16 @@
     "free": "Free",
     "total": "Total",
     "shippingAddress": "Shipping Address",
-    "phone": "Phone: {phone}"
+    "phone": "Phone: {phone}",
+    "orderStatuses": {
+      "pending": "Pending",
+      "paid": "Paid",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded"
+    }
   },
   "addresses": {
     "title": "Shipping Addresses",

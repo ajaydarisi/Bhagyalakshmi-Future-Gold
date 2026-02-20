@@ -6,6 +6,7 @@ import { useWishlist } from "@/hooks/use-wishlist";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Heart } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 
@@ -21,21 +22,22 @@ export function WishlistButton({
   const { isInWishlist, addItem, removeItem } = useWishlist();
   const { isLoggedIn } = useAuth();
   const router = useRouter();
+  const t = useTranslations("wishlist");
   const isWishlisted = isInWishlist(productId);
 
   async function handleToggle() {
     if (!isLoggedIn) {
-      toast.info("Please sign in to add items to your wishlist");
+      toast.info(t("signInRequired"));
       router.push(ROUTES.login);
       return;
     }
 
     if (isWishlisted) {
       await removeItem(productId);
-      toast.success("Removed from wishlist");
+      toast.success(t("removed"));
     } else {
       await addItem(productId);
-      toast.success("Added to wishlist");
+      toast.success(t("added"));
     }
   }
 
@@ -67,7 +69,7 @@ export function WishlistButton({
           isWishlisted && "fill-red-500 text-red-500"
         )}
       />
-      {isWishlisted ? "Wishlisted" : "Wishlist"}
+      {isWishlisted ? t("buttoned") : t("button")}
     </Button>
   );
 }

@@ -6,6 +6,7 @@
   "noResults": "No products found",
   "noResultsDesc": "We couldn't find any products matching \"{query}\". Try a different search term.",
   "browseAll": "Browse All Products",
+  "metaTitle": "Search: {query}",
   "emptyTitle": "Search for products",
   "emptyDesc": "Use the search bar to find jewellery you'll love"
 }

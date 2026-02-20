@@ -7,14 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { formatPrice, formatDate } from "@/lib/formatters";
-import { ORDER_STATUSES, ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = {
-  title: "Order Details",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("account.orderDetail");
+  return { title: t("metaTitle") };
+}
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
@@ -79,9 +80,6 @@ export default async function OrderDetailPage({
               {STATUS_FLOW.map((status, index) => {
                 const isCompleted = index <= currentStatusIndex;
                 const isCurrent = index === currentStatusIndex;
-                const statusInfo = ORDER_STATUSES.find(
-                  (s) => s.value === status
-                );
                 return (
                   <div
                     key={status}
@@ -129,7 +127,7 @@ export default async function OrderDetailPage({
                           : "text-muted-foreground"
                       )}
                     >
-                      {statusInfo?.label}
+                      {t(`orderStatuses.${status}`)}
                     </span>
                   </div>
                 );

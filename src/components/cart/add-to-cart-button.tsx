@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { toast } from "sonner";
 import { Loader2, Minus, Plus, ShoppingBag } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { Product } from "@/types/product";
 
 interface AddToCartButtonProps {
@@ -15,6 +16,7 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const { addItem } = useCart();
+  const t = useTranslations("products.addToCart");
 
   const isOutOfStock = product.stock === 0;
 
@@ -22,10 +24,10 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
     setIsAdding(true);
     try {
       await addItem(product, quantity);
-      toast.success(`${product.name} added to cart`);
+      toast.success(t("addedToast", { name: product.name }));
       setQuantity(1);
     } catch {
-      toast.error("Failed to add to cart");
+      toast.error(t("errorToast"));
     } finally {
       setIsAdding(false);
     }
@@ -65,7 +67,7 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
         ) : (
           <ShoppingBag className="mr-2 h-4 w-4" />
         )}
-        {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+        {isOutOfStock ? t("outOfStock") : t("addToCart")}
       </Button>
     </div>
   );

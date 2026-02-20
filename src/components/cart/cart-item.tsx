@@ -7,6 +7,7 @@ import { useCart } from "@/hooks/use-cart";
 import { formatPrice } from "@/lib/formatters";
 import { ROUTES } from "@/lib/constants";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { CartItem as CartItemType } from "@/types/cart";
 
 interface CartItemProps {
@@ -15,6 +16,7 @@ interface CartItemProps {
 
 export function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem } = useCart();
+  const t = useTranslations("products.card");
   const { product, quantity } = item;
   const price = product.discount_price || product.price;
 
@@ -34,7 +36,7 @@ export function CartItem({ item }: CartItemProps) {
           />
         ) : (
           <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-            No Image
+            {t("noImage")}
           </div>
         )}
       </Link>

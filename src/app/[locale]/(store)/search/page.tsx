@@ -18,8 +18,9 @@ export async function generateMetadata({
   searchParams,
 }: SearchPageProps): Promise<Metadata> {
   const params = await searchParams;
+  const t = await getTranslations("search");
   return {
-    title: params.q ? `Search: ${params.q}` : "Search",
+    title: params.q ? t("metaTitle", { query: params.q }) : t("title"),
   };
 }
 

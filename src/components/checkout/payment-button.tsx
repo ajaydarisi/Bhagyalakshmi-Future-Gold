@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/lib/constants";
 import { CreditCard, Loader2 } from "lucide-react";
 import Script from "next/script";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -33,6 +34,7 @@ export function PaymentButton({
 }: PaymentButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const t = useTranslations("cart.checkout.paymentButton");
 
   async function handlePayment() {
     setIsLoading(true);
@@ -47,7 +49,7 @@ export function PaymentButton({
         amount: Math.round(amount * 100),
         currency: "INR",
         name: APP_NAME,
-        description: "Jewellery Purchase",
+        description: t("description"),
         order_id: razorpayOrderId,
         prefill: {
           email: userEmail,
@@ -65,16 +67,16 @@ export function PaymentButton({
               response.razorpay_order_id,
               response.razorpay_signature
             );
-            toast.success("Payment successful!");
+            toast.success(t("success"));
             onSuccess(orderId);
           } catch {
-            toast.error("Payment verification failed");
+            toast.error(t("verifyFailed"));
           }
         },
         modal: {
           ondismiss: () => {
             setIsLoading(false);
-            toast.info("Payment cancelled");
+            toast.info(t("cancelled"));
           },
         },
         theme: {
@@ -86,7 +88,7 @@ export function PaymentButton({
       razorpay.open();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to initiate payment"
+        error instanceof Error ? error.message : t("initFailed")
       );
       setIsLoading(false);
     }
@@ -109,7 +111,7 @@ export function PaymentButton({
         ) : (
           <CreditCard className="mr-2 h-4 w-4" />
         )}
-        Pay Now
+        {t("payNow")}
       </Button>
     </>
   );

@@ -84,9 +84,9 @@ export default function CheckoutPage() {
       .from("addresses")
       .insert({ ...data, user_id: user.id });
     if (error) {
-      toast.error("Failed to add address");
+      toast.error(t("addressAddError"));
     } else {
-      toast.success("Address added");
+      toast.success(t("addressAddSuccess"));
       setAddAddressOpen(false);
       fetchAddresses();
     }

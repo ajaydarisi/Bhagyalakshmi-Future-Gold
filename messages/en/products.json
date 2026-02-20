@@ -7,8 +7,16 @@
     "productCount": "{count, plural, one {# product} other {# products}} found",
     "noProducts": "No products found",
     "noProductsDesc": "Try adjusting your filters or search criteria",
-    "clearFilters": "Clear Filters"
+    "clearFilters": "Clear Filters",
+    "metaProductsSuffix": "Products"
   },
+  "addToCart": {
+    "outOfStock": "Out of Stock",
+    "addToCart": "Add to Cart",
+    "addedToast": "{name} added to cart",
+    "errorToast": "Failed to add to cart"
+  },
+  "whatsappMessage": "Hi, is this available?",
   "detail": {
     "forSale": "For Sale",
     "forRent": "For Rent",
@@ -22,7 +30,9 @@
     "availability": "Availability",
     "inStock": "In Stock ({count} available)",
     "outOfStock": "Out of Stock",
-    "relatedProducts": "You May Also Like"
+    "relatedProducts": "You May Also Like",
+    "notFoundMeta": "Product Not Found",
+    "metaDescription": "Shop {name} at Bhagyalakshmi Future Gold Commerce"
   },
   "filters": {
     "title": "Filters",

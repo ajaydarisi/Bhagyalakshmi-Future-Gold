@@ -32,16 +32,17 @@ export async function generateMetadata({
 }: ProductsPageProps): Promise<Metadata> {
   const params = await searchParams;
   const supabase = await createClient();
-  let title = "All Products";
+  const t = await getTranslations("products.listing");
+  let title = t("allProducts");
   if (params.category) {
     const { data: cat } = await supabase
       .from("categories")
       .select("name")
       .eq("slug", params.category)
       .single();
-    if (cat) title = `${cat.name} - Products`;
+    if (cat) title = `${cat.name} - ${t("metaProductsSuffix")}`;
   }
-  if (params.type === "rental") title = `Rental - ${title}`;
+  if (params.type === "rental") title = `${t("forRent")} - ${title}`;
   return { title };
 }
 

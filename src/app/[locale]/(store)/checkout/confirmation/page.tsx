@@ -10,9 +10,10 @@ import { formatPrice, formatDate } from "@/lib/formatters";
 import { ROUTES } from "@/lib/constants";
 import { CheckCircle, Package, ArrowRight } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Order Confirmed",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("cart.confirmation");
+  return { title: t("metaTitle") };
+}
 
 interface ConfirmationPageProps {
   searchParams: Promise<{ order_id?: string }>;

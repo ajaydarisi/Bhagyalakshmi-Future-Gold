@@ -7,8 +7,16 @@
     "productCount": "{count, plural, one {# ఉత్పత్తి} other {# ఉత్పత్తులు}} కనుగొనబడ్డాయి",
     "noProducts": "ఉత్పత్తులు కనుగొనబడలేదు",
     "noProductsDesc": "మీ ఫిల్టర్లు లేదా సెర్చ్ క్రైటీరియా సవరించి ప్రయత్నించండి",
-    "clearFilters": "ఫిల్టర్లు తొలగించండి"
+    "clearFilters": "ఫిల్టర్లు తొలగించండి",
+    "metaProductsSuffix": "ఉత్పత్తులు"
   },
+  "addToCart": {
+    "outOfStock": "స్టాక్ లేదు",
+    "addToCart": "కార్ట్‌కు జోడించు",
+    "addedToast": "{name} కార్ట్‌కు జోడించబడింది",
+    "errorToast": "కార్ట్‌కు జోడించడం విఫలమైంది"
+  },
+  "whatsappMessage": "హాయ్, ఇది అందుబాటులో ఉందా?",
   "detail": {
     "forSale": "అమ్మకానికి",
     "forRent": "అద్దెకు",
@@ -22,7 +30,9 @@
     "availability": "లభ్యత",
     "inStock": "స్టాక్‌లో ఉంది ({count} అందుబాటులో)",
     "outOfStock": "స్టాక్ లేదు",
-    "relatedProducts": "మీకు ఇవి కూడా నచ్చవచ్చు"
+    "relatedProducts": "మీకు ఇవి కూడా నచ్చవచ్చు",
+    "notFoundMeta": "ఉత్పత్తి కనుగొనబడలేదు",
+    "metaDescription": "భాగ్యలక్ష్మి ఫ్యూచర్ గోల్డ్ కామర్స్‌లో {name} షాప్ చేయండి"
   },
   "filters": {
     "title": "ఫిల్టర్లు",

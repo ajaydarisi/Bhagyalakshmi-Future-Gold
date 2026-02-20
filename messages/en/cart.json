@@ -36,6 +36,16 @@
     "couponApply": "Apply",
     "couponSuccess": "Coupon applied! You save {amount}",
     "couponInvalid": "Invalid coupon",
+    "addressAddSuccess": "Address added",
+    "addressAddError": "Failed to add address",
+    "paymentButton": {
+      "description": "Jewellery Purchase",
+      "success": "Payment successful!",
+      "verifyFailed": "Payment verification failed",
+      "cancelled": "Payment cancelled",
+      "initFailed": "Failed to initiate payment",
+      "payNow": "Pay Now"
+    },
     "steps": {
       "address": "Address",
       "review": "Review",
@@ -67,6 +77,7 @@
     }
   },
   "confirmation": {
+    "metaTitle": "Order Confirmed",
     "title": "Order Confirmed!",
     "description": "Thank you for your purchase. Your order has been placed successfully.",
     "orderNumber": "Order Number",

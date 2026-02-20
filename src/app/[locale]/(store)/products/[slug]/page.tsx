@@ -51,14 +51,16 @@ export async function generateMetadata({
   const product = await getProduct(slug);
   const locale = await getLocale();
 
-  if (!product) return { title: "Product Not Found" };
+  const t = await getTranslations("products.detail");
+
+  if (!product) return { title: t("notFoundMeta") };
 
   const displayName = getProductName(product, locale);
   const displayDesc = getProductDescription(product, locale);
 
   return {
     title: displayName,
-    description: displayDesc || `Shop ${displayName} at Bhagyalakshmi Future Gold Commerce`,
+    description: displayDesc || t("metaDescription", { name: displayName }),
     openGraph: {
       title: displayName,
       description: displayDesc || undefined,

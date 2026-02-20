@@ -11,9 +11,10 @@ import { ROUTES } from "@/lib/constants";
 import { Package, ArrowRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = {
-  title: "My Orders",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("account.orders");
+  return { title: t("metaTitle") };
+}
 
 export default async function OrdersPage() {
   const supabase = await createClient();
