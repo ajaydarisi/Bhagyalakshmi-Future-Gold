@@ -3,23 +3,60 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CATEGORIES, MATERIALS } from "@/lib/constants";
+import { MATERIALS, PRODUCT_TYPES } from "@/lib/constants";
 import { formatPrice } from "@/lib/formatters";
 import { useState } from "react";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
+import type { Category } from "@/types/product";
 
-export function ProductFilters() {
+interface ProductFiltersProps {
+  categories?: Category[];
+}
+
+function buildCategoryTree(categories: Category[]) {
+  const parents = categories
+    .filter((c) => !c.parent_id)
+    .sort((a, b) => a.sort_order - b.sort_order);
+  return parents.map((parent) => ({
+    ...parent,
+    children: categories
+      .filter((c) => c.parent_id === parent.id)
+      .sort((a, b) => a.sort_order - b.sort_order),
+  }));
+}
+
+export function ProductFilters({ categories = [] }: ProductFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCategory = searchParams.get("category") || "";
   const currentMaterial = searchParams.get("material") || "";
+  const currentType = searchParams.get("type") || "";
   const currentMinPrice = Number(searchParams.get("minPrice")) || 0;
   const currentMaxPrice = Number(searchParams.get("maxPrice")) || 10000;
 
   const [priceRange, setPriceRange] = useState([currentMinPrice, currentMaxPrice]);
+  const [expandedParents, setExpandedParents] = useState<Set<string>>(() => {
+    // Auto-expand the parent that contains the current category
+    const set = new Set<string>();
+    if (currentCategory) {
+      const cat = categories.find((c) => c.slug === currentCategory);
+      if (cat?.parent_id) {
+        set.add(cat.parent_id);
+      } else if (cat) {
+        set.add(cat.id);
+      }
+    }
+    return set;
+  });
+
+  const categoryTree = buildCategoryTree(categories);
+  // Groups (have children) first, standalone (no children) last
+  const groupedParents = categoryTree.filter((p) => p.children.length > 0);
+  const standaloneParents = categoryTree.filter((p) => p.children.length === 0);
 
   function updateFilter(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -52,7 +89,19 @@ export function ProductFilters() {
     router.push("/products");
   }
 
-  const hasFilters = currentCategory || currentMaterial || currentMinPrice > 0 || currentMaxPrice < 10000;
+  function toggleParent(parentId: string) {
+    setExpandedParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(parentId)) {
+        next.delete(parentId);
+      } else {
+        next.add(parentId);
+      }
+      return next;
+    });
+  }
+
+  const hasFilters = currentCategory || currentMaterial || currentType || currentMinPrice > 0 || currentMaxPrice < 10000;
 
   return (
     <div className="space-y-6">
@@ -73,12 +122,91 @@ export function ProductFilters() {
 
       <Separator />
 
-      {/* Category */}
+      {/* Type: Sale / Rental */}
+      <div>
+        <h3 className="mb-3 text-sm font-medium">Type</h3>
+        <RadioGroup
+          value={currentType || "all"}
+          onValueChange={(value) =>
+            updateFilter("type", value === "all" ? "" : value)
+          }
+        >
+          {PRODUCT_TYPES.map((type) => (
+            <div key={type.value} className="flex items-center gap-2">
+              <RadioGroupItem value={type.value} id={`type-${type.value}`} />
+              <Label
+                htmlFor={`type-${type.value}`}
+                className="text-sm font-normal cursor-pointer"
+              >
+                {type.label}
+              </Label>
+            </div>
+          ))}
+        </RadioGroup>
+      </div>
+
+      <Separator />
+
+      {/* Category — Hierarchical (groups first, standalone last) */}
       <div>
         <h3 className="mb-3 text-sm font-medium">Category</h3>
-        <div className="space-y-2">
-          {CATEGORIES.map((cat) => (
-            <div key={cat.slug} className="flex items-center gap-2">
+        <div className="space-y-1">
+          {groupedParents.map((parent) => (
+            <div key={parent.slug}>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => toggleParent(parent.id)}
+                  className="shrink-0 p-0.5"
+                >
+                  <ChevronDown
+                    className={`size-3 text-muted-foreground transition-transform ${
+                      expandedParents.has(parent.id) ? "" : "-rotate-90"
+                    }`}
+                  />
+                </button>
+                <Checkbox
+                  id={`cat-${parent.slug}`}
+                  checked={currentCategory === parent.slug}
+                  onCheckedChange={(checked) =>
+                    updateFilter("category", checked ? parent.slug : "")
+                  }
+                />
+                <Label
+                  htmlFor={`cat-${parent.slug}`}
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  {parent.name}
+                </Label>
+              </div>
+              {expandedParents.has(parent.id) &&
+                parent.children.map((child) => (
+                  <div
+                    key={child.slug}
+                    className="flex items-center gap-2 pl-8 mt-1"
+                  >
+                    <Checkbox
+                      id={`cat-${child.slug}`}
+                      checked={currentCategory === child.slug}
+                      onCheckedChange={(checked) =>
+                        updateFilter("category", checked ? child.slug : "")
+                      }
+                    />
+                    <Label
+                      htmlFor={`cat-${child.slug}`}
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      {child.name}
+                    </Label>
+                  </div>
+                ))}
+            </div>
+          ))}
+          {standaloneParents.length > 0 && groupedParents.length > 0 && (
+            <Separator className="my-2" />
+          )}
+          {standaloneParents.map((cat) => (
+            <div key={cat.slug} className="flex items-center gap-2 pl-5">
               <Checkbox
                 id={`cat-${cat.slug}`}
                 checked={currentCategory === cat.slug}
@@ -88,7 +216,7 @@ export function ProductFilters() {
               />
               <Label
                 htmlFor={`cat-${cat.slug}`}
-                className="text-sm font-normal"
+                className="text-sm font-normal cursor-pointer"
               >
                 {cat.name}
               </Label>

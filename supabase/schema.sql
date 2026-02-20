@@ -41,7 +41,9 @@ create table public.addresses (
 -- CATEGORIES
 create table public.categories (
   id uuid default uuid_generate_v4() primary key,
+  parent_id uuid references public.categories(id) on delete cascade,
   name text not null unique,
+  name_telugu text,
   slug text not null unique,
   description text,
   image_url text,
@@ -53,6 +55,7 @@ create table public.categories (
 create table public.products (
   id uuid default uuid_generate_v4() primary key,
   name text not null,
+  name_telugu text,
   slug text not null unique,
   description text,
   price numeric(10,2) not null check (price >= 0),
@@ -64,6 +67,11 @@ create table public.products (
   images text[] default '{}',
   is_active boolean default true,
   featured boolean default false,
+  is_sale boolean not null default true,
+  is_rental boolean not null default false,
+  rental_price numeric(10,2) check (rental_price >= 0),
+  rental_deposit numeric(10,2) check (rental_deposit >= 0),
+  max_rental_days integer check (max_rental_days > 0),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -191,6 +199,11 @@ create index idx_addresses_user_default on public.addresses(user_id, is_default 
 
 -- Categories
 create index idx_categories_sort on public.categories(sort_order);
+create index idx_categories_parent on public.categories(parent_id);
+
+-- Products: sale/rental
+create index idx_products_rental on public.products(is_rental) where is_rental = true;
+create index idx_products_sale on public.products(is_sale) where is_sale = true;
 
 -- Coupons
 create index idx_coupons_active on public.coupons(is_active) where is_active = true;

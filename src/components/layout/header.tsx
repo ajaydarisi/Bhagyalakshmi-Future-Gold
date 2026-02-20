@@ -72,16 +72,31 @@ export function Header() {
           </div>
 
           {/* Center: Navigation (desktop only) */}
-          <nav className="hidden md:flex items-center gap-8">
-            {CATEGORIES.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`${ROUTES.products}?category=${cat.slug}`}
-                className="text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-primary"
-              >
-                {cat.name}
-              </Link>
-            ))}
+          <nav className="hidden lg:flex items-center gap-8">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-primary cursor-pointer">
+                Categories
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-56">
+                {CATEGORIES.map((cat) => (
+                  <DropdownMenuItem key={cat.slug} asChild>
+                    <Link href={`${ROUTES.products}?category=${cat.slug}`}>
+                      {cat.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href={ROUTES.products}>All Products</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Link
+              href={`${ROUTES.products}?type=rental`}
+              className="text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-primary"
+            >
+              Rentals
+            </Link>
             <Link
               href={ROUTES.about}
               className="text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-primary"

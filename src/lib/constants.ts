@@ -6,11 +6,20 @@ export const APP_DESCRIPTION =
   "Shop quality-checked fashion jewellery at Bhagyalakshmi Future Gold, Chirala. Visit our store or explore curated collections of necklaces, earrings, bracelets, rings, and jewellery sets online. Sourced from Mumbai dealers and Machilipatnam craftsmen. Free shipping on orders above \u20B9999.";
 
 export const CATEGORIES = [
-  { name: "Necklaces", slug: "necklaces" },
-  { name: "Earrings", slug: "earrings" },
-  { name: "Bracelets", slug: "bracelets" },
-  { name: "Rings", slug: "rings" },
-  { name: "Jewellery Sets", slug: "jewellery-sets" },
+  { name: "Gold Jewelry", slug: "gold-jewelry" },
+  { name: "Polish / Finish Types", slug: "polish-finish-types" },
+  { name: "Metal Types", slug: "metal-types" },
+  { name: "Bangles & Bracelets", slug: "bangles-bracelets" },
+  { name: "Neck Jewelry", slug: "neck-jewelry" },
+  { name: "Dance & Traditional Ornaments", slug: "dance-traditional-ornaments" },
+  { name: "Leg & Hair Accessories", slug: "leg-hair-accessories" },
+  { name: "Marriage Rental Sets", slug: "marriage-rental-sets" },
+] as const;
+
+export const PRODUCT_TYPES = [
+  { value: "all", label: "All" },
+  { value: "sale", label: "For Sale" },
+  { value: "rental", label: "For Rent" },
 ] as const;
 
 export const MATERIALS = [
@@ -22,6 +31,7 @@ export const MATERIALS = [
   "Crystal",
   "Stainless Steel",
   "Brass",
+  "Panchaloha",
 ] as const;
 
 export const PRODUCT_TAGS = [

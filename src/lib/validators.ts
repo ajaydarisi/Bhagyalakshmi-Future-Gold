@@ -69,20 +69,31 @@ export const couponSchema = z.object({
   expires_at: z.string().optional().nullable(),
 });
 
-export const productSchema = z.object({
-  name: z.string().min(2, "Product name is required"),
-  slug: z.string().min(2, "Slug is required"),
-  description: z.string().optional(),
-  price: z.number().positive("Price must be greater than 0"),
-  discount_price: z.number().positive().optional().nullable(),
-  category_id: z.string().uuid("Select a category").optional().nullable(),
-  stock: z.number().int().min(0, "Stock cannot be negative").default(0),
-  material: z.string().optional().nullable(),
-  tags: z.array(z.string()).default([]),
-  images: z.array(z.string()).default([]),
-  is_active: z.boolean().default(true),
-  featured: z.boolean().default(false),
-});
+export const productSchema = z
+  .object({
+    name: z.string().min(2, "Product name is required"),
+    name_telugu: z.string().optional().nullable(),
+    slug: z.string().min(2, "Slug is required"),
+    description: z.string().optional(),
+    price: z.number().positive("Price must be greater than 0"),
+    discount_price: z.number().positive().optional().nullable(),
+    category_id: z.string().uuid("Select a category").optional().nullable(),
+    stock: z.number().int().min(0, "Stock cannot be negative").default(0),
+    material: z.string().optional().nullable(),
+    tags: z.array(z.string()).default([]),
+    images: z.array(z.string()).default([]),
+    is_active: z.boolean().default(true),
+    featured: z.boolean().default(false),
+    is_sale: z.boolean().default(true),
+    is_rental: z.boolean().default(false),
+    rental_price: z.number().positive().optional().nullable(),
+    rental_deposit: z.number().positive().optional().nullable(),
+    max_rental_days: z.number().int().positive().optional().nullable(),
+  })
+  .refine((data) => data.is_sale || data.is_rental, {
+    message: "Product must be available for sale, rental, or both",
+    path: ["is_sale"],
+  });
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SignupInput = z.infer<typeof signupSchema>;

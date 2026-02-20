@@ -8,7 +8,7 @@ import { Pagination } from "@/components/shared/pagination";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProductGridSkeleton } from "@/components/shared/loading-skeleton";
-import { PRODUCTS_PER_PAGE, CATEGORIES } from "@/lib/constants";
+import { PRODUCTS_PER_PAGE } from "@/lib/constants";
 import type { ProductWithCategory, SortOption } from "@/types/product";
 import { MobileFilterSheet } from "@/components/products/mobile-filter-sheet";
 import { Search } from "lucide-react";
@@ -21,6 +21,7 @@ interface ProductsPageProps {
     maxPrice?: string;
     sort?: string;
     page?: string;
+    type?: string;
   }>;
 }
 
@@ -28,8 +29,17 @@ export async function generateMetadata({
   searchParams,
 }: ProductsPageProps): Promise<Metadata> {
   const params = await searchParams;
-  const category = CATEGORIES.find((c) => c.slug === params.category);
-  const title = category ? `${category.name} - Products` : "All Products";
+  const supabase = await createClient();
+  let title = "All Products";
+  if (params.category) {
+    const { data: cat } = await supabase
+      .from("categories")
+      .select("name")
+      .eq("slug", params.category)
+      .single();
+    if (cat) title = `${cat.name} - Products`;
+  }
+  if (params.type === "rental") title = `Rental - ${title}`;
   return { title };
 }
 
@@ -41,18 +51,37 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const maxPrice = Number(params.maxPrice) || 0;
   const sort = (params.sort as SortOption) || "newest";
   const page = Number(params.page) || 1;
+  const type = params.type || "";
 
   const supabase = await createClient();
 
-  // Resolve category ID in parallel with building the query
-  let categoryId: string | null = null;
+  // Fetch all categories for filters
+  const { data: allCategories } = await supabase
+    .from("categories")
+    .select("*")
+    .order("sort_order");
+
+  const categoriesList = allCategories ?? [];
+
+  // Resolve category IDs — if a parent category is selected, include all children
+  let categoryIds: string[] = [];
+  let categoryName = "";
   if (category) {
-    const { data: cat } = await supabase
-      .from("categories")
-      .select("id")
-      .eq("slug", category)
-      .single();
-    categoryId = cat?.id ?? null;
+    const cat = categoriesList.find((c) => c.slug === category);
+    if (cat) {
+      categoryName = cat.name;
+      // Collect this category and all its descendants
+      categoryIds = [cat.id];
+      const children = categoriesList.filter((c) => c.parent_id === cat.id);
+      for (const child of children) {
+        categoryIds.push(child.id);
+        // Also include grandchildren
+        const grandchildren = categoriesList.filter((c) => c.parent_id === child.id);
+        for (const gc of grandchildren) {
+          categoryIds.push(gc.id);
+        }
+      }
+    }
   }
 
   let query = supabase
@@ -60,12 +89,20 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     .select("*, category:categories(name, slug)", { count: "exact" })
     .eq("is_active", true);
 
-  if (categoryId) {
-    query = query.eq("category_id", categoryId);
+  if (categoryIds.length === 1) {
+    query = query.eq("category_id", categoryIds[0]);
+  } else if (categoryIds.length > 1) {
+    query = query.in("category_id", categoryIds);
   }
 
   if (material) {
     query = query.eq("material", material);
+  }
+
+  if (type === "sale") {
+    query = query.eq("is_sale", true);
+  } else if (type === "rental") {
+    query = query.eq("is_rental", true);
   }
 
   if (minPrice > 0) {
@@ -97,7 +134,6 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const { data: products, count } = await query;
 
   const totalPages = Math.ceil((count || 0) / PRODUCTS_PER_PAGE);
-  const categoryName = CATEGORIES.find((c) => c.slug === category)?.name;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -112,6 +148,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         <div>
           <h1 className="text-2xl font-bold md:text-3xl">
             {categoryName || "All Products"}
+            {type === "rental" && " — For Rent"}
+            {type === "sale" && " — For Sale"}
           </h1>
           <p className="text-sm text-muted-foreground">
             {count || 0} product{count !== 1 ? "s" : ""} found
@@ -119,7 +157,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         </div>
         <div className="flex items-center gap-2">
           <Suspense>
-            <MobileFilterSheet />
+            <MobileFilterSheet categories={categoriesList} />
           </Suspense>
           <Suspense>
             <ProductSort />
@@ -131,7 +169,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         {/* Sidebar Filters */}
         <aside className="hidden lg:block">
           <Suspense>
-            <ProductFilters />
+            <ProductFilters categories={categoriesList} />
           </Suspense>
         </aside>
 

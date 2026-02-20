@@ -94,7 +94,9 @@ export type Database = {
       categories: {
         Row: {
           id: string;
+          parent_id: string | null;
           name: string;
+          name_telugu: string | null;
           slug: string;
           description: string | null;
           image_url: string | null;
@@ -103,7 +105,9 @@ export type Database = {
         };
         Insert: {
           id?: string;
+          parent_id?: string | null;
           name: string;
+          name_telugu?: string | null;
           slug: string;
           description?: string | null;
           image_url?: string | null;
@@ -112,7 +116,9 @@ export type Database = {
         };
         Update: {
           id?: string;
+          parent_id?: string | null;
           name?: string;
+          name_telugu?: string | null;
           slug?: string;
           description?: string | null;
           image_url?: string | null;
@@ -124,6 +130,7 @@ export type Database = {
         Row: {
           id: string;
           name: string;
+          name_telugu: string | null;
           slug: string;
           description: string | null;
           price: number;
@@ -135,12 +142,18 @@ export type Database = {
           images: string[];
           is_active: boolean;
           featured: boolean;
+          is_sale: boolean;
+          is_rental: boolean;
+          rental_price: number | null;
+          rental_deposit: number | null;
+          max_rental_days: number | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           name: string;
+          name_telugu?: string | null;
           slug: string;
           description?: string | null;
           price: number;
@@ -152,12 +165,18 @@ export type Database = {
           images?: string[];
           is_active?: boolean;
           featured?: boolean;
+          is_sale?: boolean;
+          is_rental?: boolean;
+          rental_price?: number | null;
+          rental_deposit?: number | null;
+          max_rental_days?: number | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           name?: string;
+          name_telugu?: string | null;
           slug?: string;
           description?: string | null;
           price?: number;
@@ -169,6 +188,11 @@ export type Database = {
           images?: string[];
           is_active?: boolean;
           featured?: boolean;
+          is_sale?: boolean;
+          is_rental?: boolean;
+          rental_price?: number | null;
+          rental_deposit?: number | null;
+          max_rental_days?: number | null;
           created_at?: string;
           updated_at?: string;
         };

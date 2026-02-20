@@ -1,6 +1,6 @@
 import { ProductGrid } from "@/components/products/product-grid";
 import { Button } from "@/components/ui/button";
-import { CATEGORIES, IS_ONLINE, ROUTES, BRAND_STORY } from "@/lib/constants";
+import { IS_ONLINE, ROUTES, BRAND_STORY } from "@/lib/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProductWithCategory } from "@/types/product";
 import { ArrowRight } from "lucide-react";
@@ -38,10 +38,25 @@ const getNewProducts = unstable_cache(
   { revalidate: 300 }
 );
 
+const getTopCategories = unstable_cache(
+  async () => {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("categories")
+      .select("name, slug")
+      .is("parent_id", null)
+      .order("sort_order");
+    return data;
+  },
+  ["top-categories"],
+  { revalidate: 300 }
+);
+
 export default async function HomePage() {
-  const [featuredProducts, newProducts] = await Promise.all([
+  const [featuredProducts, newProducts, topCategories] = await Promise.all([
     getFeaturedProducts(),
     getNewProducts(),
+    getTopCategories(),
   ]);
 
   return (
@@ -84,8 +99,8 @@ export default async function HomePage() {
                 className="border-white bg-transparent text-white hover:bg-white/10"
                 asChild
               >
-                <Link href={`${ROUTES.products}?category=jewellery-sets`}>
-                  View Sets
+                <Link href={`${ROUTES.products}?category=marriage-rental-sets`}>
+                  Rental Sets
                 </Link>
               </Button>
             </div>
@@ -101,8 +116,8 @@ export default async function HomePage() {
           </p>
           <h2 className="text-3xl md:text-4xl">Shop by Category</h2>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {CATEGORIES.map((cat) => (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {(topCategories ?? []).map((cat) => (
             <Link
               key={cat.slug}
               href={`${ROUTES.products}?category=${cat.slug}`}

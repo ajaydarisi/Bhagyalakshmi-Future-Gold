@@ -15,6 +15,7 @@ export async function createProduct(formData: FormData) {
 
   const data = productSchema.parse({
     name: raw.name as string,
+    name_telugu: (raw.name_telugu as string) || null,
     slug: (raw.slug as string) || generateSlug(raw.name as string),
     description: (raw.description as string) || undefined,
     price: Number(raw.price),
@@ -26,6 +27,11 @@ export async function createProduct(formData: FormData) {
     images: (formData.getAll("images") as string[]).filter(Boolean),
     is_active: raw.is_active === "true",
     featured: raw.featured === "true",
+    is_sale: raw.is_sale === "true",
+    is_rental: raw.is_rental === "true",
+    rental_price: raw.rental_price ? Number(raw.rental_price) : null,
+    rental_deposit: raw.rental_deposit ? Number(raw.rental_deposit) : null,
+    max_rental_days: raw.max_rental_days ? Number(raw.max_rental_days) : null,
   });
 
   const supabase = createAdminClient();
@@ -46,6 +52,7 @@ export async function updateProduct(id: string, formData: FormData) {
 
   const data = productSchema.parse({
     name: raw.name as string,
+    name_telugu: (raw.name_telugu as string) || null,
     slug: (raw.slug as string) || generateSlug(raw.name as string),
     description: (raw.description as string) || undefined,
     price: Number(raw.price),
@@ -57,6 +64,11 @@ export async function updateProduct(id: string, formData: FormData) {
     images: (formData.getAll("images") as string[]).filter(Boolean),
     is_active: raw.is_active === "true",
     featured: raw.featured === "true",
+    is_sale: raw.is_sale === "true",
+    is_rental: raw.is_rental === "true",
+    rental_price: raw.rental_price ? Number(raw.rental_price) : null,
+    rental_deposit: raw.rental_deposit ? Number(raw.rental_deposit) : null,
+    max_rental_days: raw.max_rental_days ? Number(raw.max_rental_days) : null,
   });
 
   const supabase = createAdminClient();
@@ -139,16 +151,18 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
 
 export async function createCategory(formData: FormData) {
   const name = formData.get("name") as string;
+  const name_telugu = (formData.get("name_telugu") as string) || null;
   const slug = (formData.get("slug") as string) || generateSlug(name);
   const description = (formData.get("description") as string) || null;
   const image_url = (formData.get("image_url") as string) || null;
   const sort_order = Number(formData.get("sort_order") ?? 0);
+  const parent_id = (formData.get("parent_id") as string) || null;
 
   const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("categories")
-    .insert({ name, slug, description, image_url, sort_order });
+    .insert({ name, name_telugu, slug, description, image_url, sort_order, parent_id });
 
   if (error) {
     return { error: error.message };
@@ -161,16 +175,18 @@ export async function createCategory(formData: FormData) {
 
 export async function updateCategory(id: string, formData: FormData) {
   const name = formData.get("name") as string;
+  const name_telugu = (formData.get("name_telugu") as string) || null;
   const slug = (formData.get("slug") as string) || generateSlug(name);
   const description = (formData.get("description") as string) || null;
   const image_url = (formData.get("image_url") as string) || null;
   const sort_order = Number(formData.get("sort_order") ?? 0);
+  const parent_id = (formData.get("parent_id") as string) || null;
 
   const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("categories")
-    .update({ name, slug, description, image_url, sort_order })
+    .update({ name, name_telugu, slug, description, image_url, sort_order, parent_id })
     .eq("id", id);
 
   if (error) {

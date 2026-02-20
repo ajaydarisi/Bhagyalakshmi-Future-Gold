@@ -13,7 +13,7 @@ import { generateSlug } from "@/lib/formatters";
 import { MATERIALS, PRODUCT_TAGS } from "@/lib/constants";
 import { createProduct, updateProduct } from "@/app/admin/actions";
 import { uploadProductImage, deleteProductImage } from "@/lib/supabase/storage";
-import type { Product } from "@/types/product";
+import type { Product, Category } from "@/types/product";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,9 @@ import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -41,13 +43,25 @@ import {
 
 interface ProductFormProps {
   product?: Product;
-  categories: { id: string; name: string }[];
+  categories: Category[];
 }
 
 interface ImageEntry {
   url: string;
   file?: File;
   preview?: string;
+}
+
+function buildCategoryTree(categories: Category[]) {
+  const parents = categories
+    .filter((c) => !c.parent_id)
+    .sort((a, b) => a.sort_order - b.sort_order);
+  return parents.map((parent) => ({
+    ...parent,
+    children: categories
+      .filter((c) => c.parent_id === parent.id)
+      .sort((a, b) => a.sort_order - b.sort_order),
+  }));
 }
 
 export function ProductForm({ product, categories }: ProductFormProps) {
@@ -59,11 +73,14 @@ export function ProductForm({ product, categories }: ProductFormProps) {
   );
   const [isUploading, setIsUploading] = useState(false);
 
+  const categoryTree = buildCategoryTree(categories);
+
   const form = useForm<ProductInput>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(productSchema) as any,
     defaultValues: {
       name: product?.name ?? "",
+      name_telugu: product?.name_telugu ?? null,
       slug: product?.slug ?? "",
       description: product?.description ?? "",
       price: product?.price ?? 0,
@@ -75,8 +92,15 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       images: product?.images ?? [],
       is_active: product?.is_active ?? true,
       featured: product?.featured ?? false,
+      is_sale: product?.is_sale ?? true,
+      is_rental: product?.is_rental ?? false,
+      rental_price: product?.rental_price ?? null,
+      rental_deposit: product?.rental_deposit ?? null,
+      max_rental_days: product?.max_rental_days ?? null,
     },
   });
+
+  const isRental = form.watch("is_rental");
 
   function handleNameChange(name: string) {
     form.setValue("name", name);
@@ -146,6 +170,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
         const formData = new FormData();
         formData.set("name", data.name);
+        formData.set("name_telugu", data.name_telugu ?? "");
         formData.set("slug", data.slug);
         formData.set("description", data.description ?? "");
         formData.set("price", String(data.price));
@@ -158,6 +183,20 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         formData.set("material", data.material ?? "");
         formData.set("is_active", String(data.is_active));
         formData.set("featured", String(data.featured));
+        formData.set("is_sale", String(data.is_sale));
+        formData.set("is_rental", String(data.is_rental));
+        formData.set(
+          "rental_price",
+          data.rental_price ? String(data.rental_price) : ""
+        );
+        formData.set(
+          "rental_deposit",
+          data.rental_deposit ? String(data.rental_deposit) : ""
+        );
+        formData.set(
+          "max_rental_days",
+          data.max_rental_days ? String(data.max_rental_days) : ""
+        );
 
         for (const tag of data.tags) {
           formData.append("tags", tag);
@@ -216,6 +255,24 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
                 <FormField
                   control={form.control}
+                  name="name_telugu"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name (Telugu)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ""}
+                          placeholder="తెలుగు పేరు"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="slug"
                   render={({ field }) => (
                     <FormItem>
@@ -260,7 +317,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Price</FormLabel>
+                        <FormLabel>Sale Price</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -327,6 +384,98 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                 />
               </CardContent>
             </Card>
+
+            {/* Rental Pricing — shown only when is_rental is true */}
+            {isRental && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Rental Pricing</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <FormField
+                      control={form.control}
+                      name="rental_price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Rental Price</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="Per rental"
+                              value={field.value ?? ""}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value
+                                    ? parseFloat(e.target.value)
+                                    : null
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="rental_deposit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Deposit</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="Security deposit"
+                              value={field.value ?? ""}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value
+                                    ? parseFloat(e.target.value)
+                                    : null
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="max_rental_days"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Max Days</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="1"
+                              placeholder="Max rental days"
+                              value={field.value ?? ""}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value
+                                    ? parseInt(e.target.value)
+                                    : null
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader>
@@ -426,6 +575,52 @@ export function ProductForm({ product, categories }: ProductFormProps) {
 
             <Card>
               <CardHeader>
+                <CardTitle>Sale / Rental</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="is_sale"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between">
+                      <FormLabel>For Sale</FormLabel>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <Separator />
+
+                <FormField
+                  control={form.control}
+                  name="is_rental"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between">
+                      <FormLabel>For Rent</FormLabel>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="is_sale"
+                  render={() => <FormMessage />}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>Organization</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -447,10 +642,18 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </SelectItem>
+                          {categoryTree.map((parent) => (
+                            <SelectGroup key={parent.id}>
+                              <SelectLabel>{parent.name}</SelectLabel>
+                              <SelectItem value={parent.id}>
+                                {parent.name} (All)
+                              </SelectItem>
+                              {parent.children.map((child) => (
+                                <SelectItem key={child.id} value={child.id}>
+                                  &nbsp;&nbsp;{child.name}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
                           ))}
                         </SelectContent>
                       </Select>

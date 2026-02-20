@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
 import { IS_ONLINE, ROUTES } from "@/lib/constants";
+import { formatPrice } from "@/lib/formatters";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { ProductWithCategory } from "@/types/product";
@@ -110,6 +111,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <h1 className="text-2xl font-bold md:text-3xl">
               {typedProduct.name}
             </h1>
+            {typedProduct.name_telugu && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {typedProduct.name_telugu}
+              </p>
+            )}
           </div>
 
           <PriceDisplay
@@ -118,13 +124,48 @@ export default async function ProductPage({ params }: ProductPageProps) {
             size="lg"
           />
 
-          {typedProduct.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {typedProduct.tags.map((tag) => (
-                <Badge key={tag} variant="secondary">
-                  {tag}
-                </Badge>
-              ))}
+          <div className="flex flex-wrap gap-2">
+            {typedProduct.is_sale && (
+              <Badge variant="default">For Sale</Badge>
+            )}
+            {typedProduct.is_rental && (
+              <Badge variant="outline">For Rent</Badge>
+            )}
+            {typedProduct.tags.map((tag) => (
+              <Badge key={tag} variant="secondary">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+
+          {/* Rental Pricing */}
+          {typedProduct.is_rental && typedProduct.rental_price && (
+            <div className="rounded-lg border bg-accent/50 p-4 space-y-2">
+              <h3 className="font-semibold">Rental Details</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Rental Price:</span>
+                  <span className="ml-2 font-medium">
+                    {formatPrice(typedProduct.rental_price)}
+                  </span>
+                </div>
+                {typedProduct.rental_deposit && (
+                  <div>
+                    <span className="text-muted-foreground">Deposit:</span>
+                    <span className="ml-2 font-medium">
+                      {formatPrice(typedProduct.rental_deposit)}
+                    </span>
+                  </div>
+                )}
+                {typedProduct.max_rental_days && (
+                  <div>
+                    <span className="text-muted-foreground">Max Duration:</span>
+                    <span className="ml-2 font-medium">
+                      {typedProduct.max_rental_days} days
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

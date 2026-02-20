@@ -6,8 +6,8 @@ export default async function NewProductPage() {
 
   const { data: categories } = await supabase
     .from("categories")
-    .select("id, name")
-    .order("name");
+    .select("*")
+    .order("sort_order");
 
   return (
     <div className="space-y-6">
