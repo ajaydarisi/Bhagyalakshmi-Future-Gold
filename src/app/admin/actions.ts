@@ -79,6 +79,28 @@ export async function updateProduct(id: string, formData: FormData) {
 export async function deleteProduct(id: string) {
   const supabase = createAdminClient();
 
+  // Fetch product images so we can clean up storage
+  const { data: product } = await supabase
+    .from("products")
+    .select("images")
+    .eq("id", id)
+    .single();
+
+  if (product?.images?.length) {
+    const BUCKET = "product-images";
+    const marker = `/storage/v1/object/public/${BUCKET}/`;
+    const paths = product.images
+      .map((url: string) => {
+        const idx = url.indexOf(marker);
+        return idx !== -1 ? url.slice(idx + marker.length) : null;
+      })
+      .filter(Boolean) as string[];
+
+    if (paths.length) {
+      await supabase.storage.from(BUCKET).remove(paths);
+    }
+  }
+
   const { error } = await supabase.from("products").delete().eq("id", id);
 
   if (error) {

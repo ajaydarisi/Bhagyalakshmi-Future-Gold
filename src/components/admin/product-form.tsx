@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2, Plus, X } from "lucide-react";
+import Image from "next/image";
+import { Loader2, Plus, Trash2, Upload } from "lucide-react";
 
 import { productSchema, type ProductInput } from "@/lib/validators";
 import { generateSlug } from "@/lib/formatters";
 import { MATERIALS, PRODUCT_TAGS } from "@/lib/constants";
 import { createProduct, updateProduct } from "@/app/admin/actions";
+import { uploadProductImage, deleteProductImage } from "@/lib/supabase/storage";
 import type { Product } from "@/types/product";
 
 import { Button } from "@/components/ui/button";
@@ -42,12 +44,20 @@ interface ProductFormProps {
   categories: { id: string; name: string }[];
 }
 
+interface ImageEntry {
+  url: string;
+  file?: File;
+  preview?: string;
+}
+
 export function ProductForm({ product, categories }: ProductFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [imageUrls, setImageUrls] = useState<string[]>(
-    product?.images ?? [""]
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [images, setImages] = useState<ImageEntry[]>(
+    product?.images.map((url) => ({ url })) ?? []
   );
+  const [isUploading, setIsUploading] = useState(false);
 
   const form = useForm<ProductInput>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -75,63 +85,102 @@ export function ProductForm({ product, categories }: ProductFormProps) {
     }
   }
 
-  function addImageField() {
-    setImageUrls([...imageUrls, ""]);
+  function handleFilesSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newEntries: ImageEntry[] = Array.from(files).map((file) => ({
+      url: "",
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+
+    setImages((prev) => [...prev, ...newEntries]);
+
+    // Reset the input so the same file can be selected again
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function removeImageField(index: number) {
-    const updated = imageUrls.filter((_, i) => i !== index);
-    setImageUrls(updated.length ? updated : [""]);
+  async function removeImage(index: number) {
+    const entry = images[index];
+
+    // If it's an already-uploaded Supabase URL, delete from storage
+    if (entry.url && entry.url.includes("supabase.co/storage")) {
+      await deleteProductImage(entry.url);
+    }
+
+    // Revoke preview URL to prevent memory leaks
+    if (entry.preview) URL.revokeObjectURL(entry.preview);
+
+    const updated = images.filter((_, i) => i !== index);
+    setImages(updated);
     form.setValue(
       "images",
-      updated.filter(Boolean)
+      updated.filter((e) => e.url).map((e) => e.url)
     );
   }
 
-  function updateImageUrl(index: number, value: string) {
-    const updated = [...imageUrls];
-    updated[index] = value;
-    setImageUrls(updated);
-    form.setValue(
-      "images",
-      updated.filter(Boolean)
-    );
+  async function uploadPendingImages(): Promise<string[]> {
+    const urls: string[] = [];
+
+    for (const entry of images) {
+      if (entry.url) {
+        // Already uploaded
+        urls.push(entry.url);
+      } else if (entry.file) {
+        // Needs upload
+        const url = await uploadProductImage(entry.file);
+        urls.push(url);
+      }
+    }
+
+    return urls;
   }
 
   function onSubmit(data: ProductInput) {
     startTransition(async () => {
-      const formData = new FormData();
-      formData.set("name", data.name);
-      formData.set("slug", data.slug);
-      formData.set("description", data.description ?? "");
-      formData.set("price", String(data.price));
-      formData.set(
-        "discount_price",
-        data.discount_price ? String(data.discount_price) : ""
-      );
-      formData.set("category_id", data.category_id ?? "");
-      formData.set("stock", String(data.stock));
-      formData.set("material", data.material ?? "");
-      formData.set("is_active", String(data.is_active));
-      formData.set("featured", String(data.featured));
+      setIsUploading(true);
+      try {
+        // Upload any new files first
+        const imageUrls = await uploadPendingImages();
 
-      for (const tag of data.tags) {
-        formData.append("tags", tag);
-      }
-      for (const img of data.images) {
-        formData.append("images", img);
-      }
+        const formData = new FormData();
+        formData.set("name", data.name);
+        formData.set("slug", data.slug);
+        formData.set("description", data.description ?? "");
+        formData.set("price", String(data.price));
+        formData.set(
+          "discount_price",
+          data.discount_price ? String(data.discount_price) : ""
+        );
+        formData.set("category_id", data.category_id ?? "");
+        formData.set("stock", String(data.stock));
+        formData.set("material", data.material ?? "");
+        formData.set("is_active", String(data.is_active));
+        formData.set("featured", String(data.featured));
 
-      const result = product
-        ? await updateProduct(product.id, formData)
-        : await createProduct(formData);
+        for (const tag of data.tags) {
+          formData.append("tags", tag);
+        }
+        for (const url of imageUrls) {
+          formData.append("images", url);
+        }
 
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success(product ? "Product updated" : "Product created");
-        router.push("/admin/products");
-        router.refresh();
+        const result = product
+          ? await updateProduct(product.id, formData)
+          : await createProduct(formData);
+
+        if (result.error) {
+          toast.error(result.error);
+        } else {
+          toast.success(product ? "Product updated" : "Product created");
+          router.push("/admin/products");
+          router.refresh();
+        }
+      } catch {
+        toast.error("Failed to upload images. Please try again.");
+      } finally {
+        setIsUploading(false);
       }
     });
   }
@@ -283,32 +332,50 @@ export function ProductForm({ product, categories }: ProductFormProps) {
               <CardHeader>
                 <CardTitle>Images</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {imageUrls.map((url, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      placeholder="https://example.com/image.jpg"
-                      value={url}
-                      onChange={(e) => updateImageUrl(index, e.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => removeImageField(index)}
-                    >
-                      <X className="size-4" />
-                    </Button>
+              <CardContent className="space-y-4">
+                {images.length > 0 && (
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    {images.map((entry, index) => (
+                      <div
+                        key={index}
+                        className="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
+                      >
+                        <Image
+                          src={entry.preview || entry.url}
+                          alt={`Product image ${index + 1}`}
+                          fill
+                          sizes="200px"
+                          className="object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute right-2 top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleFilesSelected}
+                />
+
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={addImageField}
+                  onClick={() => fileInputRef.current?.click()}
                 >
-                  <Plus className="size-4" />
-                  Add Image URL
+                  <Upload className="size-4" />
+                  Add Images
                 </Button>
               </CardContent>
             </Card>
@@ -474,9 +541,15 @@ export function ProductForm({ product, categories }: ProductFormProps) {
         </div>
 
         <div className="flex gap-3">
-          <Button type="submit" disabled={isPending}>
-            {isPending && <Loader2 className="size-4 animate-spin" />}
-            {product ? "Update Product" : "Create Product"}
+          <Button type="submit" disabled={isPending || isUploading}>
+            {(isPending || isUploading) && (
+              <Loader2 className="size-4 animate-spin" />
+            )}
+            {isUploading
+              ? "Uploading images..."
+              : product
+                ? "Update Product"
+                : "Create Product"}
           </Button>
           <Button
             type="button"
