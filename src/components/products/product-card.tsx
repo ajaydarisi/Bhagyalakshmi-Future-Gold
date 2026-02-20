@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/shared/price-display";
-import { ROUTES } from "@/lib/constants";
+import { IS_ONLINE, ROUTES } from "@/lib/constants";
 import type { ProductWithCategory } from "@/types/product";
 
 interface ProductCardProps {
@@ -42,7 +42,7 @@ export function ProductCard({ product }: ProductCardProps) {
             ))}
           </div>
         )}
-        {product.stock === 0 && (
+        {IS_ONLINE && product.stock === 0 && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
             <span className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
               Sold Out

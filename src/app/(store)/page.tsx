@@ -169,6 +169,30 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* Wishlist CTA — offline only */}
+      {!IS_ONLINE && (
+        <section className="bg-accent/30">
+          <div className="container mx-auto px-4 py-16 text-center max-w-xl">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
+              <span className="underline decoration-primary underline-offset-4 decoration-2">Pro Tip</span>
+            </p>
+            <h2 className="text-2xl md:text-3xl leading-snug">
+              Save Time at the Store
+            </h2>
+            <p className="mt-3 text-muted-foreground font-sans">
+              Wishlist your favourites now and skip the browsing when you
+              visit — walk in knowing exactly what you want.
+            </p>
+            <Button variant="outline" className="mt-6" asChild>
+              <Link href={ROUTES.products}>
+                Start Wishlisting
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </section>
+      )}
+
       {/* New Arrivals */}
       {newProducts && newProducts.length > 0 && (
         <section className="border-t border-b">

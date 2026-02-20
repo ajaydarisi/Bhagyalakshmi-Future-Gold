@@ -148,18 +148,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
           )}
 
-          <div>
-            <h3 className="font-semibold">Availability</h3>
-            <p className="mt-1">
-              {typedProduct.stock > 0 ? (
-                <span className="text-green-600">
-                  In Stock ({typedProduct.stock} available)
-                </span>
-              ) : (
-                <span className="text-red-600">Out of Stock</span>
-              )}
-            </p>
-          </div>
+          {IS_ONLINE && (
+            <div>
+              <h3 className="font-semibold">Availability</h3>
+              <p className="mt-1">
+                {typedProduct.stock > 0 ? (
+                  <span className="text-green-600">
+                    In Stock ({typedProduct.stock} available)
+                  </span>
+                ) : (
+                  <span className="text-red-600">Out of Stock</span>
+                )}
+              </p>
+            </div>
+          )}
 
           <Separator />
 
