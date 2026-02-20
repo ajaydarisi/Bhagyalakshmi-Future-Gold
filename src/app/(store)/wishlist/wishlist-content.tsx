@@ -3,13 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { CheckAvailabilityButton } from "@/components/products/check-availability-button";
 import { PriceDisplay } from "@/components/shared/price-display";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useCart } from "@/hooks/use-cart";
 import { toast } from "sonner";
 import { Heart, ShoppingBag, Trash2 } from "lucide-react";
-import { ROUTES } from "@/lib/constants";
+import { IS_ONLINE, ROUTES } from "@/lib/constants";
 import type { ProductWithCategory } from "@/types/product";
 
 interface WishlistContentProps {
@@ -75,15 +76,23 @@ export function WishlistContent({ products }: WishlistContentProps) {
               />
             </div>
             <div className="mt-3 flex gap-2">
-              <Button
-                size="sm"
-                className="flex-1"
-                onClick={() => handleMoveToCart(product)}
-                disabled={product.stock === 0}
-              >
-                <ShoppingBag className="mr-1 h-3 w-3" />
-                {product.stock === 0 ? "Out of Stock" : "Move to Cart"}
-              </Button>
+              {IS_ONLINE ? (
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => handleMoveToCart(product)}
+                  disabled={product.stock === 0}
+                >
+                  <ShoppingBag className="mr-1 h-3 w-3" />
+                  {product.stock === 0 ? "Out of Stock" : "Move to Cart"}
+                </Button>
+              ) : (
+                <CheckAvailabilityButton
+                  productName={product.name}
+                  productImage={product.images[0]}
+                  size="sm"
+                />
+              )}
               <Button
                 size="sm"
                 variant="outline"

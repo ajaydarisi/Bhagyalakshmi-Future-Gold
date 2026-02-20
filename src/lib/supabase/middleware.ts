@@ -1,6 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const STORE_MODE = process.env.NEXT_PUBLIC_STORE_MODE || "ONLINE";
+
+const OFFLINE_DISABLED_ROUTES = [
+  "/cart",
+  "/checkout",
+  "/account/orders",
+  "/account/addresses",
+];
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -34,6 +43,18 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+
+  // In OFFLINE mode, redirect disabled routes to home
+  if (STORE_MODE === "OFFLINE") {
+    const isDisabled = OFFLINE_DISABLED_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(route + "/")
+    );
+    if (isDisabled) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+  }
 
   // Protect account routes - require login
   if (pathname.startsWith("/account") && !user) {

@@ -1,6 +1,6 @@
 import { ProductGrid } from "@/components/products/product-grid";
 import { Button } from "@/components/ui/button";
-import { CATEGORIES, ROUTES, BRAND_STORY } from "@/lib/constants";
+import { CATEGORIES, IS_ONLINE, ROUTES, BRAND_STORY } from "@/lib/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProductWithCategory } from "@/types/product";
 import { ArrowRight } from "lucide-react";
@@ -197,24 +197,44 @@ export default async function HomePage() {
       {/* Trust Bar */}
       <section className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
-          {[
-            {
-              title: "Complimentary Shipping",
-              description: "On orders above \u20B9999",
-            },
-            {
-              title: "Secure Checkout",
-              description: "100% secure payments",
-            },
-            {
-              title: "Easy Returns",
-              description: "7-day return policy",
-            },
-            {
-              title: "Quality Assured",
-              description: "Every piece quality-checked",
-            },
-          ].map((feature) => (
+          {(IS_ONLINE
+            ? [
+                {
+                  title: "Complimentary Shipping",
+                  description: "On orders above \u20B9999",
+                },
+                {
+                  title: "Secure Checkout",
+                  description: "100% secure payments",
+                },
+                {
+                  title: "Easy Returns",
+                  description: "7-day return policy",
+                },
+                {
+                  title: "Quality Assured",
+                  description: "Every piece quality-checked",
+                },
+              ]
+            : [
+                {
+                  title: "WhatsApp Support",
+                  description: "Chat with us instantly",
+                },
+                {
+                  title: "Visit Our Store",
+                  description: "See pieces in person",
+                },
+                {
+                  title: "Save Your Favourites",
+                  description: "Wishlist the pieces you love",
+                },
+                {
+                  title: "Quality Assured",
+                  description: "Every piece quality-checked",
+                },
+              ]
+          ).map((feature) => (
             <div key={feature.title} className="text-center py-4">
               <h3 className="text-xs uppercase tracking-[0.15em] font-medium">
                 {feature.title}

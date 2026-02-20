@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { APP_NAME, CATEGORIES, ROUTES } from "@/lib/constants";
+import { APP_NAME, CATEGORIES, IS_ONLINE, ROUTES } from "@/lib/constants";
 import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
 
@@ -89,22 +89,24 @@ export function MobileNav({ open, onOpenChange, onSearchOpen, itemCount, user, p
               <Heart className="h-4 w-4" strokeWidth={1.5} />
               Wishlist
             </Link>
-            <Link
-              href={ROUTES.cart}
-              onClick={() => onOpenChange(false)}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
-            >
-              <ShoppingBag className="h-4 w-4" strokeWidth={1.5} />
-              Shopping Bag
-              {itemCount > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="ml-auto h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
-                >
-                  {itemCount}
-                </Badge>
-              )}
-            </Link>
+            {IS_ONLINE && (
+              <Link
+                href={ROUTES.cart}
+                onClick={() => onOpenChange(false)}
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+              >
+                <ShoppingBag className="h-4 w-4" strokeWidth={1.5} />
+                Shopping Bag
+                {itemCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="ml-auto h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+                  >
+                    {itemCount}
+                  </Badge>
+                )}
+              </Link>
+            )}
             <Link
               href={ROUTES.account}
               onClick={() => onOpenChange(false)}

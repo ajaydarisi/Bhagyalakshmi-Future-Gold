@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { APP_NAME, BUSINESS_INFO, CATEGORIES, ROUTES } from "@/lib/constants";
+import { APP_NAME, BUSINESS_INFO, CATEGORIES, IS_ONLINE, ROUTES } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
@@ -79,22 +79,26 @@ export function Footer() {
               Customer Care
             </h3>
             <ul className="space-y-2.5">
-              <li>
-                <Link
-                  href={ROUTES.accountOrders}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Track Order
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={ROUTES.cart}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Shopping Bag
-                </Link>
-              </li>
+              {IS_ONLINE && (
+                <li>
+                  <Link
+                    href={ROUTES.accountOrders}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Track Order
+                  </Link>
+                </li>
+              )}
+              {IS_ONLINE && (
+                <li>
+                  <Link
+                    href={ROUTES.cart}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Shopping Bag
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link
                   href={ROUTES.wishlist}
@@ -128,14 +132,16 @@ export function Footer() {
                   Profile
                 </Link>
               </li>
-              <li>
-                <Link
-                  href={ROUTES.accountAddresses}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Addresses
-                </Link>
-              </li>
+              {IS_ONLINE && (
+                <li>
+                  <Link
+                    href={ROUTES.accountAddresses}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Addresses
+                  </Link>
+                </li>
+              )}
               <li>
                 {user ? (
                   <button

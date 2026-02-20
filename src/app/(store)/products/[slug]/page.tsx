@@ -1,4 +1,5 @@
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { CheckAvailabilityButton } from "@/components/products/check-availability-button";
 import { ProductGrid } from "@/components/products/product-grid";
 import { ProductImages } from "@/components/products/product-images";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
@@ -6,7 +7,7 @@ import { PriceDisplay } from "@/components/shared/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
-import { ROUTES } from "@/lib/constants";
+import { IS_ONLINE, ROUTES } from "@/lib/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { ProductWithCategory } from "@/types/product";
@@ -164,7 +165,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <AddToCartButton product={typedProduct} />
+              {IS_ONLINE ? (
+                <AddToCartButton product={typedProduct} />
+              ) : (
+                <CheckAvailabilityButton
+                  productName={typedProduct.name}
+                  productImage={typedProduct.images[0]}
+                />
+              )}
             </div>
             <WishlistButton productId={typedProduct.id} />
           </div>

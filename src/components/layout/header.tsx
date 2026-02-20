@@ -29,7 +29,7 @@ import { ProductSearch } from "@/components/products/product-search";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { createClient } from "@/lib/supabase/client";
-import { APP_NAME, CATEGORIES, ROUTES } from "@/lib/constants";
+import { APP_NAME, CATEGORIES, IS_ONLINE, ROUTES } from "@/lib/constants";
 import { toast } from "sonner";
 import Image from "next/image";
 
@@ -109,19 +109,21 @@ export function Header() {
                 </Link>
               </Button>
 
-              <Button variant="ghost" size="icon" asChild>
-                <Link href={ROUTES.cart} className="relative">
-                  <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
-                  {itemCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
-                    >
-                      {itemCount}
-                    </Badge>
-                  )}
-                </Link>
-              </Button>
+              {IS_ONLINE && (
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href={ROUTES.cart} className="relative">
+                    <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
+                    {itemCount > 0 && (
+                      <Badge
+                        variant="destructive"
+                        className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+                      >
+                        {itemCount}
+                      </Badge>
+                    )}
+                  </Link>
+                </Button>
+              )}
 
               {user ? (
                 <DropdownMenu>
@@ -157,18 +159,22 @@ export function Header() {
                         My Profile
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={ROUTES.accountOrders}>
-                        <Package className="mr-2 h-4 w-4" />
-                        My Orders
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={ROUTES.accountAddresses}>
-                        <MapPin className="mr-2 h-4 w-4" />
-                        Addresses
-                      </Link>
-                    </DropdownMenuItem>
+                    {IS_ONLINE && (
+                      <DropdownMenuItem asChild>
+                        <Link href={ROUTES.accountOrders}>
+                          <Package className="mr-2 h-4 w-4" />
+                          My Orders
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {IS_ONLINE && (
+                      <DropdownMenuItem asChild>
+                        <Link href={ROUTES.accountAddresses}>
+                          <MapPin className="mr-2 h-4 w-4" />
+                          Addresses
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />

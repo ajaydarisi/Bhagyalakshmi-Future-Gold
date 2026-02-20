@@ -4,13 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User, Package, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ROUTES } from "@/lib/constants";
+import { IS_ONLINE, ROUTES } from "@/lib/constants";
 
-const accountLinks = [
-  { href: ROUTES.account, label: "Profile", icon: User },
-  { href: ROUTES.accountOrders, label: "Orders", icon: Package },
-  { href: ROUTES.accountAddresses, label: "Addresses", icon: MapPin },
+const allAccountLinks = [
+  { href: ROUTES.account, label: "Profile", icon: User, onlineOnly: false },
+  { href: ROUTES.accountOrders, label: "Orders", icon: Package, onlineOnly: true },
+  { href: ROUTES.accountAddresses, label: "Addresses", icon: MapPin, onlineOnly: true },
 ];
+
+const accountLinks = allAccountLinks.filter(
+  (link) => !link.onlineOnly || IS_ONLINE
+);
 
 export function AccountSidebar() {
   const pathname = usePathname();

@@ -1,3 +1,6 @@
+export const STORE_MODE = (process.env.NEXT_PUBLIC_STORE_MODE || "ONLINE") as "ONLINE" | "OFFLINE";
+export const IS_ONLINE = STORE_MODE === "ONLINE";
+
 export const APP_NAME = "Bhagyalakshmi Future Gold";
 export const APP_DESCRIPTION =
   "Shop quality-checked fashion jewellery at Bhagyalakshmi Future Gold, Chirala. Visit our store or explore curated collections of necklaces, earrings, bracelets, rings, and jewellery sets online. Sourced from Mumbai dealers and Machilipatnam craftsmen. Free shipping on orders above \u20B9999.";
@@ -109,7 +112,7 @@ export const BUSINESS_INFO = {
   },
   phone: "+91 9290011275",
   email: "darisilakshmi3@gmail.com",
-  whatsapp: "9290011275",
+  whatsapp: "8328031546",
   hours: {
     weekdays: "10:00 AM – 9:00 PM",
     sunday: "10:00 AM – 2:00 PM",
