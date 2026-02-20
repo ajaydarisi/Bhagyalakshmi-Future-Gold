@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
-import { Playfair_Display, DM_Sans } from "next/font/google";
-import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/shared/theme-provider";
-import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
+import { Toaster } from "@/components/ui/sonner";
+import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
+import type { Metadata } from "next";
+import { DM_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -19,12 +19,19 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: `${APP_NAME} — Contemporary Fashion Jewellery`,
+    default: `${APP_NAME}`,
     template: `%s | ${APP_NAME}`,
   },
   description: APP_DESCRIPTION,
   keywords: [
     "fashion jewellery",
+    "fashion jewellery Chirala",
+    "jewellery shop Chirala",
+    "jewellery Bapatla district",
+    "jewellery Andhra Pradesh",
+    "quality checked jewellery",
+    "Machilipatnam jewellery",
+    "Bhagyalakshmi Future Gold Chirala",
     "necklaces",
     "earrings",
     "bracelets",
@@ -35,14 +42,14 @@ export const metadata: Metadata = {
     "online jewellery store India",
   ],
   openGraph: {
-    title: `${APP_NAME} — Contemporary Fashion Jewellery`,
+    title: `${APP_NAME}`,
     description: APP_DESCRIPTION,
     type: "website",
     siteName: APP_NAME,
   },
   twitter: {
     card: "summary_large_image",
-    title: `${APP_NAME} — Contemporary Fashion Jewellery`,
+    title: `${APP_NAME}`,
     description: APP_DESCRIPTION,
   },
 };

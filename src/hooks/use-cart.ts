@@ -24,7 +24,7 @@ interface CartContextType {
   clearCart: () => Promise<void>;
 }
 
-const CART_STORAGE_KEY = "bfg-jewellery-cart";
+const CART_STORAGE_KEY = "bhagylakshmi-future-gold-cart";
 
 export const CartContext = createContext<CartContextType | null>(null);
 

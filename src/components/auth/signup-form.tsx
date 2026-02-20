@@ -2,20 +2,20 @@
 
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
@@ -71,7 +71,7 @@ export function SignupForm() {
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Create Account</CardTitle>
         <CardDescription>
-          Join BFG Jewellery Commerce and start shopping
+          Join Bhagyalakshmi Future Gold Commerce and start shopping
         </CardDescription>
       </CardHeader>
       <CardContent>

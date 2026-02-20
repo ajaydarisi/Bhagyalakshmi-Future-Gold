@@ -1,4 +1,4 @@
--- BFG Jewellery Commerce Seed Data
+-- Bhagyalakshmi Future Gold Commerce Seed Data
 -- Run this after schema.sql
 
 -- Categories
@@ -148,4 +148,4 @@ insert into public.products (name, slug, description, price, discount_price, cat
 insert into public.coupons (code, description, discount_type, discount_value, min_order_amount, max_uses, is_active) values
   ('WELCOME10', 'Welcome discount - 10% off your first order', 'percentage', 10, 500, null, true),
   ('FLAT200', 'Flat Rs.200 off on orders above Rs.1500', 'fixed', 200, 1500, 100, true),
-  ('BFG Jewellery20', 'Special 20% discount', 'percentage', 20, 1000, 50, true);
+  ('Bhagyalakshmi Future Gold20', 'Special 20% discount', 'percentage', 20, 1000, 50, true);

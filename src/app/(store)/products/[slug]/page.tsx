@@ -50,7 +50,7 @@ export async function generateMetadata({
 
   return {
     title: product.name,
-    description: product.description || `Shop ${product.name} at BFG Jewellery Commerce`,
+    description: product.description || `Shop ${product.name} at Bhagyalakshmi Future Gold Commerce`,
     openGraph: {
       title: product.name,
       description: product.description || undefined,

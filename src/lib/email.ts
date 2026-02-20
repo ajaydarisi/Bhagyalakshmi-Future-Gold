@@ -1,28 +1,39 @@
+import { BUSINESS_INFO } from "@/lib/constants";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM_EMAIL =
-  "BFG Jewellery Commerce <noreply@bfg-jewellery-commerce.com>";
+  "Bhagyalakshmi Future Gold <noreply@bhagylakshmi-future-gold-commerce.com>";
+
+const ADDRESS_FOOTER = `
+  <hr style="margin-top: 32px; border: none; border-top: 1px solid #e5e5e5;" />
+  <div style="margin-top: 16px; color: #71717a; font-size: 12px; text-align: center;">
+    <p style="margin: 0;">Bhagyalakshmi Future Gold</p>
+    <p style="margin: 4px 0 0;">${BUSINESS_INFO.address.city}, ${BUSINESS_INFO.address.district} Dist., ${BUSINESS_INFO.address.state}</p>
+    ${BUSINESS_INFO.phone ? `<p style="margin: 4px 0 0;">Phone: ${BUSINESS_INFO.phone}</p>` : ""}
+  </div>
+`;
 
 export async function sendWelcomeEmail(email: string, name: string) {
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to: email,
-      subject: "Welcome to BFG Jewellery Commerce!",
+      subject: "Welcome to Bhagyalakshmi Future Gold!",
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #18181b;">Welcome, ${name}!</h1>
-          <p>Thank you for joining BFG Jewellery Commerce. We're thrilled to have you.</p>
+          <p>Thank you for joining Bhagyalakshmi Future Gold. We're thrilled to have you.</p>
           <p>Discover our exquisite collection of fashion jewellery — from elegant necklaces to stunning rings.</p>
           <a href="${process.env.NEXT_PUBLIC_SITE_URL}/products"
              style="display: inline-block; padding: 12px 24px; background: #18181b; color: white; text-decoration: none; border-radius: 6px; margin-top: 16px;">
             Start Shopping
           </a>
           <p style="margin-top: 24px; color: #71717a; font-size: 14px;">
-            — The BFG Jewellery Commerce Team
+            — The Bhagyalakshmi Future Gold Team
           </p>
+          ${ADDRESS_FOOTER}
         </div>
       `,
     });
@@ -73,8 +84,9 @@ export async function sendOrderConfirmationEmail(
             Track Order
           </a>
           <p style="margin-top: 24px; color: #71717a; font-size: 14px;">
-            Thank you for shopping with BFG Jewellery Commerce!
+            Thank you for shopping with Bhagyalakshmi Future Gold!
           </p>
+          ${ADDRESS_FOOTER}
         </div>
       `,
     });
@@ -102,8 +114,9 @@ export async function sendShippingNotificationEmail(
             Track Order
           </a>
           <p style="margin-top: 24px; color: #71717a; font-size: 14px;">
-            — The BFG Jewellery Commerce Team
+            — The Bhagyalakshmi Future Gold Team
           </p>
+          ${ADDRESS_FOOTER}
         </div>
       `,
     });

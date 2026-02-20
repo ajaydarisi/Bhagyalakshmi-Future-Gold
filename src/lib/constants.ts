@@ -1,6 +1,6 @@
-export const APP_NAME = "BFG Jewellery";
+export const APP_NAME = "Bhagyalakshmi Future Gold";
 export const APP_DESCRIPTION =
-  "Shop contemporary fashion jewellery at BFG Jewellery. Explore curated collections of necklaces, earrings, bracelets, rings, and jewellery sets crafted with premium materials. Free shipping on orders above \u20B9999.";
+  "Shop quality-checked fashion jewellery at Bhagyalakshmi Future Gold, Chirala. Visit our store or explore curated collections of necklaces, earrings, bracelets, rings, and jewellery sets online. Sourced from Mumbai dealers and Machilipatnam craftsmen. Free shipping on orders above \u20B9999.";
 
 export const CATEGORIES = [
   { name: "Necklaces", slug: "necklaces" },
@@ -81,6 +81,7 @@ export const ROUTES = {
   signup: "/signup",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
+  about: "/about",
   admin: "/admin",
   adminProducts: "/admin/products",
   adminProductNew: "/admin/products/new",
@@ -90,6 +91,65 @@ export const ROUTES = {
   adminCategories: "/admin/categories",
   adminUsers: "/admin/users",
   adminCoupons: "/admin/coupons",
+} as const;
+
+export const BUSINESS_INFO = {
+  name: "Bhagyalakshmi Future Gold",
+  proprietor: {
+    name: "Darisi Bhagyalakshmi",
+    title: "Proprietor",
+  },
+  address: {
+    street: "Opposite SBI Bank on the right",
+    city: "Chirala",
+    district: "Bapatla",
+    state: "Andhra Pradesh",
+    pincode: "523155",
+    country: "India",
+  },
+  phone: "+91 9290011275",
+  email: "darisilakshmi3@gmail.com",
+  whatsapp: "9290011275",
+  hours: {
+    weekdays: "10:00 AM – 9:00 PM",
+    sunday: "10:00 AM – 2:00 PM",
+  },
+  map: {
+    embedUrl:
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3838.6000747384314!2d80.35052687603185!3d15.825027884819738!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a4a443d61be7dc3%3A0x95f4d1ce87eab9e6!2sBhagyalakshmi%20future%20gold!5e0!3m2!1sen!2sin!4v1771599857284!5m2!1sen!2sin",
+    linkUrl:
+      "https://www.google.com/maps/dir//Bhagyalakshmi+future+gold,+Muntha+vari+Centre,+Chirala,+Andhra+Pradesh+523155/@12.9564672,77.6208384,13z/data=!4m8!4m7!1m0!1m5!1m1!1s0x3a4a443d61be7dc3:0x95f4d1ce87eab9e6!2m2!1d80.3531021!2d15.8250276?hl=en-IN&entry=ttu&g_ep=EgoyMDI2MDIxNy4wIKXMDSoASAFQAw%3D%3D", // TODO: Google Maps "Get Directions" link
+  },
+} as const;
+
+export const BRAND_STORY = {
+  tagline: "Quality-Checked Fashion Jewellery from the Heart of Andhra Pradesh",
+  short:
+    "Bhagyalakshmi Future Gold brings you quality-checked fashion jewellery sourced from trusted Mumbai dealers and skilled Machilipatnam craftsmen. Based in Chirala, we personally inspect every piece before it reaches you.",
+  mission:
+    "To make beautiful, quality-assured fashion jewellery accessible to everyone — whether you visit our Chirala store or shop online.",
+  sourcing: [
+    {
+      title: "Mumbai Dealers",
+      description:
+        "We source trending designs from established fashion jewellery dealers in Mumbai, bringing the latest metropolitan styles to our customers.",
+    },
+    {
+      title: "Machilipatnam Craftsmen",
+      description:
+        "Our custom-made pieces are crafted by skilled artisans in Machilipatnam, specifically made and upgraded in quality for us with attention to detail.",
+    },
+  ],
+  qualityProcess:
+    "Every piece of jewellery passes through our hands before it reaches yours. We personally quality-check each item for finish, durability, and design accuracy.",
+  warranty:
+    "We provide warranty on specific items. Ask us about warranty coverage when you purchase — in-store or online.",
+} as const;
+
+export const SHOP_IMAGES = {
+  storefront: "/images/shop/storefront.jpeg",
+  interior: "/images/shop/interior.jpeg",
+  display: "/images/shop/display.jpeg",
 } as const;
 
 export const SHIPPING_COST = 49;

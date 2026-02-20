@@ -1,10 +1,12 @@
 "use client";
 
+import { useAuth } from "@/hooks/use-auth";
+import { APP_NAME, BUSINESS_INFO, CATEGORIES, ROUTES } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/client";
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { APP_NAME, CATEGORIES, ROUTES } from "@/lib/constants";
-import { useAuth } from "@/hooks/use-auth";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 export function Footer() {
@@ -26,7 +28,7 @@ export function Footer() {
           Stay in Touch
         </p>
         <h3 className="text-2xl md:text-3xl mb-3">
-          Join the BFG Jewellery World
+          Join the Bhagyalakshmi Future Gold World
         </h3>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
           Be the first to know about new collections, exclusive offers,
@@ -36,18 +38,19 @@ export function Footer() {
 
       {/* Links grid */}
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div>
             <Link
               href="/"
-              className="font-heading text-lg tracking-wide text-primary"
+              className="flex items-center gap-2 font-heading text-lg tracking-wide text-primary"
             >
+              <Image src="/images/logo.svg" alt="" width={20} height={20} />
               {APP_NAME}
             </Link>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              Contemporary fashion jewellery designed to celebrate your
-              unique style, every day.
+              Quality-checked fashion jewellery from Chirala, sourced from
+              Mumbai dealers and Machilipatnam craftsmen.
             </p>
           </div>
 
@@ -100,6 +103,14 @@ export function Footer() {
                   Wishlist
                 </Link>
               </li>
+              <li>
+                <Link
+                  href={ROUTES.about}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  About Us
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -141,6 +152,55 @@ export function Footer() {
                     Sign In
                   </Link>
                 )}
+              </li>
+            </ul>
+          </div>
+
+          {/* Visit Our Store */}
+          <div>
+            <h3 className="text-xs uppercase tracking-[0.15em] font-medium mb-4">
+              Visit Our Store
+            </h3>
+            <ul className="space-y-2.5">
+              <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>
+                  {[
+                    BUSINESS_INFO.address.street,
+                    BUSINESS_INFO.address.city,
+                    `${BUSINESS_INFO.address.district} Dist.`,
+                    BUSINESS_INFO.address.state,
+                    BUSINESS_INFO.address.pincode,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                </span>
+              </li>
+              {BUSINESS_INFO.phone && (
+                <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Phone className="h-4 w-4 shrink-0" />
+                  <a
+                    href={`tel:${BUSINESS_INFO.phone}`}
+                    className="hover:text-primary transition-colors"
+                  >
+                    {BUSINESS_INFO.phone}
+                  </a>
+                </li>
+              )}
+              {BUSINESS_INFO.email && (
+                <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Mail className="h-4 w-4 shrink-0" />
+                  <a
+                    href={`mailto:${BUSINESS_INFO.email}`}
+                    className="hover:text-primary transition-colors"
+                  >
+                    {BUSINESS_INFO.email}
+                  </a>
+                </li>
+              )}
+              <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4 shrink-0" />
+                <span>Mon–Sat: {BUSINESS_INFO.hours.weekdays}</span>
               </li>
             </ul>
           </div>

@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { APP_NAME, CATEGORIES, ROUTES } from "@/lib/constants";
 import type { User } from "@supabase/supabase-js";
+import Image from "next/image";
 
 interface MobileNavProps {
   open: boolean;
@@ -32,7 +33,8 @@ export function MobileNav({ open, onOpenChange, onSearchOpen, itemCount, user, p
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-80 pl-3">
         <SheetHeader>
-          <SheetTitle className="text-left font-heading tracking-wide text-primary">
+          <SheetTitle className="flex items-center gap-2 text-left font-heading tracking-wide text-primary">
+            <Image src="/images/logo.svg" alt="" width={20} height={20} />
             {APP_NAME}
           </SheetTitle>
         </SheetHeader>
@@ -64,6 +66,13 @@ export function MobileNav({ open, onOpenChange, onSearchOpen, itemCount, user, p
               className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
             >
               All Products
+            </Link>
+            <Link
+              href={ROUTES.about}
+              onClick={() => onOpenChange(false)}
+              className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+            >
+              About Us
             </Link>
             <button
               onClick={onSearchOpen}

@@ -1,6 +1,6 @@
 import { ProductGrid } from "@/components/products/product-grid";
 import { Button } from "@/components/ui/button";
-import { CATEGORIES, ROUTES } from "@/lib/constants";
+import { CATEGORIES, ROUTES, BRAND_STORY } from "@/lib/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProductWithCategory } from "@/types/product";
 import { ArrowRight } from "lucide-react";
@@ -124,18 +124,15 @@ export default async function HomePage() {
               Our Story
             </p>
             <h2 className="text-3xl md:text-4xl leading-snug">
-              Crafted with Passion,
+              Quality-Checked Jewellery,
               <br />
-              Worn with Confidence
+              Rooted in Chirala
             </h2>
             <p className="mt-4 text-muted-foreground leading-relaxed max-w-md font-sans">
-              Every piece in our collection is thoughtfully designed to bring
-              elegance to your everyday. From statement necklaces to delicate
-              rings, BFG Jewellery blends contemporary design with timeless
-              craftsmanship.
+              {BRAND_STORY.short}
             </p>
             <Button variant="outline" className="mt-6" asChild>
-              <Link href={ROUTES.products}>Discover More</Link>
+              <Link href={ROUTES.about}>Our Story</Link>
             </Button>
           </div>
           <div className="relative aspect-4/5 overflow-hidden">
@@ -215,7 +212,7 @@ export default async function HomePage() {
             },
             {
               title: "Quality Assured",
-              description: "Premium craftsmanship",
+              description: "Every piece quality-checked",
             },
           ].map((feature) => (
             <div key={feature.title} className="text-center py-4">

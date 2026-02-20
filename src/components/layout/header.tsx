@@ -31,6 +31,7 @@ import { useCart } from "@/hooks/use-cart";
 import { createClient } from "@/lib/supabase/client";
 import { APP_NAME, CATEGORIES, ROUTES } from "@/lib/constants";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export function Header() {
   const { user, profile, isAdmin } = useAuth();
@@ -63,8 +64,9 @@ export function Header() {
             </Button>
             <Link
               href="/"
-              className="font-heading text-xl tracking-wide text-primary"
+              className="flex items-center gap-2 font-heading text-xl tracking-wide text-primary"
             >
+              <Image src="/images/logo.svg" alt="" width={24} height={24} className="hidden md:block" />
               {APP_NAME}
             </Link>
           </div>
@@ -80,6 +82,12 @@ export function Header() {
                 {cat.name}
               </Link>
             ))}
+            <Link
+              href={ROUTES.about}
+              className="text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-primary"
+            >
+              About
+            </Link>
           </nav>
 
           {/* Right: Actions */}
