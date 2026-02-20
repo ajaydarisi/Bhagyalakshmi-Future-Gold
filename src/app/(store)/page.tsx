@@ -59,12 +59,12 @@ export default async function HomePage() {
         <div className="container mx-auto relative h-full flex items-center px-4">
           <div className="max-w-xl text-white">
             <p className="text-xs uppercase tracking-[0.2em] mb-4 text-white/80">
-              New Collection 2026
+              <span className="underline decoration-white/50 underline-offset-4 decoration-2">New Collection 2026</span>
             </p>
             <h1 className="text-4xl md:text-6xl leading-tight">
               Adorn Your
               <br />
-              Every Moment
+              <span className="underline decoration-white/50 underline-offset-4 decoration-2">Every Moment</span>
             </h1>
             <p className="mt-4 text-base md:text-lg text-white/80 max-w-md font-sans">
               Explore our exquisite collection of fashion jewellery, designed
@@ -97,7 +97,7 @@ export default async function HomePage() {
       <section className="container mx-auto px-4 py-20">
         <div className="mb-12 text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-            Explore
+            <span className="underline decoration-primary underline-offset-4 decoration-2">Explore</span>
           </p>
           <h2 className="text-3xl md:text-4xl">Shop by Category</h2>
         </div>
@@ -121,10 +121,10 @@ export default async function HomePage() {
         <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-              Our Story
+              <span className="underline decoration-primary underline-offset-4 decoration-2">Our Story</span>
             </p>
             <h2 className="text-3xl md:text-4xl leading-snug">
-              Quality-Checked Jewellery,
+              <span className="underline decoration-primary underline-offset-4 decoration-2">Quality-Checked</span> Jewellery,
               <br />
               Rooted in Chirala
             </h2>
@@ -152,7 +152,7 @@ export default async function HomePage() {
           <div className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                Curated for You
+                <span className="underline decoration-primary underline-offset-4 decoration-2">Curated for You</span>
               </p>
               <h2 className="text-3xl md:text-4xl">Featured Pieces</h2>
             </div>
@@ -176,7 +176,7 @@ export default async function HomePage() {
             <div className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                  Just Landed
+                  <span className="underline decoration-primary underline-offset-4 decoration-2">Just Landed</span>
                 </p>
                 <h2 className="text-3xl md:text-4xl">New Arrivals</h2>
               </div>
