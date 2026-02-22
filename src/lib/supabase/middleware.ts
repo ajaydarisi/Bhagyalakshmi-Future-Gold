@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { locales } from "@/i18n/config";
 
-const STORE_MODE = process.env.NEXT_PUBLIC_STORE_MODE || "ONLINE";
+const STORE_MODE = (process.env.NEXT_PUBLIC_STORE_MODE || "ONLINE").toUpperCase();
 
 const OFFLINE_DISABLED_ROUTES = [
   "/cart",

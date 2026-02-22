@@ -5,12 +5,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createRazorpayClient } from "@/lib/razorpay/client";
 import { verifyRazorpaySignature } from "@/lib/razorpay/verify";
 import { generateOrderNumber } from "@/lib/formatters";
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST } from "@/lib/constants";
+import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST, STORE_MODE } from "@/lib/constants";
 
 export async function createOrder(
   addressId: string,
   couponCode?: string | null
 ) {
+  if (STORE_MODE === "OFFLINE") throw new Error("Store is currently offline");
   const supabase = await createClient();
   const admin = createAdminClient();
 
@@ -184,6 +185,7 @@ export async function verifyPayment(
   razorpayOrderId: string,
   razorpaySignature: string
 ) {
+  if (STORE_MODE === "OFFLINE") throw new Error("Store is currently offline");
   const admin = createAdminClient();
 
   const isValid = verifyRazorpaySignature(
@@ -241,6 +243,7 @@ export async function verifyPayment(
 }
 
 export async function applyCoupon(code: string, subtotal: number) {
+  if (STORE_MODE === "OFFLINE") throw new Error("Store is currently offline");
   const supabase = await createClient();
 
   const { data: coupon } = await supabase

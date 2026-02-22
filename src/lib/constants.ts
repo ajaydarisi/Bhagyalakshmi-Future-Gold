@@ -1,4 +1,4 @@
-export const STORE_MODE = (process.env.NEXT_PUBLIC_STORE_MODE || "ONLINE") as "ONLINE" | "OFFLINE";
+export const STORE_MODE = (process.env.NEXT_PUBLIC_STORE_MODE || "ONLINE").toUpperCase() as "ONLINE" | "OFFLINE";
 export const IS_ONLINE = STORE_MODE === "ONLINE";
 
 export const APP_NAME = "Bhagyalakshmi Future Gold";
