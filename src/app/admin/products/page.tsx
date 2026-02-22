@@ -29,7 +29,7 @@ export default async function AdminProductsPage() {
         </Button>
       </div>
 
-      <ProductsTable products={products ?? []} />
+      <ProductsTable products={products ?? []} categories={categories ?? []} />
     </div>
   );
 }

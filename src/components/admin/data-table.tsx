@@ -4,11 +4,14 @@ import { useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getSortedRowModel,
   getPaginationRowModel,
   useReactTable,
   type ColumnDef,
+  type ColumnFiltersState,
   type SortingState,
+  type Table as TanStackTable,
 } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import {
@@ -25,28 +28,34 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pageSize?: number;
+  toolbar?: (table: TanStackTable<TData>) => React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   pageSize = 10,
+  toolbar,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
-    state: { sorting },
+    onColumnFiltersChange: setColumnFilters,
+    state: { sorting, columnFilters },
     initialState: { pagination: { pageSize } },
   });
 
   return (
     <div className="space-y-4">
+      {toolbar?.(table)}
       <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
