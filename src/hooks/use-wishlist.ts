@@ -22,9 +22,9 @@ export function useWishlist() {
   return context;
 }
 
-export function useWishlistProvider(): WishlistContextType {
-  const [items, setItems] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export function useWishlistProvider(initialItems?: string[]): WishlistContextType {
+  const [items, setItems] = useState<string[]>(initialItems ?? []);
+  const [isLoading, setIsLoading] = useState(!initialItems);
   const { user, isLoading: authLoading } = useAuth();
   const supabase = createClient();
 
