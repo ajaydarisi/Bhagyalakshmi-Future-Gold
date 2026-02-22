@@ -2,7 +2,7 @@
 
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
-import { ShoppingBag } from "lucide-react";
+import { Heart, ShoppingBag } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -18,9 +18,10 @@ interface MobileNavProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   itemCount: number;
+  wishlistCount: number;
 }
 
-export function MobileNav({ open, onOpenChange, itemCount }: MobileNavProps) {
+export function MobileNav({ open, onOpenChange, itemCount, wishlistCount }: MobileNavProps) {
   const t = useTranslations("nav");
   const tc = useTranslations("constants");
   const tCommon = useTranslations();
@@ -69,6 +70,22 @@ export function MobileNav({ open, onOpenChange, itemCount }: MobileNavProps) {
               className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
             >
               {t("aboutUs")}
+            </Link>
+            <Link
+              href={ROUTES.wishlist}
+              onClick={() => onOpenChange(false)}
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+            >
+              <Heart className="h-4 w-4" strokeWidth={1.5} />
+              {t("wishlist")}
+              {wishlistCount > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="ml-auto h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+                >
+                  {wishlistCount}
+                </Badge>
+              )}
             </Link>
             {IS_ONLINE && (
               <Link

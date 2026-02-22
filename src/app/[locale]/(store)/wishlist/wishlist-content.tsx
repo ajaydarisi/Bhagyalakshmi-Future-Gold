@@ -22,10 +22,12 @@ interface WishlistContentProps {
 export function WishlistContent({ products }: WishlistContentProps) {
   const t = useTranslations("wishlist");
   const locale = useLocale();
-  const { removeItem } = useWishlist();
+  const { items, removeItem } = useWishlist();
   const { addItem } = useCart();
 
-  if (products.length === 0) {
+  const wishlistedProducts = products.filter((p) => items.includes(p.id));
+
+  if (wishlistedProducts.length === 0) {
     return (
       <EmptyState
         icon={<Heart className="h-16 w-16" />}
@@ -45,7 +47,7 @@ export function WishlistContent({ products }: WishlistContentProps) {
 
   return (
     <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {products.map((product) => {
+      {wishlistedProducts.map((product) => {
         const displayName = getProductName(product, locale);
         return (
           <div key={product.id} className="group rounded-lg border p-4">

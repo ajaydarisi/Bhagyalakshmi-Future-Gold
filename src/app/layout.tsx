@@ -1,4 +1,4 @@
-import { DM_Sans, Marcellus, NTR, Playfair_Display } from "next/font/google";
+import { DM_Sans, Marcellus, Noto_Sans_Telugu, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
 const marcellus = Marcellus({
@@ -20,10 +20,9 @@ const dmSans = DM_Sans({
   display: "swap",
 });
 
-const ntr = NTR({
+const notoSansTelugu = Noto_Sans_Telugu({
   variable: "--font-telugu",
   subsets: ["telugu"],
-  weight: "400",
   display: "swap",
 });
 
@@ -35,7 +34,7 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning>
       <body
-        className={`${marcellus.variable} ${playfair.variable} ${dmSans.variable} ${ntr.variable} antialiased`}
+        className={`${marcellus.variable} ${playfair.variable} ${dmSans.variable} ${notoSansTelugu.variable} antialiased`}
       >
         {children}
       </body>

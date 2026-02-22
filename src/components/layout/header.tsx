@@ -41,6 +41,7 @@ import { useTheme } from "next-themes";
 import { locales } from "@/i18n/config";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
+import { useWishlist } from "@/hooks/use-wishlist";
 import { createClient } from "@/lib/supabase/client";
 import { CATEGORIES, IS_ONLINE, ROUTES } from "@/lib/constants";
 import { toast } from "sonner";
@@ -53,6 +54,7 @@ export function Header() {
   const tCommon = useTranslations();
   const { user, profile, isAdmin } = useAuth();
   const { itemCount } = useCart();
+  const { items: wishlistItems } = useWishlist();
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
@@ -153,6 +155,14 @@ export function Header() {
               <Button variant="ghost" size="icon" asChild>
                 <Link href={ROUTES.wishlist} className="relative">
                   <Heart className="h-5 w-5" strokeWidth={1.5} />
+                  {wishlistItems.length > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+                    >
+                      {wishlistItems.length}
+                    </Badge>
+                  )}
                 </Link>
               </Button>
 
@@ -293,9 +303,17 @@ export function Header() {
                     {t("search")}
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={ROUTES.wishlist}>
+                    <Link href={ROUTES.wishlist} className="flex items-center">
                       <Heart className="mr-2 h-4 w-4" />
                       {t("wishlist")}
+                      {wishlistItems.length > 0 && (
+                        <Badge
+                          variant="destructive"
+                          className="ml-auto h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+                        >
+                          {wishlistItems.length}
+                        </Badge>
+                      )}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -335,9 +353,17 @@ export function Header() {
                     {t("search")}
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={ROUTES.wishlist}>
+                    <Link href={ROUTES.wishlist} className="flex items-center">
                       <Heart className="mr-2 h-4 w-4" />
                       {t("wishlist")}
+                      {wishlistItems.length > 0 && (
+                        <Badge
+                          variant="destructive"
+                          className="ml-auto h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+                        >
+                          {wishlistItems.length}
+                        </Badge>
+                      )}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -381,6 +407,7 @@ export function Header() {
         open={mobileNavOpen}
         onOpenChange={setMobileNavOpen}
         itemCount={itemCount}
+        wishlistCount={wishlistItems.length}
       />
     </>
   );

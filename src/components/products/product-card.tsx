@@ -4,6 +4,7 @@ import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/shared/price-display";
+import { WishlistButton } from "@/components/wishlist/wishlist-button";
 import { IS_ONLINE, ROUTES } from "@/lib/constants";
 import { getCategoryName, getProductName } from "@/lib/i18n-helpers";
 import type { ProductWithCategory } from "@/types/product";
@@ -52,6 +53,9 @@ export function ProductCard({ product }: ProductCardProps) {
             ))}
           </div>
         )}
+        <div className="absolute right-2 top-2 z-10">
+          <WishlistButton productId={product.id} variant="icon" />
+        </div>
         {IS_ONLINE && product.stock === 0 && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
             <span className="text-xs uppercase tracking-wider font-medium text-muted-foreground">

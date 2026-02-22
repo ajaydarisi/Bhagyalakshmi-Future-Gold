@@ -4,6 +4,33 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+@keyframes heart-float-1 {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-8px, -40px) scale(0.6); }
+}
+@keyframes heart-float-2 {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(6px, -35px) scale(0.5); }
+}
+@keyframes heart-float-3 {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-4px, -45px) scale(0.4); }
+}
+@keyframes heart-float-4 {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(10px, -30px) scale(0.7); }
+}
+@keyframes heart-float-5 {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-2px, -50px) scale(0.5); }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -190,7 +217,7 @@
     font-family: var(--font-heading), ui-serif, Georgia, serif;
   }
 
-  /* Telugu locale: NTR font for all text */
+  /* Telugu locale: Noto Sans Telugu font for all text */
   html[lang="te"] body {
     font-family: var(--font-telugu), ui-sans-serif, system-ui, sans-serif;
   }
