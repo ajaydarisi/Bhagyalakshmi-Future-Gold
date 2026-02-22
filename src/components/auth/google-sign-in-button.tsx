@@ -22,8 +22,7 @@ export function GoogleSignInButton({ label, errorLabel }: GoogleSignInButtonProp
     setIsLoading(true);
     const supabase = createClient();
 
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    const siteUrl = window.location.origin;
 
     const localePrefix = locale === "en" ? "" : `/${locale}`;
     const redirectParam = searchParams.get("redirect");
