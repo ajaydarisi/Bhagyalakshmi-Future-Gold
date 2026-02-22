@@ -94,8 +94,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const typedProduct = product as unknown as ProductWithCategory;
   const displayName = getProductName(typedProduct, locale);
   const displayDescription = getProductDescription(typedProduct, locale);
-  // Show the alternate language name as subtitle
-  const subtitleName = locale === "te" ? typedProduct.name : typedProduct.name_telugu;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -130,11 +128,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <h1 className="text-2xl font-bold md:text-3xl">
               {displayName}
             </h1>
-            {subtitleName && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {subtitleName}
-              </p>
-            )}
           </div>
 
           {typedProduct.is_sale && (
