@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { CheckAvailabilityButton } from "@/components/products/check-availability-button";
 import { ProductGrid } from "@/components/products/product-grid";
 import { ProductImages } from "@/components/products/product-images";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import { ProductGridSkeleton } from "@/components/shared/loading-skeleton";
 import { PriceDisplay } from "@/components/shared/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -11,23 +13,45 @@ import { IS_ONLINE, ROUTES } from "@/lib/constants";
 import { formatPrice } from "@/lib/formatters";
 import { getCategoryName, getProductDescription, getProductName } from "@/lib/i18n-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 import type { ProductWithCategory } from "@/types/product";
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import { getLocale, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { cache } from "react";
 
-const getProduct = cache(async (slug: string) => {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("products")
-    .select("*, category:categories(name, name_telugu, slug)")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .single();
-  return data;
-});
+const RELATED_PRODUCT_FIELDS =
+  "id, name, name_telugu, slug, price, discount_price, images, tags, stock, is_sale, is_rental, rental_price, material, category:categories(name, name_telugu, slug)";
+
+const getProduct = unstable_cache(
+  async (slug: string) => {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("products")
+      .select("*, category:categories(name, name_telugu, slug)")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .single();
+    return data;
+  },
+  ["product"],
+  { revalidate: 3600 }
+);
+
+const getRelatedProducts = unstable_cache(
+  async (categoryId: string, excludeId: string) => {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("products")
+      .select(RELATED_PRODUCT_FIELDS)
+      .eq("is_active", true)
+      .eq("category_id", categoryId)
+      .neq("id", excludeId)
+      .limit(4);
+    return data;
+  },
+  ["related-products"],
+  { revalidate: 3600 }
+);
 
 export async function generateStaticParams() {
   const supabase = createAdminClient();
@@ -69,6 +93,28 @@ export async function generateMetadata({
   };
 }
 
+async function RelatedProducts({
+  categoryId,
+  productId,
+}: {
+  categoryId: string;
+  productId: string;
+}) {
+  const relatedProducts = await getRelatedProducts(categoryId, productId);
+  const t = await getTranslations("products.detail");
+
+  if (!relatedProducts || relatedProducts.length === 0) return null;
+
+  return (
+    <section className="mt-16">
+      <h2 className="mb-6 text-xl font-bold">{t("relatedProducts")}</h2>
+      <ProductGrid
+        products={relatedProducts as unknown as ProductWithCategory[]}
+      />
+    </section>
+  );
+}
+
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const product = await getProduct(slug);
@@ -80,16 +126,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const tl = await getTranslations("products.listing");
   const tc = await getTranslations("constants");
   const tCommon = await getTranslations();
-
-  // Fetch related products from same category
-  const supabase = await createClient();
-  const { data: relatedProducts } = await supabase
-    .from("products")
-    .select("*, category:categories(name, name_telugu, slug)")
-    .eq("is_active", true)
-    .eq("category_id", product.category_id!)
-    .neq("id", product.id)
-    .limit(4);
 
   const typedProduct = product as unknown as ProductWithCategory;
   const displayName = getProductName(typedProduct, locale);
@@ -199,7 +235,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
 
           <Separator />
-          
+
           {displayDescription && (
             <div>
               <h3 className="font-semibold">{t("description")}</h3>
@@ -237,13 +273,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </div>
 
       {/* Related Products */}
-      {relatedProducts && relatedProducts.length > 0 && (
-        <section className="mt-16">
-          <h2 className="mb-6 text-xl font-bold">{t("relatedProducts")}</h2>
-          <ProductGrid
-            products={relatedProducts as unknown as ProductWithCategory[]}
+      {typedProduct.category_id && (
+        <Suspense fallback={<div className="mt-16"><ProductGridSkeleton count={4} /></div>}>
+          <RelatedProducts
+            categoryId={typedProduct.category_id}
+            productId={typedProduct.id}
           />
-        </section>
+        </Suspense>
       )}
     </div>
   );

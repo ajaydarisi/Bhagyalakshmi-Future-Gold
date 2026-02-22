@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ProductGrid } from "@/components/products/product-grid";
 import { ProductFilters } from "@/components/products/product-filters";
 import { ProductSort } from "@/components/products/product-sort";
@@ -14,6 +14,7 @@ import { MobileFilterSheet } from "@/components/products/mobile-filter-sheet";
 import { Search } from "lucide-react";
 import { getTranslations, getLocale } from "next-intl/server";
 import { getCategoryName } from "@/lib/i18n-helpers";
+import { unstable_cache } from "next/cache";
 
 interface ProductsPageProps {
   searchParams: Promise<{
@@ -27,19 +28,97 @@ interface ProductsPageProps {
   }>;
 }
 
+const PRODUCT_LIST_FIELDS =
+  "id, name, name_telugu, slug, price, discount_price, images, tags, stock, is_sale, is_rental, rental_price, material, category:categories(name, name_telugu, slug)";
+
+const getAllCategories = unstable_cache(
+  async () => {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("categories")
+      .select("*")
+      .order("sort_order");
+    return data ?? [];
+  },
+  ["all-categories"],
+  { revalidate: 300 }
+);
+
+const getFilteredProducts = unstable_cache(
+  async (
+    categoryIds: string[],
+    material: string,
+    type: string,
+    minPrice: number,
+    maxPrice: number,
+    sort: string,
+    page: number
+  ) => {
+    const supabase = createAdminClient();
+
+    let query = supabase
+      .from("products")
+      .select(PRODUCT_LIST_FIELDS, { count: "exact" })
+      .eq("is_active", true);
+
+    if (categoryIds.length === 1) {
+      query = query.eq("category_id", categoryIds[0]);
+    } else if (categoryIds.length > 1) {
+      query = query.in("category_id", categoryIds);
+    }
+
+    if (material) {
+      query = query.eq("material", material);
+    }
+
+    if (type === "sale") {
+      query = query.eq("is_sale", true);
+    } else if (type === "rental") {
+      query = query.eq("is_rental", true);
+    }
+
+    if (minPrice > 0) {
+      query = query.gte("price", minPrice);
+    }
+
+    if (maxPrice > 0) {
+      query = query.lte("price", maxPrice);
+    }
+
+    switch (sort) {
+      case "price-asc":
+        query = query.order("price", { ascending: true });
+        break;
+      case "price-desc":
+        query = query.order("price", { ascending: false });
+        break;
+      case "name-asc":
+        query = query.order("name", { ascending: true });
+        break;
+      default:
+        query = query.order("created_at", { ascending: false });
+    }
+
+    const from = (page - 1) * PRODUCTS_PER_PAGE;
+    const to = from + PRODUCTS_PER_PAGE - 1;
+    query = query.range(from, to);
+
+    const { data, count } = await query;
+    return { products: data, count };
+  },
+  ["filtered-products"],
+  { revalidate: 60 }
+);
+
 export async function generateMetadata({
   searchParams,
 }: ProductsPageProps): Promise<Metadata> {
   const params = await searchParams;
-  const supabase = await createClient();
   const t = await getTranslations("products.listing");
   let title = t("allProducts");
   if (params.category) {
-    const { data: cat } = await supabase
-      .from("categories")
-      .select("name")
-      .eq("slug", params.category)
-      .single();
+    const categories = await getAllCategories();
+    const cat = categories.find((c) => c.slug === params.category);
     if (cat) title = `${cat.name} - ${t("metaProductsSuffix")}`;
   }
   if (params.type === "rental") title = `${t("forRent")} - ${title}`;
@@ -60,15 +139,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const t = await getTranslations("products.listing");
   const tRoot = await getTranslations();
 
-  const supabase = await createClient();
-
-  // Fetch all categories for filters
-  const { data: allCategories } = await supabase
-    .from("categories")
-    .select("*")
-    .order("sort_order");
-
-  const categoriesList = allCategories ?? [];
+  // Fetch categories (cached)
+  const categoriesList = await getAllCategories();
 
   // Resolve category IDs — if a parent category is selected, include all children
   let categoryIds: string[] = [];
@@ -91,54 +163,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     }
   }
 
-  let query = supabase
-    .from("products")
-    .select("*, category:categories(name, name_telugu, slug)", { count: "exact" })
-    .eq("is_active", true);
-
-  if (categoryIds.length === 1) {
-    query = query.eq("category_id", categoryIds[0]);
-  } else if (categoryIds.length > 1) {
-    query = query.in("category_id", categoryIds);
-  }
-
-  if (material) {
-    query = query.eq("material", material);
-  }
-
-  if (type === "sale") {
-    query = query.eq("is_sale", true);
-  } else if (type === "rental") {
-    query = query.eq("is_rental", true);
-  }
-
-  if (minPrice > 0) {
-    query = query.gte("price", minPrice);
-  }
-
-  if (maxPrice > 0) {
-    query = query.lte("price", maxPrice);
-  }
-
-  switch (sort) {
-    case "price-asc":
-      query = query.order("price", { ascending: true });
-      break;
-    case "price-desc":
-      query = query.order("price", { ascending: false });
-      break;
-    case "name-asc":
-      query = query.order("name", { ascending: true });
-      break;
-    default:
-      query = query.order("created_at", { ascending: false });
-  }
-
-  const from = (page - 1) * PRODUCTS_PER_PAGE;
-  const to = from + PRODUCTS_PER_PAGE - 1;
-  query = query.range(from, to);
-
-  const { data: products, count } = await query;
+  // Fetch products (cached by filter params)
+  const { products, count } = await getFilteredProducts(
+    categoryIds,
+    material,
+    type,
+    minPrice,
+    maxPrice,
+    sort,
+    page
+  );
 
   const totalPages = Math.ceil((count || 0) / PRODUCTS_PER_PAGE);
 

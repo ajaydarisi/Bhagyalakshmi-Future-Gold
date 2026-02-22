@@ -10,6 +10,7 @@ import { Link } from "@/i18n/routing";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "next-intl/server";
 import { getCategoryName } from "@/lib/i18n-helpers";
+import { Confetti } from "@/components/shared/confetti";
 
 const getFeaturedProducts = unstable_cache(
   async () => {
@@ -69,6 +70,7 @@ export default async function HomePage() {
 
   return (
     <div>
+      {process.env.NEXT_PUBLIC_CONFETTI_ENABLED === "true" && <Confetti />}
       {/* Hero Section */}
       <section className="relative h-[70vh] min-h-125 max-h-200 overflow-hidden">
         <Image
