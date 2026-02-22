@@ -1,0 +1,15 @@
+{
+  "title": "Share Your Feedback",
+  "description": "We'd love to hear about your experience. Your feedback helps us improve our products and services.",
+  "nameLabel": "Your Name",
+  "namePlaceholder": "Enter your name",
+  "emailLabel": "Email Address",
+  "emailPlaceholder": "Enter your email",
+  "ratingLabel": "How would you rate your experience?",
+  "messageLabel": "Your Feedback",
+  "messagePlaceholder": "Tell us about your experience — what you liked, what we can improve...",
+  "submitButton": "Submit Feedback",
+  "submitting": "Submitting...",
+  "successMessage": "Thank you for your feedback! We appreciate you taking the time to share your thoughts.",
+  "errorMessage": "Something went wrong. Please try again later."
+}

@@ -103,4 +103,20 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
 export type AddressInput = z.infer<typeof addressSchema>;
 export type CouponInput = z.infer<typeof couponSchema>;
+export const feedbackSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .optional()
+    .or(z.literal("")),
+  email: z
+    .string()
+    .email("Please enter a valid email address")
+    .optional()
+    .or(z.literal("")),
+  rating: z.number().int().min(1, "Please select a rating").max(5),
+  message: z.string().min(10, "Message must be at least 10 characters"),
+});
+
 export type ProductInput = z.infer<typeof productSchema>;
+export type FeedbackInput = z.infer<typeof feedbackSchema>;

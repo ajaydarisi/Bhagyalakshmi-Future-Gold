@@ -95,6 +95,45 @@ export async function sendOrderConfirmationEmail(
   }
 }
 
+export async function sendFeedbackNotificationEmail(
+  name: string,
+  email: string,
+  rating: number,
+  message: string,
+) {
+  const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: BUSINESS_INFO.email,
+      subject: `New Feedback (${rating}/5 stars) from ${name}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #18181b;">New Customer Feedback</h1>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 16px;">
+            <tr>
+              <td style="padding: 8px; font-weight: bold; vertical-align: top;">From:</td>
+              <td style="padding: 8px;">${name} (${email})</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; vertical-align: top;">Rating:</td>
+              <td style="padding: 8px; font-size: 18px; color: #f59e0b;">${stars} (${rating}/5)</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-weight: bold; vertical-align: top;">Message:</td>
+              <td style="padding: 8px;">${message}</td>
+            </tr>
+          </table>
+          ${ADDRESS_FOOTER}
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.error("Failed to send feedback notification:", error);
+  }
+}
+
 export async function sendShippingNotificationEmail(
   email: string,
   orderNumber: string,

@@ -3,6 +3,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { BUSINESS_INFO, CATEGORIES, IS_ONLINE, ROUTES } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
+import { FeedbackDialog } from "@/components/feedback/feedback-form";
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
 import { Link, useRouter, usePathname } from "@/i18n/routing";
@@ -116,6 +117,13 @@ export function Footer() {
                 >
                   {t("aboutUs")}
                 </Link>
+              </li>
+              <li>
+                <FeedbackDialog>
+                  <button className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    {t("feedback")}
+                  </button>
+                </FeedbackDialog>
               </li>
             </ul>
           </div>

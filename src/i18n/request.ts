@@ -20,6 +20,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
       cart: (await import(`../../messages/${locale}/cart.json`)).default,
       wishlist: (await import(`../../messages/${locale}/wishlist.json`)).default,
       search: (await import(`../../messages/${locale}/search.json`)).default,
+      feedback: (await import(`../../messages/${locale}/feedback.json`)).default,
     },
   };
 });
