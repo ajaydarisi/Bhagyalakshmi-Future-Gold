@@ -47,7 +47,7 @@ export function useAuthProvider(): AuthContextType {
         } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          fetchProfile(session.user.id);
         }
       } catch {
         setUser(null);
@@ -64,7 +64,7 @@ export function useAuthProvider(): AuthContextType {
     } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        fetchProfile(session.user.id);
       } else {
         setProfile(null);
       }
