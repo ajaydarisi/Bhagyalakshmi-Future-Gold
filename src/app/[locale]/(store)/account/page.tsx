@@ -176,7 +176,7 @@ function ChangePasswordCard() {
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
-  const { profile, user } = useAuth();
+  const { profile, user, isLoading: isAuthLoading } = useAuth();
   const t = useTranslations("account.profile");
 
   const form = useForm<ProfileUpdateInput>({
@@ -208,6 +208,14 @@ export default function ProfilePage() {
     setIsLoading(false);
   }
 
+  if (isAuthLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -219,7 +227,7 @@ export default function ProfilePage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t("email")}</label>
-                <Input value={user?.email || ""} disabled />
+                <Input value={user?.email || profile?.email || ""} disabled />
                 <p className="text-xs text-muted-foreground">
                   {t("emailHint")}
                 </p>
