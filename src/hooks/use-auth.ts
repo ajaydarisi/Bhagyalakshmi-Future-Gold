@@ -40,14 +40,14 @@ export function useAuthProvider(): AuthContextType {
   }, []);
 
   useEffect(() => {
-    const getUser = async () => {
+    const initAuth = async () => {
       try {
         const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        setUser(user);
-        if (user) {
-          await fetchProfile(user.id);
+          data: { session },
+        } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
         }
       } catch {
         setUser(null);
@@ -57,7 +57,7 @@ export function useAuthProvider(): AuthContextType {
       }
     };
 
-    getUser();
+    initAuth();
 
     const {
       data: { subscription },
@@ -73,7 +73,7 @@ export function useAuthProvider(): AuthContextType {
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        getUser();
+        initAuth();
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
