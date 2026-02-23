@@ -104,7 +104,6 @@ export function Header() {
               href="/"
               className="flex items-center gap-2 font-brand text-xl tracking-wide text-primary"
             >
-              <Image src="/images/logo.svg" alt="" width={24} height={24} className="hidden md:block" />
               {tCommon("appName")}
             </Link>
           </div>

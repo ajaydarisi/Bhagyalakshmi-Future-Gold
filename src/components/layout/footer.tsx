@@ -55,7 +55,6 @@ export function Footer() {
               href="/"
               className="flex items-center gap-2 font-brand text-lg tracking-wide text-primary"
             >
-              <Image src="/images/logo.svg" alt="" width={20} height={20} />
               {tCommon("appName")}
             </Link>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
