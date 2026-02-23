@@ -70,5 +70,19 @@
     "addError": "Failed to add address",
     "updateError": "Failed to update address",
     "deleteError": "Failed to delete address"
+  },
+  "changePassword": {
+    "title": "Change Password",
+    "currentPassword": "Current Password",
+    "currentPasswordPlaceholder": "Enter current password",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter new password",
+    "confirmPassword": "Confirm New Password",
+    "confirmPlaceholder": "Re-enter new password",
+    "submit": "Update Password",
+    "successToast": "Password updated successfully",
+    "errorToast": "Failed to update password",
+    "wrongPassword": "Current password is incorrect",
+    "samePassword": "New password must be different from current password"
   }
 }
