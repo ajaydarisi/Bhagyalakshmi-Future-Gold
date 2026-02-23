@@ -56,13 +56,12 @@ export async function updateSession(
     }
   );
 
-  // Use getSession() for fast cookie-based check (no API round-trip).
-  // This is sufficient for route protection in middleware.
+  // Use getUser() to verify the token with Supabase server.
+  // getSession() only reads from cookies without verification, which can
+  // cause stale/expired sessions to appear valid and break auth flows.
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const user = session?.user ?? null;
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
   const strippedPath = stripLocale(pathname);
@@ -89,20 +88,6 @@ export async function updateSession(
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
-
-    // Verify user is not banned/deleted
-    const {
-      data: { user: verifiedUser },
-    } = await supabase.auth.getUser();
-
-    if (!verifiedUser) {
-      // User was banned or deleted — clear session and redirect to login
-      await supabase.auth.signOut();
-      const url = request.nextUrl.clone();
-      const localePrefix = pathname.replace(strippedPath, "");
-      url.pathname = `${localePrefix}/login`;
-      return NextResponse.redirect(url);
-    }
   }
 
   // Protect admin routes - require login + admin role
@@ -114,23 +99,11 @@ export async function updateSession(
       return NextResponse.redirect(url);
     }
 
-    // Use getUser() only for admin — verifies token with Supabase server
-    const {
-      data: { user: verifiedUser },
-    } = await supabase.auth.getUser();
-
-    if (!verifiedUser) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
-    }
-
-    // Check admin role
+    // Check admin role (user is already verified via getUser() above)
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", verifiedUser.id)
+      .eq("id", user.id)
       .single();
 
     if (profile?.role !== "admin") {
@@ -149,6 +122,7 @@ export async function updateSession(
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

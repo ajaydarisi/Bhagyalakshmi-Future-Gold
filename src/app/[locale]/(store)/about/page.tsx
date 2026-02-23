@@ -85,35 +85,6 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* Our Sourcing */}
-      {/* <section className="container mx-auto px-4 pb-20">
-        <div className="mb-12 text-center">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-            {t("sourcingLabel")}
-          </p>
-          <h2 className="text-3xl md:text-4xl">{t("sourcingTitle")}</h2>
-        </div>
-        <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          {[
-            { title: t("sourcingMumbaiTitle"), description: t("sourcingMumbaiDesc"), icon: Star },
-            { title: t("sourcingMachilipatnamTitle"), description: t("sourcingMachilipatnamDesc"), icon: Gem },
-          ].map((source) => (
-            <div
-              key={source.title}
-              className="border border-border bg-card p-8 text-center"
-            >
-              <source.icon className="h-6 w-6 mx-auto mb-4 text-primary" />
-              <h3 className="text-sm uppercase tracking-[0.15em] font-medium mb-3">
-                {source.title}
-              </h3>
-              <p className="text-sm text-muted-foreground font-sans leading-relaxed">
-                {source.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section> */}
-
       {/* Quality & Warranty */}
       <section className="bg-accent/30 py-20">
         <div className="container mx-auto px-4 max-w-3xl text-center">

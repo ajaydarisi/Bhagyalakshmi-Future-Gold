@@ -3,7 +3,7 @@ export const IS_ONLINE = STORE_MODE === "ONLINE";
 
 export const APP_NAME = "Bhagyalakshmi Future Gold";
 export const APP_DESCRIPTION =
-  "Shop quality-checked fashion jewellery at Bhagyalakshmi Future Gold, Chirala. Visit our store or explore curated collections of necklaces, earrings, bracelets, rings, and jewellery sets online. Sourced from Mumbai dealers and Machilipatnam craftsmen. Free shipping on orders above \u20B9999.";
+  "Shop quality-checked fashion jewellery at Bhagyalakshmi Future Gold, Chirala. Visit our store or explore curated collections of necklaces, earrings, bracelets, rings, and jewellery sets online. Free shipping on orders above \u20B9999.";
 
 export const CATEGORIES = [
   { name: "Gold Jewelry", slug: "gold-jewelry" },
@@ -140,21 +140,9 @@ export const BUSINESS_INFO = {
 export const BRAND_STORY = {
   tagline: "Quality-Checked Fashion Jewellery from the Heart of Andhra Pradesh",
   short:
-    "Bhagyalakshmi Future Gold brings you quality-checked fashion jewellery sourced from trusted Mumbai dealers and skilled Machilipatnam craftsmen. Based in Chirala, we personally inspect every piece before it reaches you.",
+    "Bhagyalakshmi Future Gold brings you quality-checked fashion jewellery. Based in Chirala, we personally inspect every piece before it reaches you.",
   mission:
     "To make beautiful, quality-assured fashion jewellery accessible to everyone — whether you visit our Chirala store or shop online.",
-  sourcing: [
-    {
-      title: "Mumbai Dealers",
-      description:
-        "We source trending designs from established fashion jewellery dealers in Mumbai, bringing the latest metropolitan styles to our customers.",
-    },
-    {
-      title: "Machilipatnam Craftsmen",
-      description:
-        "Our custom-made pieces are crafted by skilled artisans in Machilipatnam, specifically made and upgraded in quality for us with attention to detail.",
-    },
-  ],
   qualityProcess:
     "Every piece of jewellery passes through our hands before it reaches yours. We personally quality-check each item for finish, durability, and design accuracy.",
   warranty:
