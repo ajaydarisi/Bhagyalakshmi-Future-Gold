@@ -45,8 +45,8 @@ export function GoogleSignInButton({ label, errorLabel }: GoogleSignInButtonProp
 
     if (error) {
       toast.error(errorLabel);
-      setIsLoading(false);
     }
+    setIsLoading(false);
   }
 
   return (
