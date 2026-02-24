@@ -33,6 +33,12 @@
     "title": "New Arrivals",
     "shopNew": "Shop New"
   },
+  "installApp": {
+    "title": "Get our Android App",
+    "description": "Download the app for a better shopping experience",
+    "download": "Download",
+    "dismiss": "Dismiss"
+  },
   "trustBar": {
     "online": {
       "shipping": "Complimentary Shipping",

@@ -16,6 +16,10 @@ const Confetti = dynamic(() =>
   import("@/components/shared/confetti").then((m) => m.Confetti),
 );
 
+const InstallAppBanner = dynamic(() =>
+  import("@/components/shared/install-app-banner").then((m) => m.InstallAppBanner),
+);
+
 const getFeaturedProducts = unstable_cache(
   async () => {
     const supabase = createAdminClient();
@@ -120,6 +124,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Install App Banner — Android only */}
+      <InstallAppBanner />
 
       {/* Categories */}
       <section className="container mx-auto px-4 py-20">
