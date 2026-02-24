@@ -4,7 +4,7 @@ import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: APP_NAME,
-    short_name: "BFG Jewellery",
+    short_name: "Bhagyalakshmi Future Gold",
     description: APP_DESCRIPTION,
     start_url: "/",
     display: "standalone",
