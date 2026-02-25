@@ -9,18 +9,27 @@ import { SetHtmlLang } from "@/components/shared/set-html-lang";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
 import type { Metadata, Viewport } from "next";
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "https://bfg.darisi.in";
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#b8860b",
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: `${APP_NAME}`,
     template: `%s | ${APP_NAME}`,
   },
   description: APP_DESCRIPTION,
+  authors: [{ name: "Ajay Darisi" }],
+  creator: "Ajay Darisi",
+  publisher: APP_NAME,
   keywords: [
     "fashion jewellery",
     "fashion jewellery Chirala",
@@ -38,6 +47,32 @@ export const metadata: Metadata = {
     "rose gold jewellery",
     "online jewellery store India",
   ],
+  alternates: {
+    canonical: SITE_URL,
+    languages: {
+      en: SITE_URL,
+      te: `${SITE_URL}/te`,
+    },
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -47,13 +82,26 @@ export const metadata: Metadata = {
     title: `${APP_NAME}`,
     description: APP_DESCRIPTION,
     type: "website",
+    locale: "en_IN",
+    url: SITE_URL,
     siteName: APP_NAME,
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: `${APP_NAME} — Quality-Checked Fashion Jewellery`,
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: `${APP_NAME}`,
     description: APP_DESCRIPTION,
+    images: ["/og-image.png"],
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export function generateStaticParams() {

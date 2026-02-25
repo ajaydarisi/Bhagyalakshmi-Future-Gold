@@ -8,7 +8,7 @@ import { Pagination } from "@/components/shared/pagination";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProductGridSkeleton } from "@/components/shared/loading-skeleton";
-import { PRODUCTS_PER_PAGE } from "@/lib/constants";
+import { APP_NAME, PRODUCTS_PER_PAGE } from "@/lib/constants";
 import type { ProductWithCategory, SortOption } from "@/types/product";
 import { MobileFilterSheet } from "@/components/products/mobile-filter-sheet";
 import { FilterLoadingProvider } from "@/components/products/filter-loading-context";
@@ -152,7 +152,8 @@ export async function generateMetadata({
     if (names.length > 0) title = `${names.join(", ")} - ${t("metaProductsSuffix")}`;
   }
   if (params.type === "rental") title = `${t("forRent")} - ${title}`;
-  return { title };
+  const description = `${t("metaDescription", { brand: APP_NAME })}`;
+  return { title, description };
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {

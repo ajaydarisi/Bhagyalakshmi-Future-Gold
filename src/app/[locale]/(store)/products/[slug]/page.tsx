@@ -9,7 +9,7 @@ import { PriceDisplay } from "@/components/shared/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
-import { IS_ONLINE, ROUTES } from "@/lib/constants";
+import { APP_NAME, IS_ONLINE, ROUTES } from "@/lib/constants";
 import { formatPrice } from "@/lib/formatters";
 import { getCategoryName, getProductDescription, getProductName } from "@/lib/i18n-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -76,6 +76,9 @@ export async function generateMetadata({
   const locale = await getLocale();
 
   const t = await getTranslations("products.detail");
+  const SITE_URL =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://bfg.darisi.in";
 
   if (!product) return { title: t("notFoundMeta") };
 
@@ -85,10 +88,20 @@ export async function generateMetadata({
   return {
     title: displayName,
     description: displayDesc || t("metaDescription", { name: displayName }),
+    alternates: {
+      canonical: `${SITE_URL}/products/${slug}`,
+      languages: {
+        en: `${SITE_URL}/products/${slug}`,
+        te: `${SITE_URL}/te/products/${slug}`,
+      },
+    },
     openGraph: {
       title: displayName,
       description: displayDesc || undefined,
-      images: product.images[0] ? [product.images[0]] : undefined,
+      type: "website",
+      images: product.images[0]
+        ? [{ url: product.images[0], alt: displayName }]
+        : undefined,
     },
   };
 }
@@ -127,12 +140,83 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const tc = await getTranslations("constants");
   const tCommon = await getTranslations();
 
+  const SITE_URL =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://bfg.darisi.in";
+
   const typedProduct = product as unknown as ProductWithCategory;
   const displayName = getProductName(typedProduct, locale);
   const displayDescription = getProductDescription(typedProduct, locale);
 
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: getProductName(typedProduct, "en"),
+    ...(getProductDescription(typedProduct, "en") && {
+      description: getProductDescription(typedProduct, "en"),
+    }),
+    ...(typedProduct.images[0] && { image: typedProduct.images[0] }),
+    sku: typedProduct.id,
+    brand: { "@type": "Brand", name: APP_NAME },
+    ...(typedProduct.is_sale && {
+      offers: {
+        "@type": "Offer",
+        price: typedProduct.discount_price || typedProduct.price,
+        priceCurrency: "INR",
+        availability:
+          typedProduct.stock > 0
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
+        seller: { "@type": "Organization", name: APP_NAME },
+      },
+    }),
+    ...(typedProduct.category && {
+      category: getCategoryName(typedProduct.category, "en"),
+    }),
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Products",
+        item: `${SITE_URL}/products`,
+      },
+      ...(typedProduct.category
+        ? [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: getCategoryName(typedProduct.category, "en"),
+              item: `${SITE_URL}/products?category=${typedProduct.category.slug}`,
+            },
+          ]
+        : []),
+      {
+        "@type": "ListItem",
+        position: typedProduct.category ? 4 : 3,
+        name: getProductName(typedProduct, "en"),
+      },
+    ],
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([productJsonLd, breadcrumbJsonLd]),
+        }}
+      />
       <Breadcrumbs
         homeLabel={tCommon("breadcrumbHome")}
         items={[

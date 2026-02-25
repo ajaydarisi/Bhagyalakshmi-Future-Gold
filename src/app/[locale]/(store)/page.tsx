@@ -1,6 +1,12 @@
 import { ProductGrid } from "@/components/products/product-grid";
 import { Button } from "@/components/ui/button";
-import { IS_ONLINE, ROUTES } from "@/lib/constants";
+import {
+  APP_DESCRIPTION,
+  APP_NAME,
+  BUSINESS_INFO,
+  IS_ONLINE,
+  ROUTES,
+} from "@/lib/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProductWithCategory } from "@/types/product";
 import { ArrowRight } from "lucide-react";
@@ -75,8 +81,78 @@ export default async function HomePage() {
   const t = await getTranslations("home");
   const tBrand = await getTranslations("constants.brandStory");
 
+  const SITE_URL =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://bfg.darisi.in";
+
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: APP_NAME,
+      url: SITE_URL,
+      logo: `${SITE_URL}/images/logo.png`,
+      description: APP_DESCRIPTION,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: APP_NAME,
+      url: SITE_URL,
+      description: APP_DESCRIPTION,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "JewelryStore",
+      name: BUSINESS_INFO.name,
+      url: SITE_URL,
+      telephone: BUSINESS_INFO.phone,
+      email: BUSINESS_INFO.email,
+      image: `${SITE_URL}/images/logo.png`,
+      priceRange: "$$",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: BUSINESS_INFO.address.street,
+        addressLocality: BUSINESS_INFO.address.city,
+        addressRegion: BUSINESS_INFO.address.state,
+        postalCode: BUSINESS_INFO.address.pincode,
+        addressCountry: "IN",
+      },
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: 15.825028,
+        longitude: 80.350527,
+      },
+      openingHoursSpecification: [
+        {
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ],
+          opens: "10:00",
+          closes: "21:00",
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: "Sunday",
+          opens: "10:00",
+          closes: "14:00",
+        },
+      ],
+    },
+  ];
+
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {process.env.NEXT_PUBLIC_CONFETTI_ENABLED === "true" && <Confetti />}
       {/* Hero Section */}
       <section className="relative h-[70vh] min-h-125 max-h-200 overflow-hidden">

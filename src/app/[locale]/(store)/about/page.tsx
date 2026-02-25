@@ -1,6 +1,7 @@
 import { ShopImage } from "@/components/shared/shop-image";
 import { Button } from "@/components/ui/button";
 import {
+  APP_DESCRIPTION,
   BUSINESS_INFO,
   ROUTES,
   SHOP_IMAGES,
@@ -39,8 +40,66 @@ export default async function AboutPage() {
     .filter(Boolean)
     .join(", ");
 
+  const SITE_URL =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://bfg.darisi.in";
+
+  const aboutJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "JewelryStore",
+    name: BUSINESS_INFO.name,
+    url: SITE_URL,
+    telephone: BUSINESS_INFO.phone,
+    email: BUSINESS_INFO.email,
+    image: `${SITE_URL}/images/logo.png`,
+    description: APP_DESCRIPTION,
+    priceRange: "$$",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: BUSINESS_INFO.address.street,
+      addressLocality: BUSINESS_INFO.address.city,
+      addressRegion: BUSINESS_INFO.address.state,
+      postalCode: BUSINESS_INFO.address.pincode,
+      addressCountry: "IN",
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: 15.825028,
+      longitude: 80.350527,
+    },
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ],
+        opens: "10:00",
+        closes: "21:00",
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Sunday",
+        opens: "10:00",
+        closes: "14:00",
+      },
+    ],
+    founder: {
+      "@type": "Person",
+      name: BUSINESS_INFO.proprietor.name,
+      jobTitle: BUSINESS_INFO.proprietor.title,
+    },
+  };
+
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutJsonLd) }}
+      />
       {/* Hero Banner */}
       <section className="bg-accent/30 py-20">
         <div className="container mx-auto px-4 text-center">
