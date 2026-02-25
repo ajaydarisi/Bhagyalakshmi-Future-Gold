@@ -1,41 +1,47 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 const DISMISS_KEY = "install-app-banner-dismissed";
 
+function shouldShow(): boolean {
+  if (typeof window === "undefined") return false;
+  if (process.env.NEXT_PUBLIC_SHOW_APP_BANNER !== "true") return false;
+  if (!process.env.NEXT_PUBLIC_APK_URL) return false;
+
+  const cap = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+  if (cap?.isNativePlatform?.()) return false;
+
+  if (localStorage.getItem(DISMISS_KEY)) return false;
+  return true;
+}
+
+let snapshot = false;
+function subscribe(cb: () => void) {
+  snapshot = shouldShow();
+  window.addEventListener("storage", cb);
+  return () => window.removeEventListener("storage", cb);
+}
+function getSnapshot() {
+  return snapshot;
+}
+function getServerSnapshot() {
+  return false;
+}
+
 export function InstallAppBanner() {
-  const [show, setShow] = useState(false);
+  const show = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const t = useTranslations("home.installApp");
-
-  useEffect(() => {
-    // Don't show inside Capacitor native app
-    if (typeof window !== "undefined" && (window as any).Capacitor?.isNativePlatform?.()) {
-      return;
-    }
-
-    // Only show on Android devices
-    const isAndroid = /android/i.test(navigator.userAgent);
-    if (!isAndroid) return;
-
-    // Don't show if previously dismissed
-    const dismissed = localStorage.getItem(DISMISS_KEY);
-    if (dismissed) return;
-
-    // Don't show if no APK URL configured
-    if (!process.env.NEXT_PUBLIC_APK_URL) return;
-
-    setShow(true);
-  }, []);
 
   if (!show) return null;
 
   const handleDismiss = () => {
     localStorage.setItem(DISMISS_KEY, "true");
-    setShow(false);
+    snapshot = false;
+    window.dispatchEvent(new StorageEvent("storage"));
   };
 
   return (
