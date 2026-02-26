@@ -23,6 +23,7 @@ const dmSans = DM_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 const notoSansTelugu = Noto_Sans_Telugu({
