@@ -8,7 +8,7 @@ const marcellus = Marcellus({
   subsets: ["latin"],
   weight: "400",
   display: "swap",
-
+  preload: false,
 });
 
 const playfair = Playfair_Display({
@@ -16,6 +16,7 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "700"],
   display: "swap",
+  preload: false,
 });
 
 const dmSans = DM_Sans({

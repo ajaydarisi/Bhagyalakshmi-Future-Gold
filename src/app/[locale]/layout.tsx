@@ -9,6 +9,8 @@ import { SetHtmlLang } from "@/components/shared/set-html-lang";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants";
 import type { Metadata, Viewport } from "next";
 
+export const dynamic = "force-dynamic";
+
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ||
   "https://bfg.darisi.in";
