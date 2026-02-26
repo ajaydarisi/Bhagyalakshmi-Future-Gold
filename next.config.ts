@@ -5,6 +5,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   experimental: {
+    inlineCss: true,
     optimizePackageImports: ["lucide-react", "recharts", "cmdk"],
   },
   images: {

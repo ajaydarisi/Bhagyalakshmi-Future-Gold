@@ -174,21 +174,13 @@ export function Footer() {
                 </li>
               )}
               <li>
-                {isLoggedIn ? (
-                  <button
-                    onClick={handleSignOut}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {tCommon("nav.signOut")}
-                  </button>
-                ) : (
-                  <Link
-                    href={pathname === "/" ? ROUTES.login : `${ROUTES.login}?redirect=${encodeURIComponent(pathname)}`}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {tCommon("nav.signIn")}
-                  </Link>
-                )}
+                <Link
+                  href={isLoggedIn ? "#" : (pathname === "/" ? ROUTES.login : `${ROUTES.login}?redirect=${encodeURIComponent(pathname)}`)}
+                  onClick={isLoggedIn ? (e: React.MouseEvent) => { e.preventDefault(); handleSignOut(); } : undefined}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {isLoggedIn ? tCommon("nav.signOut") : tCommon("nav.signIn")}
+                </Link>
               </li>
             </ul>
           </div>

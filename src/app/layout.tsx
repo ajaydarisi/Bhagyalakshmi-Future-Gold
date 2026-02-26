@@ -8,11 +8,13 @@ const marcellus = Marcellus({
   subsets: ["latin"],
   weight: "400",
   display: "swap",
+
 });
 
 const playfair = Playfair_Display({
   variable: "--font-heading",
   subsets: ["latin"],
+  weight: ["400", "700"],
   display: "swap",
 });
 
@@ -26,6 +28,7 @@ const notoSansTelugu = Noto_Sans_Telugu({
   variable: "--font-telugu",
   subsets: ["telugu"],
   display: "swap",
+  preload: false,
 });
 
 export default function RootLayout({
