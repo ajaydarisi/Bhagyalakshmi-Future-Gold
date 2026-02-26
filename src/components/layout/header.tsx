@@ -14,9 +14,6 @@ import {
   MapPin,
   LayoutDashboard,
   Menu,
-  Languages,
-  Sun,
-  Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +56,7 @@ export function Header() {
   const pathname = usePathname();
   const locale = useLocale();
   const { theme, setTheme } = useTheme();
+  const themeToggle = () => setTheme(theme === "dark" ? "light" : "dark");
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [langDialogOpen, setLangDialogOpen] = useState(false);
@@ -262,141 +260,6 @@ export function Header() {
               )}
             </div>
 
-            {/* Mobile-only: User dropdown with search/wishlist */}
-            {isLoading ? (
-              <div className="h-9 w-9 animate-pulse rounded-md bg-muted md:hidden" />
-            ) : user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("myAccount")}>
-                    <User className="h-5 w-5" strokeWidth={1.5} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">
-                      {profile?.full_name || "User"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  {isAdmin && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <NextLink href={ROUTES.admin}>
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          {t("adminDashboard")}
-                        </NextLink>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <DropdownMenuItem asChild>
-                    <Link href={ROUTES.account}>
-                      <User className="mr-2 h-4 w-4" />
-                      {t("myProfile")}
-                    </Link>
-                  </DropdownMenuItem>
-                  {IS_ONLINE && (
-                    <DropdownMenuItem asChild>
-                      <Link href={ROUTES.accountOrders}>
-                        <Package className="mr-2 h-4 w-4" />
-                        {t("myOrders")}
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  {IS_ONLINE && (
-                    <DropdownMenuItem asChild>
-                      <Link href={ROUTES.accountAddresses}>
-                        <MapPin className="mr-2 h-4 w-4" />
-                        {t("addresses")}
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setSearchOpen(true)}>
-                    <Search className="mr-2 h-4 w-4" />
-                    {t("search")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={ROUTES.wishlist} className="flex items-center">
-                      <Heart className="mr-2 h-4 w-4" />
-                      {t("wishlist")}
-                      {wishlistItems.length > 0 && (
-                        <Badge
-                          variant="destructive"
-                          className="ml-auto h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
-                        >
-                          {wishlistItems.length}
-                        </Badge>
-                      )}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setLangDialogOpen(true)}>
-                    <Languages className="mr-2 h-4 w-4" />
-                    {t("changeLanguage")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-                    <Sun className="mr-2 h-4 w-4 dark:hidden" />
-                    <Moon className="mr-2 hidden h-4 w-4 dark:block" />
-                    {theme === "dark" ? t("lightMode") : t("darkMode")}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    {t("signOut")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden" aria-label={t("signIn")}>
-                    <User className="h-5 w-5" strokeWidth={1.5} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem asChild>
-                    <Link href={pathname === "/" ? ROUTES.login : `${ROUTES.login}?redirect=${encodeURIComponent(pathname)}`}>
-                      <User className="mr-2 h-4 w-4" />
-                      {t("signIn")}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setSearchOpen(true)}>
-                    <Search className="mr-2 h-4 w-4" />
-                    {t("search")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={ROUTES.wishlist} className="flex items-center">
-                      <Heart className="mr-2 h-4 w-4" />
-                      {t("wishlist")}
-                      {wishlistItems.length > 0 && (
-                        <Badge
-                          variant="destructive"
-                          className="ml-auto h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
-                        >
-                          {wishlistItems.length}
-                        </Badge>
-                      )}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setLangDialogOpen(true)}>
-                    <Languages className="mr-2 h-4 w-4" />
-                    {t("changeLanguage")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-                    <Sun className="mr-2 h-4 w-4 dark:hidden" />
-                    <Moon className="mr-2 hidden h-4 w-4 dark:block" />
-                    {theme === "dark" ? t("lightMode") : t("darkMode")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
         </div>
       </header>
@@ -425,6 +288,17 @@ export function Header() {
         open={mobileNavOpen}
         onOpenChange={setMobileNavOpen}
         itemCount={itemCount}
+        user={user}
+        profile={profile}
+        isAdmin={isAdmin}
+        isLoading={isLoading}
+        wishlistCount={wishlistItems.length}
+        onSearchOpen={() => setSearchOpen(true)}
+        onSignOut={handleSignOut}
+        onLangDialogOpen={() => setLangDialogOpen(true)}
+        theme={theme}
+        onThemeToggle={themeToggle}
+        pathname={pathname}
       />
     </>
   );
