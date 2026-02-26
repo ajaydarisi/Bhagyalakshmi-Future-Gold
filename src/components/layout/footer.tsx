@@ -236,7 +236,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t pt-6 text-center text-sm flex justify-between items-center text-muted-foreground tracking-wide">
+        <div className="mt-12 border-t pt-6 text-center text-sm gap-3 flex flex-col sm:flex-row sm:justify-between items-center text-muted-foreground tracking-wide">
           <p>&copy; {new Date().getFullYear()} {tCommon("appName")}. {t("allRightsReserved")}</p>
           <a
             href="https://darisi.in"
