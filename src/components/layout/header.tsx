@@ -111,7 +111,7 @@ export function Header() {
                 className="h-10 w-15 rounded-2xl"
                 priority
               />
-              <span className="text-sm sm:text-base">{tCommon("appName")}</span>
+              <span className="hidden sm:inline text-sm sm:text-base">{tCommon("appName")}</span>
             </Link>
           </div>
 
