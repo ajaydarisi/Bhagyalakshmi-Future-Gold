@@ -113,9 +113,6 @@ export const ROUTES = {
 export const NOTIFICATION_TYPES = [
   { value: "custom", label: "Custom Message" },
   { value: "promotion", label: "Promotion" },
-  { value: "order_update", label: "Order Update" },
-  { value: "price_drop", label: "Price Drop" },
-  { value: "back_in_stock", label: "Back in Stock" },
 ] as const;
 
 export const NOTIFICATION_TARGETS = [

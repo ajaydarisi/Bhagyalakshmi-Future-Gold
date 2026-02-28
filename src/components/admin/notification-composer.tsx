@@ -27,6 +27,7 @@ export function NotificationComposer() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
   const [type, setType] = useState("custom");
   const [targetType, setTargetType] = useState("all");
   const [targetValue, setTargetValue] = useState("");
@@ -64,6 +65,7 @@ export function NotificationComposer() {
           title: title.trim(),
           body: body.trim(),
           imageUrl: imageUrl.trim() || undefined,
+          data: linkUrl.trim() ? { url: linkUrl.trim() } : undefined,
           type,
           targetType,
           targetValue: targetType === "all" ? undefined : targetValue,
@@ -80,6 +82,7 @@ export function NotificationComposer() {
         setTitle("");
         setBody("");
         setImageUrl("");
+        setLinkUrl("");
         setType("custom");
         setTargetType("all");
         setTargetValue("");
@@ -213,6 +216,16 @@ export function NotificationComposer() {
             placeholder="https://..."
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="notif-link">Link URL (optional)</Label>
+          <Input
+            id="notif-link"
+            placeholder="/products/gold-chain"
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
           />
         </div>
 

@@ -14,6 +14,7 @@ import { MATERIALS, PRODUCT_TAGS } from "@/lib/constants";
 import { createProduct, updateProduct } from "@/app/admin/actions";
 import { uploadProductImage, deleteProductImage } from "@/lib/supabase/storage";
 import type { Product, Category } from "@/types/product";
+import { ProductNotificationButtons } from "@/components/admin/product-notification-buttons";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -793,6 +794,13 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                 />
               </CardContent>
             </Card>
+
+            {product && (
+              <ProductNotificationButtons
+                productId={product.id}
+                productName={product.name}
+              />
+            )}
           </div>
         </div>
 
