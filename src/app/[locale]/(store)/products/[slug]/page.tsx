@@ -279,8 +279,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
           {!typedProduct.is_sale && typedProduct.is_rental && typedProduct.rental_price && (
             <div className="rounded-lg border bg-accent/50 p-4 space-y-2">
               <h3 className="font-semibold">{t("rentalDetails")}</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
+              <div className="grid sm:grid-cols-2 gap-2 text-sm">
+                <div className="flex">
                   <span className="text-muted-foreground">{t("rentalPrice")}</span>
                   <div className="ml-2">
                     <PriceDisplay

@@ -11,6 +11,14 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/gtag";
 
+function isPwaStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches &&
+    !Capacitor.isNativePlatform()
+  );
+}
+
 interface GoogleSignInButtonProps {
   label: string;
   errorLabel: string;
@@ -59,6 +67,64 @@ export function GoogleSignInButton({ label, errorLabel }: GoogleSignInButtonProp
         trackEvent("login", { method: "google" });
         // Keep isLoading true — page navigates away when callback completes
       }
+    } else if (isPwaStandalone()) {
+      // PWA standalone mode — use popup to stay within the installed app
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: callbackUrl.toString(),
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error || !data?.url) {
+        toast.error(errorLabel);
+        setIsLoading(false);
+        return;
+      }
+
+      trackEvent("login", { method: "google" });
+
+      const popup = window.open(
+        data.url,
+        "google-auth",
+        "width=500,height=600,left=100,top=100"
+      );
+
+      if (!popup) {
+        // Popup blocked — fall back to redirect (no worse than current behavior)
+        window.location.href = data.url;
+        return;
+      }
+
+      const POLL_MS = 500;
+      const TIMEOUT_MS = 120_000;
+      const startTime = Date.now();
+
+      const timer = setInterval(() => {
+        try {
+          if (popup.closed) {
+            clearInterval(timer);
+            setIsLoading(false);
+            return;
+          }
+          if (popup.location.origin === window.location.origin) {
+            clearInterval(timer);
+            popup.close();
+            // Session cookies already set by callback route — navigate PWA
+            window.location.href = next;
+            return;
+          }
+        } catch {
+          // Cross-origin — expected while on Google's domain
+        }
+
+        if (Date.now() - startTime > TIMEOUT_MS) {
+          clearInterval(timer);
+          popup.close();
+          setIsLoading(false);
+        }
+      }, POLL_MS);
     } else {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
