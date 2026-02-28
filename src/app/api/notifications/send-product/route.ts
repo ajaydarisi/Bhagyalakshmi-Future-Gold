@@ -4,14 +4,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendProductNotification } from "@/lib/notifications";
 
 export async function POST(request: Request) {
-  console.log("send-product route hit");
-
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    console.log("send-product: Unauthorized - no user");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -22,19 +19,14 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single();
 
-  console.log("send-product: user", user.id, "role", profile?.role);
-
   if (profile?.role !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
-    const body = await request.json();
-    console.log("send-product API called with:", body);
-    const { productId, type } = body;
+    const { productId, type } = await request.json();
 
     if (!productId || !["price_drop", "new_product", "back_in_stock"].includes(type)) {
-      console.log("Invalid request - productId:", productId, "type:", type);
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 

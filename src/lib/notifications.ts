@@ -130,17 +130,13 @@ export async function sendProductNotification(
   productId: string,
   type: "price_drop" | "new_product" | "back_in_stock"
 ) {
-  console.log("sendProductNotification called:", { productId, type });
-
   const supabase = createAdminClient();
 
-  const { data: product, error: productError } = await supabase
+  const { data: product } = await supabase
     .from("products")
     .select("name, slug, price, discount_price, is_sale, is_rental, rental_price, rental_discount_price, images")
     .eq("id", productId)
     .single();
-
-  console.log("Product query result:", product?.name ?? "NOT FOUND", "error:", productError?.message);
 
   if (!product) throw new Error("Product not found");
 
@@ -176,24 +172,20 @@ export async function sendProductNotification(
 
     if (type === "price_drop") {
       // Send only to users who wishlisted this product
-      const { data: wishlistUsers, error: wishlistError } = await supabase
+      const { data: wishlistUsers } = await supabase
         .from("wishlist_items")
         .select("user_id")
         .eq("product_id", productId);
-
-      console.log("Wishlist lookup for product", productId, ":", wishlistUsers?.length ?? 0, "users, error:", wishlistError?.message);
 
       if (!wishlistUsers?.length) return { success: true };
 
       const userIds = [...new Set(wishlistUsers.map((w) => w.user_id))];
 
-      const { data: tokens, error: tokenError } = await supabase
+      const { data: tokens } = await supabase
         .from("device_tokens")
         .select("token")
         .in("user_id", userIds)
         .eq("is_active", true);
-
-      console.log("Device tokens for wishlist users", userIds, ":", tokens?.length ?? 0, "tokens, error:", tokenError?.message);
 
       if (!tokens?.length) return { success: true };
 
