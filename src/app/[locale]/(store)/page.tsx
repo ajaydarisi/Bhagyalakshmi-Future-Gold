@@ -219,7 +219,7 @@ export default async function HomePage() {
             {/* Text Content */}
             <div className="flex-1 text-center lg:text-left">
               {/* Badge */}
-              <div className="wedding-ornament lg:justify-start mb-6">
+              <div className="wedding-ornament justify-center lg:justify-start mb-6">
                 <span className="text-xs uppercase tracking-[0.25em] text-amber-300/90 font-sans">
                   {t("hero.badge")}
                 </span>
