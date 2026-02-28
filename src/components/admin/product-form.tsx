@@ -226,11 +226,21 @@ export function ProductForm({ product, categories }: ProductFormProps) {
           const productId = product?.id || ("productId" in result ? result.productId : undefined);
           if (productId && notifications.length > 0) {
             for (const type of notifications) {
-              fetch("/api/notifications/send-product", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productId, type }),
-              }).catch(() => {});
+              try {
+                const res = await fetch("/api/notifications/send-product", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ productId, type }),
+                });
+                if (!res.ok) {
+                  const data = await res.json();
+                  console.error("Notification failed:", type, data);
+                  toast.error(`Notification (${type}) failed: ${data.error}`);
+                }
+              } catch (e) {
+                console.error("Notification fetch error:", type, e);
+                toast.error(`Notification (${type}) failed`);
+              }
             }
             setNotifications([]);
           }
@@ -816,7 +826,7 @@ export function ProductForm({ product, categories }: ProductFormProps) {
               <CardContent>
                 <div className="space-y-2">
                   {[
-                    { value: "price_drop", label: "Price Drop" },
+                    { value: "price_drop", label: "Price Drop (Wishlist)" },
                     { value: "new_product", label: "New Product" },
                     { value: "back_in_stock", label: "Back in Stock" },
                   ].map((n) => (

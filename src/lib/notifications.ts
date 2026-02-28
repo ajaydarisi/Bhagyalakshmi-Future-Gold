@@ -130,13 +130,17 @@ export async function sendProductNotification(
   productId: string,
   type: "price_drop" | "new_product" | "back_in_stock"
 ) {
+  console.log("sendProductNotification called:", { productId, type });
+
   const supabase = createAdminClient();
 
-  const { data: product } = await supabase
+  const { data: product, error: productError } = await supabase
     .from("products")
     .select("name, slug, price, discount_price, is_sale, is_rental, rental_price, rental_discount_price, images")
     .eq("id", productId)
     .single();
+
+  console.log("Product query result:", product?.name ?? "NOT FOUND", "error:", productError?.message);
 
   if (!product) throw new Error("Product not found");
 
@@ -152,31 +156,84 @@ export async function sendProductNotification(
   const imageUrl = product.images?.[0] || undefined;
 
   const messaging = getFirebaseMessaging();
+  const notificationPayload = {
+    notification: { title, body, imageUrl },
+    data: {
+      type,
+      productId,
+      url: `/products/${product.slug}`,
+    },
+    android: {
+      priority: "high" as const,
+      notification: { channelId: "default", sound: "default", color: "#7a462e" },
+    },
+  };
 
   try {
-    await messaging.send({
-      topic: "all_users",
-      notification: { title, body, imageUrl },
-      data: {
-        type,
-        productId,
-        url: `/products/${product.slug}`,
-      },
-      android: {
-        priority: "high",
-        notification: { channelId: "default", sound: "default", color: "#7a462e" },
-      },
-    });
+    let sentCount = 0;
+    let failedCount = 0;
+    let targetType = "all";
+
+    if (type === "price_drop") {
+      // Send only to users who wishlisted this product
+      const { data: wishlistUsers, error: wishlistError } = await supabase
+        .from("wishlist_items")
+        .select("user_id")
+        .eq("product_id", productId);
+
+      console.log("Wishlist lookup for product", productId, ":", wishlistUsers?.length ?? 0, "users, error:", wishlistError?.message);
+
+      if (!wishlistUsers?.length) return { success: true };
+
+      const userIds = [...new Set(wishlistUsers.map((w) => w.user_id))];
+
+      const { data: tokens, error: tokenError } = await supabase
+        .from("device_tokens")
+        .select("token")
+        .in("user_id", userIds)
+        .eq("is_active", true);
+
+      console.log("Device tokens for wishlist users", userIds, ":", tokens?.length ?? 0, "tokens, error:", tokenError?.message);
+
+      if (!tokens?.length) return { success: true };
+
+      const response = await messaging.sendEachForMulticast({
+        tokens: tokens.map((t) => t.token),
+        ...notificationPayload,
+      });
+
+      sentCount = response.successCount;
+      failedCount = response.failureCount;
+      targetType = "wishlist";
+
+      // Deactivate stale tokens
+      response.responses.forEach((resp, idx) => {
+        if (resp.error?.code === "messaging/registration-token-not-registered") {
+          supabase
+            .from("device_tokens")
+            .update({ is_active: false })
+            .eq("token", tokens[idx].token)
+            .then(() => {});
+        }
+      });
+    } else {
+      // Broadcast to all users for new_product, back_in_stock
+      await messaging.send({
+        topic: "all_users",
+        ...notificationPayload,
+      });
+      sentCount = 1;
+    }
 
     await supabase.from("notifications").insert({
       title,
       body,
       image_url: imageUrl || null,
       type,
-      target_type: "all",
+      target_type: targetType,
       status: "sent",
-      sent_count: 1,
-      failed_count: 0,
+      sent_count: sentCount,
+      failed_count: failedCount,
       sent_at: new Date().toISOString(),
     });
 
