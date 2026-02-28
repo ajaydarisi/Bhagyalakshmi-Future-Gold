@@ -40,6 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Firebase config (generated from env vars)
+android/app/google-services.json
+
 # Capacitor native build artifacts
 android/app/build/
 android/.gradle/
