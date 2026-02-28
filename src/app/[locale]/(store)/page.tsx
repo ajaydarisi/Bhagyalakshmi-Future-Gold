@@ -70,45 +70,12 @@ const getTopCategories = unstable_cache(
   { revalidate: 300 }
 );
 
-const getHeroRentalProduct = unstable_cache(
-  async () => {
-    const supabase = createAdminClient();
-    // Try marriage-rental-sets category first
-    const { data: category } = await supabase
-      .from("categories")
-      .select("id")
-      .eq("slug", "marriage-rental-sets")
-      .single();
-    if (category) {
-      const { data } = await supabase
-        .from("products")
-        .select("name, images")
-        .eq("category_id", category.id)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(1);
-      if (data?.[0]?.images?.[0]) return data[0];
-    }
-    // Fallback: newest product with an image from any category
-    const { data: fallback } = await supabase
-      .from("products")
-      .select("name, images")
-      .eq("is_active", true)
-      .not("images", "eq", "{}")
-      .order("created_at", { ascending: false })
-      .limit(1);
-    return fallback?.[0] ?? null;
-  },
-  ["hero-rental-product"],
-  { revalidate: 300 }
-);
 
 export default async function HomePage() {
-  const [featuredProducts, newProducts, topCategories, heroRentalProduct] = await Promise.all([
+  const [featuredProducts, newProducts, topCategories] = await Promise.all([
     getFeaturedProducts(),
     getNewProducts(),
     getTopCategories(),
-    getHeroRentalProduct(),
   ]);
 
   const locale = await getLocale();
@@ -189,88 +156,78 @@ export default async function HomePage() {
       />
       {process.env.NEXT_PUBLIC_CONFETTI_ENABLED === "true" && <Confetti />}
       {/* Hero Section — Wedding Season */}
-      <section className="relative overflow-hidden wedding-hero">
+      <section className="relative overflow-hidden wedding-hero md:min-h-[70vh]">
+        {/* Background image */}
+        <Image
+          src="/images/hero.png"
+          alt="South Indian bridal wedding jewelry set"
+          fill
+          priority
+          fetchPriority="high"
+          sizes="100vw"
+          className="object-cover object-[70%_30%] md:object-[center_30%] opacity-50 md:opacity-100"
+        />
+        {/* Dark gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/60 to-black/30 md:bg-linear-to-r md:from-black/80 md:via-black/50 md:to-black/10" />
         {/* Subtle traditional dot pattern overlay */}
         <div className="absolute inset-0 wedding-hero-pattern" />
         {/* Soft vignette */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.3)_100%)]" />
 
-        <div className="container mx-auto relative px-4 py-12 md:py-20 lg:py-24">
-          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
-            {/* Image — shows first on mobile, right side on desktop */}
-            <div className="order-first lg:order-last shrink-0 w-full max-w-xs sm:max-w-sm lg:max-w-md">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-amber-900/40 ring-2 ring-amber-400/30">
-                <Image
-                  src={heroRentalProduct?.images?.[0] || "https://images.unsplash.com/photo-1610694955371-d4a3e0ce4b52?w=800&q=80"}
-                  alt={heroRentalProduct?.name || "South Indian bridal wedding jewelry set"}
-                  width={480}
-                  height={600}
-                  priority
-                  fetchPriority="high"
-                  sizes="(max-width: 640px) 80vw, (max-width: 1024px) 50vw, 400px"
-                  className="object-cover w-full h-64 sm:h-80 lg:h-112"
-                />
-                {/* Gold corner accents */}
-                <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-amber-400/50 rounded-tl-2xl" />
-                <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-amber-400/50 rounded-br-2xl" />
-              </div>
+        <div className="container mx-auto relative px-4 py-8 pb-10 md:py-20 lg:py-24 flex items-center min-h-[inherit]">
+          <div className="max-w-xl lg:max-w-2xl text-center lg:text-left">
+            {/* Badge */}
+            <div className="wedding-ornament justify-center lg:justify-start mb-6 font-bold">
+              <span className="text-xs uppercase tracking-[0.25em] text-primary font-sans">
+                {t("hero.badge")}
+              </span>
             </div>
 
-            {/* Text Content */}
-            <div className="flex-1 text-center lg:text-left">
-              {/* Badge */}
-              <div className="wedding-ornament justify-center lg:justify-start mb-6">
-                <span className="text-xs uppercase tracking-[0.25em] text-amber-300/90 font-sans">
-                  {t("hero.badge")}
-                </span>
-              </div>
+            {/* Headline */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight text-white">
+              {t("hero.titleLine1")}
+              <br />
+              <span className="text-primary">{t("hero.titleLine2")}</span>
+            </h1>
 
-              {/* Headline */}
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight text-amber-50">
-                {t("hero.titleLine1")}
-                <br />
-                <span className="text-amber-300">{t("hero.titleLine2")}</span>
-              </h1>
+            {/* Subheading */}
+            <p className="mt-5 text-base md:text-lg text-white/85 max-w-xl mx-auto lg:mx-0 font-brand">
+              {t("hero.subtitle")}
+            </p>
 
-              {/* Subheading */}
-              <p className="mt-5 text-base md:text-lg text-amber-100/80 max-w-xl mx-auto lg:mx-0 font-brand">
-                {t("hero.subtitle")}
-              </p>
+            {/* Description */}
+            <p className="mt-3 text-sm md:text-base text-white/65 max-w-lg mx-auto lg:mx-0 font-sans">
+              {t("hero.description")}
+            </p>
 
-              {/* Description */}
-              <p className="mt-3 text-sm md:text-base text-amber-100/60 max-w-lg mx-auto lg:mx-0 font-sans">
-                {t("hero.description")}
-              </p>
+            {/* Ornamental divider */}
+            <div className="mt-8 flex items-center gap-3 justify-center lg:justify-start">
+              <span className="h-px w-12 bg-linear-to-r from-transparent to-primary/60" />
+              <span className="text-primary/80 text-lg">✦</span>
+              <span className="h-px w-12 bg-linear-to-l from-transparent to-primary/60" />
+            </div>
 
-              {/* Ornamental divider */}
-              <div className="mt-8 flex items-center gap-3 justify-center lg:justify-start">
-                <span className="h-px w-12 bg-linear-to-r from-transparent to-amber-400/50" />
-                <span className="text-amber-400/70 text-lg">✦</span>
-                <span className="h-px w-12 bg-linear-to-l from-transparent to-amber-400/50" />
-              </div>
-
-              {/* CTA Buttons */}
-              <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button
-                  size="lg"
-                  className="btn-gold-shimmer text-amber-950 font-semibold hover:opacity-90 transition-opacity"
-                  asChild
-                >
-                  <Link href={`${ROUTES.products}?category=marriage-rental-sets`}>
-                    {t("hero.shopCollection")}
-                  </Link>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-amber-400/50 bg-transparent text-amber-200 hover:bg-amber-400/10 hover:border-amber-400/70"
-                  asChild
-                >
-                  <Link href={`${ROUTES.products}?category=marriage-rental-sets&sort=discount`}>
-                    {t("hero.rentalSets")}
-                  </Link>
-                </Button>
-              </div>
+            {/* CTA Buttons */}
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <Button
+                size="lg"
+                className="btn-gold-shimmer text-foreground font-semibold hover:opacity-90 transition-opacity"
+                asChild
+              >
+                <Link href={`${ROUTES.products}?category=marriage-rental-sets`}>
+                  {t("hero.shopCollection")}
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-primary/50 bg-transparent text-white hover:bg-primary/10 hover:border-primary/70"
+                asChild
+              >
+                <Link href={`${ROUTES.products}?category=marriage-rental-sets&sort=discount`}>
+                  {t("hero.rentalSets")}
+                </Link>
+              </Button>
             </div>
           </div>
         </div>

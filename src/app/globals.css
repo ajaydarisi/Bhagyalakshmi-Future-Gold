@@ -278,8 +278,13 @@
   100% { background-position: 200% center; }
 }
 
+@keyframes badge-glow {
+  0%, 100% { opacity: 0.9; text-shadow: 0 0 4px oklch(from var(--primary) l c h / 0.3); }
+  50% { opacity: 1; text-shadow: 0 0 12px oklch(from var(--primary) l c h / 0.6), 0 0 24px oklch(from var(--primary) l c h / 0.2); }
+}
+
 .btn-gold-shimmer {
-  background: linear-gradient(110deg, #b8860b 0%, #d4a017 25%, #f0d060 50%, #d4a017 75%, #b8860b 100%);
+  background: linear-gradient(110deg, oklch(from var(--primary) calc(l - 0.05) c h) 0%, var(--primary) 25%, oklch(from var(--primary) calc(l + 0.08) c h) 50%, var(--primary) 75%, oklch(from var(--primary) calc(l - 0.05) c h) 100%);
   background-size: 200% 100%;
   animation: gold-shimmer 4s linear infinite;
 }
@@ -288,6 +293,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  animation: badge-glow 3s ease-in-out infinite;
 }
 
 .wedding-ornament::before,
@@ -295,7 +301,7 @@
   content: "";
   height: 1px;
   width: 3rem;
-  background: linear-gradient(to var(--dir, right), rgba(212, 160, 23, 0.8), transparent);
+  background: linear-gradient(to var(--dir, right), oklch(from var(--primary) l c h / 0.8), transparent);
 }
 
 .wedding-ornament::after {

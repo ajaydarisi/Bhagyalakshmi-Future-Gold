@@ -78,7 +78,7 @@ export function MobileNav({
               alt={tCommon("appName")}
               width={96}
               height={32}
-              className="h-8 w-auto rounded-sm"
+              className="h-8 w-auto rounded-lg"
             />
           </SheetTitle>
         </SheetHeader>

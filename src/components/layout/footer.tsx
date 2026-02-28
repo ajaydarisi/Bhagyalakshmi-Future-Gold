@@ -245,7 +245,7 @@ export function Footer() {
             className="flex items-center gap-0.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
           >
             {locale === "en" && t("poweredBy")}
-            <Image src="/logos/darisi.svg" alt="DARISI" width={25} height={25} />
+            <Image src="/logos/darisi.svg" alt="DARISI" width={25} height={25} className="rounded-lg" />
             <span className="font-semibold tracking-widest uppercase">DARISI</span>
             {locale !== "en" && <span>{t("poweredBy")}</span>}
           </a>

@@ -108,10 +108,10 @@ export function Header() {
                 alt={tCommon("appName")}
                 width={60}
                 height={40}
-                className="h-10 w-15 rounded-2xl"
+                className="h-10 w-15 rounded-lg"
                 priority
               />
-              <span className="text-xs sm:text-base">{tCommon("appName")}</span>
+              <span className="text-sm sm:text-base">{tCommon("appName")}</span>
             </Link>
           </div>
 
