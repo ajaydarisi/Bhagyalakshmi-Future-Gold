@@ -6,6 +6,34 @@ import { productSchema, couponSchema } from "@/lib/validators";
 import { generateSlug } from "@/lib/formatters";
 import { sendOrderStatusNotification } from "@/lib/notifications";
 import type { OrderStatus } from "@/types/order";
+import * as deepl from "deepl-node";
+
+// ---------------------------------------------------------------------------
+// Translation
+// ---------------------------------------------------------------------------
+
+export async function translateToTelugu(
+  text: string
+): Promise<{ translation: string } | { error: string }> {
+  const authKey = process.env.DEEPL_AUTH_KEY;
+  if (!authKey) {
+    return { error: "DeepL API key is not configured" };
+  }
+
+  try {
+    const translator = new deepl.Translator(authKey);
+    const result = await translator.translateText(
+      text,
+      null,
+      "te" as deepl.TargetLanguageCode
+    );
+
+    const translated = Array.isArray(result) ? result[0].text : result.text;
+    return { translation: translated };
+  } catch (e) {
+    return { error: `Translation failed: ${e instanceof Error ? e.message : String(e)}` };
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Products

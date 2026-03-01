@@ -6,12 +6,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import Image from "next/image";
-import { Loader2, Trash2, Upload } from "lucide-react";
+import { Languages, Loader2, Trash2, Upload } from "lucide-react";
 
 import { productSchema, type ProductInput } from "@/lib/validators";
 import { generateSlug } from "@/lib/formatters";
 import { MATERIALS, PRODUCT_TAGS } from "@/lib/constants";
-import { createProduct, updateProduct } from "@/app/admin/actions";
+import { createProduct, updateProduct, translateToTelugu } from "@/app/admin/actions";
 import { uploadProductImage, deleteProductImage } from "@/lib/supabase/storage";
 import type { Product, Category } from "@/types/product";
 
@@ -75,6 +75,8 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
     product?.images?.map((url) => ({ url })) ?? []
   );
   const [isUploading, setIsUploading] = useState(false);
+  const [translatingName, setTranslatingName] = useState(false);
+  const [translatingDescription, setTranslatingDescription] = useState(false);
   const [notifications, setNotifications] = useState<string[]>([]);
 
   const categoryTree = buildCategoryTree(categories);
@@ -113,6 +115,32 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
     if (!product) {
       form.setValue("slug", generateSlug(name));
     }
+  }
+
+  async function handleAutoTranslate(
+    sourceField: "name" | "description",
+    targetField: "name_telugu" | "description_telugu"
+  ) {
+    const text = form.getValues(sourceField);
+    if (!text?.trim()) {
+      toast.error(
+        `Enter English ${sourceField === "name" ? "name" : "description"} first`
+      );
+      return;
+    }
+
+    const setLoading =
+      sourceField === "name" ? setTranslatingName : setTranslatingDescription;
+    setLoading(true);
+
+    const result = await translateToTelugu(text);
+    if ("error" in result) {
+      toast.error(result.error);
+    } else {
+      form.setValue(targetField, result.translation);
+    }
+
+    setLoading(false);
   }
 
   function handleFilesSelected(e: React.ChangeEvent<HTMLInputElement>) {
@@ -293,7 +321,25 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
                   name="name_telugu"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name (Telugu)</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Name (Telugu)</FormLabel>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={translatingName}
+                          onClick={() =>
+                            handleAutoTranslate("name", "name_telugu")
+                          }
+                        >
+                          {translatingName ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <Languages className="size-3.5" />
+                          )}
+                          Auto Translate
+                        </Button>
+                      </div>
                       <FormControl>
                         <Input
                           {...field}
@@ -344,7 +390,28 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
                   name="description_telugu"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description (Telugu)</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Description (Telugu)</FormLabel>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={translatingDescription}
+                          onClick={() =>
+                            handleAutoTranslate(
+                              "description",
+                              "description_telugu"
+                            )
+                          }
+                        >
+                          {translatingDescription ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <Languages className="size-3.5" />
+                          )}
+                          Auto Translate
+                        </Button>
+                      </div>
                       <FormControl>
                         <Textarea
                           {...field}
