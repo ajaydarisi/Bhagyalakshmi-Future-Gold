@@ -77,8 +77,9 @@ const getProductCount = unstable_cache(
     if (tags.length > 0) query = query.overlaps("tags", tags);
     if (type === "sale") query = query.eq("is_sale", true);
     else if (type === "rental") query = query.eq("is_rental", true);
-    if (minPrice > 0) query = query.gte("price", minPrice);
-    if (maxPrice > 0) query = query.lte("price", maxPrice);
+    const priceCol = type === "rental" ? "rental_price" : "price";
+    if (minPrice > 0) query = query.gte(priceCol, minPrice);
+    if (maxPrice > 0) query = query.lte(priceCol, maxPrice);
     if (search) query = query.ilike("name", `%${search}%`);
 
     const { count } = await query;
@@ -119,16 +120,17 @@ const getFilteredProducts = unstable_cache(
     if (tags.length > 0) query = query.overlaps("tags", tags);
     if (type === "sale") query = query.eq("is_sale", true);
     else if (type === "rental") query = query.eq("is_rental", true);
-    if (minPrice > 0) query = query.gte("price", minPrice);
-    if (maxPrice > 0) query = query.lte("price", maxPrice);
+    const priceCol = type === "rental" ? "rental_price" : "price";
+    if (minPrice > 0) query = query.gte(priceCol, minPrice);
+    if (maxPrice > 0) query = query.lte(priceCol, maxPrice);
     if (search) query = query.ilike("name", `%${search}%`);
 
     switch (sort) {
       case "price-asc":
-        query = query.order("price", { ascending: true });
+        query = query.order(priceCol, { ascending: true });
         break;
       case "price-desc":
-        query = query.order("price", { ascending: false });
+        query = query.order(priceCol, { ascending: false });
         break;
       case "name-asc":
         query = query.order(locale === "te" ? "name_telugu" : "name", { ascending: true });
