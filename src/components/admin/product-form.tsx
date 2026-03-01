@@ -375,8 +375,13 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                             step="0.01"
                             min="0"
                             {...field}
+                            value={field.value || ""}
                             onChange={(e) =>
-                              field.onChange(parseFloat(e.target.value) || 0)
+                              field.onChange(
+                                e.target.value
+                                  ? parseFloat(e.target.value)
+                                  : 0
+                              )
                             }
                           />
                         </FormControl>
@@ -424,8 +429,13 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                           type="number"
                           min="0"
                           {...field}
+                          value={field.value || ""}
                           onChange={(e) =>
-                            field.onChange(parseInt(e.target.value) || 0)
+                            field.onChange(
+                              e.target.value
+                                ? parseInt(e.target.value)
+                                : 0
+                            )
                           }
                         />
                       </FormControl>
