@@ -73,7 +73,7 @@ export const productSchema = z
   .object({
     name: z.string().min(2, "Product name is required"),
     name_telugu: z.string().optional().nullable(),
-    slug: z.string().min(2, "Slug is required"),
+    slug: z.string(),
     description: z.string().optional(),
     description_telugu: z.string().optional().nullable(),
     price: z.number().positive("Price must be greater than 0"),

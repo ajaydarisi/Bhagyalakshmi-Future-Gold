@@ -9,6 +9,7 @@ import Image from "next/image";
 import { Languages, Loader2, Trash2, Upload } from "lucide-react";
 
 import { productSchema, type ProductInput } from "@/lib/validators";
+import { generateSlug } from "@/lib/formatters";
 
 import { MATERIALS, PRODUCT_TAGS } from "@/lib/constants";
 import { createProduct, updateProduct, translateToTelugu } from "@/app/admin/actions";
@@ -113,6 +114,7 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
 
   function handleNameChange(name: string) {
     form.setValue("name", name);
+    form.setValue("slug", generateSlug(name));
   }
 
   async function handleAutoTranslate(
@@ -361,7 +363,11 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
                     <FormItem>
                       <FormLabel>Slug</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="product-slug" />
+                        <Input
+                          {...field}
+                          placeholder="product-slug"
+                          disabled
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
