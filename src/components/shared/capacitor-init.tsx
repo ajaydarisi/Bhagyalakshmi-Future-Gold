@@ -29,6 +29,13 @@ export function CapacitorInit() {
       }
     });
 
+    // Dispatch app-resume event for cart/wishlist sync on foreground
+    App.addListener("appStateChange", ({ isActive }) => {
+      if (isActive) {
+        window.dispatchEvent(new CustomEvent("bfg:app-resume"));
+      }
+    });
+
     App.addListener("appUrlOpen", ({ url }) => {
       // Handle OAuth deep link callbacks (HTTPS or custom scheme)
       if (

@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/gtag";
+import { hapticNotification } from "@/lib/haptics";
 
 declare global {
   interface Window {
@@ -75,14 +76,17 @@ export function PaymentButton({
               value: amount,
               currency: "INR",
             });
+            hapticNotification("success");
             toast.success(t("success"));
             onSuccess(orderId);
           } catch {
+            hapticNotification("error");
             toast.error(t("verifyFailed"));
           }
         },
         modal: {
           ondismiss: () => {
+            hapticNotification("warning");
             trackEvent("payment_failed");
             setIsLoading(false);
             toast.info(t("cancelled"));

@@ -8,6 +8,7 @@ import { Loader2, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { Product } from "@/types/product";
 import { trackEvent } from "@/lib/gtag";
+import { hapticNotification, hapticSelection } from "@/lib/haptics";
 
 interface AddToCartButtonProps {
   product: Product;
@@ -31,9 +32,11 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
         price: product.discount_price || product.price,
         quantity,
       });
+      hapticNotification("success");
       toast.success(t("addedToast", { name: product.name }));
       setQuantity(1);
     } catch {
+      hapticNotification("error");
       toast.error(t("errorToast"));
     } finally {
       setIsAdding(false);
@@ -47,7 +50,7 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
           variant="ghost"
           size="icon"
           className="h-10 w-10 rounded-none"
-          onClick={() => setQuantity(Math.max(1, quantity - 1))}
+          onClick={() => { hapticSelection(); setQuantity(Math.max(1, quantity - 1)); }}
           disabled={quantity <= 1}
         >
           <Minus className="h-4 w-4" />
@@ -57,7 +60,7 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
           variant="ghost"
           size="icon"
           className="h-10 w-10 rounded-none"
-          onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+          onClick={() => { hapticSelection(); setQuantity(Math.min(product.stock, quantity + 1)); }}
           disabled={quantity >= product.stock}
         >
           <Plus className="h-4 w-4" />

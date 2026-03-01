@@ -9,6 +9,7 @@ import { PriceDisplay } from "@/components/shared/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
+import { ProductCacheWriter } from "@/components/products/product-cache-writer";
 import { APP_NAME, IS_ONLINE, ROUTES } from "@/lib/constants";
 import { formatPrice } from "@/lib/formatters";
 import { getCategoryName, getProductDescription, getProductName } from "@/lib/i18n-helpers";
@@ -211,6 +212,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <ProductCacheWriter product={typedProduct} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

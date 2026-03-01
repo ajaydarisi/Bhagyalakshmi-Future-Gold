@@ -9,6 +9,7 @@ import { ROUTES } from "@/lib/constants";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CartItem as CartItemType } from "@/types/cart";
+import { hapticNotification, hapticSelection } from "@/lib/haptics";
 
 interface CartItemProps {
   item: CartItemType;
@@ -52,7 +53,7 @@ export function CartItem({ item }: CartItemProps) {
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            onClick={() => removeItem(product.id)}
+            onClick={() => { hapticNotification("warning"); removeItem(product.id); }}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -66,7 +67,7 @@ export function CartItem({ item }: CartItemProps) {
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-none"
-              onClick={() => updateQuantity(product.id, quantity - 1)}
+              onClick={() => { hapticSelection(); updateQuantity(product.id, quantity - 1); }}
               disabled={quantity <= 1}
             >
               <Minus className="h-3 w-3" />
@@ -76,7 +77,7 @@ export function CartItem({ item }: CartItemProps) {
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-none"
-              onClick={() => updateQuantity(product.id, quantity + 1)}
+              onClick={() => { hapticSelection(); updateQuantity(product.id, quantity + 1); }}
               disabled={quantity >= product.stock}
             >
               <Plus className="h-3 w-3" />

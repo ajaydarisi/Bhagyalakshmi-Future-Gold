@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Loader2, Tag, X } from "lucide-react";
 import { trackEvent } from "@/lib/gtag";
+import { hapticNotification, hapticSelection } from "@/lib/haptics";
 
 interface CouponInputProps {
   subtotal: number;
@@ -35,9 +36,11 @@ export function CouponInput({
       const result = await applyCoupon(code, subtotal);
       onApply(result.code, result.discountAmount);
       trackEvent("apply_coupon", { coupon_code: result.code, discount: result.discountAmount });
+      hapticNotification("success");
       toast.success(t("couponSuccess", { amount: formatPrice(result.discountAmount) }));
       setCode("");
     } catch (error) {
+      hapticNotification("error");
       toast.error(error instanceof Error ? error.message : t("couponInvalid"));
     } finally {
       setIsLoading(false);
@@ -60,7 +63,7 @@ export function CouponInput({
           variant="ghost"
           size="icon"
           className="h-6 w-6"
-          onClick={onRemove}
+          onClick={() => { hapticSelection(); onRemove(); }}
         >
           <X className="h-3 w-3" />
         </Button>
