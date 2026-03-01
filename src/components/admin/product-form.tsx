@@ -91,7 +91,7 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
       price: source?.price ?? 0,
       discount_price: source?.discount_price ?? null,
       category_id: source?.category_id ?? "a0000000-0000-0000-0000-000000000008",
-      stock: source?.stock ?? 0,
+      stock: source?.stock ?? 1,
       material: source?.material ?? "Gold Plated",
       tags: source?.tags ?? [],
       images: product?.images ?? [],
