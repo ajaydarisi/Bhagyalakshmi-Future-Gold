@@ -1,3 +1,4 @@
+import { ExternalLink } from "@/components/shared/external-link";
 import { ShopImage } from "@/components/shared/shop-image";
 import { Button } from "@/components/ui/button";
 import {
@@ -257,14 +258,15 @@ export default async function AboutPage() {
 
               {BUSINESS_INFO.map.linkUrl && (
                 <Button variant="outline" className="mt-8" asChild>
-                  <a
+                  <ExternalLink
                     href={BUSINESS_INFO.map.linkUrl}
+                    geoUri={`geo:0,0?q=${encodeURIComponent(`${BUSINESS_INFO.name}, ${BUSINESS_INFO.address.street}, ${BUSINESS_INFO.address.city}, ${BUSINESS_INFO.address.state} ${BUSINESS_INFO.address.pincode}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <MapPin className="mr-2 h-4 w-4" />
                     {t("getDirections")}
-                  </a>
+                  </ExternalLink>
                 </Button>
               )}
             </div>
