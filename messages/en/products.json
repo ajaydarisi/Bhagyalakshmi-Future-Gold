@@ -26,7 +26,7 @@
     "perDay": "/day",
     "deposit": "Deposit:",
     "maxDuration": "Max Duration:",
-    "days": "{count} days",
+    "days": "{count, plural, one {# day} other {# days}}",
     "description": "Description",
     "material": "Material",
     "availability": "Availability",

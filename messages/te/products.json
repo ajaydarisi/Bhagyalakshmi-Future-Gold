@@ -26,7 +26,7 @@
     "perDay": "/రోజు",
     "deposit": "డిపాజిట్:",
     "maxDuration": "గరిష్ట వ్యవధి:",
-    "days": "{count} రోజులు",
+    "days": "{count, plural, one {# రోజు} other {# రోజులు}}",
     "description": "వివరణ",
     "material": "మెటీరియల్",
     "availability": "లభ్యత",
