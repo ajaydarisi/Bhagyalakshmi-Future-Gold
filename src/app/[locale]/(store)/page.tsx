@@ -9,7 +9,8 @@ import {
 } from "@/lib/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProductWithCategory } from "@/types/product";
-import { ArrowRight } from "lucide-react";
+import { ExternalLink } from "@/components/shared/external-link";
+import { ArrowRight, Clock, Mail, MapPin, Phone } from "lucide-react";
 import { unstable_cache } from "next/cache";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
@@ -81,6 +82,7 @@ export default async function HomePage() {
   const locale = await getLocale();
   const t = await getTranslations("home");
   const tBrand = await getTranslations("constants.brandStory");
+  const tAbout = await getTranslations("about");
 
   const SITE_URL =
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -387,6 +389,120 @@ export default async function HomePage() {
               </p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Visit Us */}
+      <section className="border-t">
+        <div className="container mx-auto px-4 py-10 lg:py-20">
+          <div className="grid md:grid-cols-2 gap-12">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
+                <span className="underline decoration-primary underline-offset-4 decoration-2">{t("visitUs.label")}</span>
+              </p>
+              <h2 className="text-3xl md:text-4xl mb-8">{t("visitUs.title")}</h2>
+
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium mb-1">{tAbout("address")}</p>
+                    <p className="text-sm text-muted-foreground font-sans">
+                      {[
+                        BUSINESS_INFO.address.street,
+                        BUSINESS_INFO.address.city,
+                        `${BUSINESS_INFO.address.district} Dist.`,
+                        BUSINESS_INFO.address.state,
+                        BUSINESS_INFO.address.pincode,
+                      ].filter(Boolean).join(", ")}
+                    </p>
+                  </div>
+                </div>
+
+                {BUSINESS_INFO.phone && (
+                  <div className="flex items-start gap-3">
+                    <Phone className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium mb-1">{tAbout("phone")}</p>
+                      <a
+                        href={`tel:${BUSINESS_INFO.phone}`}
+                        className="text-sm text-muted-foreground font-sans hover:text-primary transition-colors"
+                      >
+                        {BUSINESS_INFO.phone}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {BUSINESS_INFO.email && (
+                  <div className="flex items-start gap-3">
+                    <Mail className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium mb-1">{tAbout("email")}</p>
+                      <a
+                        href={`mailto:${BUSINESS_INFO.email}`}
+                        className="text-sm text-muted-foreground font-sans hover:text-primary transition-colors"
+                      >
+                        {BUSINESS_INFO.email}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-start gap-3">
+                  <Clock className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium mb-1">{tAbout("businessHours")}</p>
+                    <p className="text-sm text-muted-foreground font-sans">
+                      {tAbout("monSat")}: {BUSINESS_INFO.hours.weekdays}
+                    </p>
+                    <p className="text-sm text-muted-foreground font-sans">
+                      {tAbout("sunday")}: {BUSINESS_INFO.hours.sunday}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {BUSINESS_INFO.map.linkUrl && (
+                <Button variant="outline" className="mt-8" asChild>
+                  <ExternalLink
+                    href={BUSINESS_INFO.map.linkUrl}
+                    geoUri={`geo:0,0?q=${encodeURIComponent(`${BUSINESS_INFO.name}, ${BUSINESS_INFO.address.street}, ${BUSINESS_INFO.address.city}, ${BUSINESS_INFO.address.state} ${BUSINESS_INFO.address.pincode}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MapPin className="mr-2 h-4 w-4" />
+                    {tAbout("getDirections")}
+                  </ExternalLink>
+                </Button>
+              )}
+            </div>
+
+            <div className="relative aspect-square overflow-hidden bg-muted">
+              {BUSINESS_INFO.map.embedUrl ? (
+                <iframe
+                  src={BUSINESS_INFO.map.embedUrl}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Bhagyalakshmi Future Gold location on Google Maps"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                  <MapPin className="h-8 w-8 mb-2" />
+                  <span className="text-sm font-sans">
+                    {tAbout("mapFallbackCity")}
+                  </span>
+                  <span className="text-xs font-sans mt-1">
+                    {tAbout("mapFallbackState")}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </section>
     </div>

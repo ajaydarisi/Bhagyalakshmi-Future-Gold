@@ -61,5 +61,9 @@
       "quality": "Quality Assured",
       "qualityDesc": "Every piece quality-checked"
     }
+  },
+  "visitUs": {
+    "label": "Find Us",
+    "title": "Visit Our Store"
   }
 }
