@@ -129,7 +129,7 @@ export default async function LocaleLayout({
           <NavProgress />
           {children}
         </AuthProvider>
-        <Toaster position="bottom-right" />
+        <Toaster />
       </ThemeProvider>
     </NextIntlClientProvider>
   );
