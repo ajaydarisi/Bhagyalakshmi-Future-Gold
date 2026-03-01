@@ -58,5 +58,13 @@
     "noResults": "No products found.",
     "heading": "Products",
     "searchAll": "Search all for \"{query}\""
+  },
+  "share": {
+    "button": "Share",
+    "shareProduct": "Share this product",
+    "shareText": "Check out {name} at Bhagyalakshmi Future Gold!",
+    "shared": "Shared successfully",
+    "copiedToClipboard": "Link copied to clipboard",
+    "shareFailed": "Could not share. Please try again."
   }
 }

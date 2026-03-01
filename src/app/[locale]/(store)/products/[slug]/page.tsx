@@ -8,6 +8,7 @@ import { ProductGridSkeleton } from "@/components/shared/loading-skeleton";
 import { PriceDisplay } from "@/components/shared/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { ShareButton } from "@/components/products/share-button";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
 import { ProductCacheWriter } from "@/components/products/product-cache-writer";
 import { APP_NAME, IS_ONLINE, ROUTES } from "@/lib/constants";
@@ -251,7 +252,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <h1 className="text-2xl font-bold md:text-3xl">
                 {displayName}
               </h1>
-              <WishlistButton productId={typedProduct.id} />
+              <div className="flex items-center gap-1">
+                <ShareButton productName={displayName} productSlug={typedProduct.slug} />
+                <WishlistButton productId={typedProduct.id} />
+              </div>
             </div>
           </div>
 

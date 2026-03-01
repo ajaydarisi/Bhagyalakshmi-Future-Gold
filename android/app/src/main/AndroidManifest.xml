@@ -33,6 +33,15 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="bhagyalakshmifuturegold" android:host="auth" />
             </intent-filter>
+
+            <!-- Deep links: open bfg.darisi.in product/preview URLs in the app -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="bfg.darisi.in" android:pathPrefix="/products" />
+                <data android:scheme="https" android:host="bfg.darisi.in" android:pathPrefix="/preview" />
+            </intent-filter>
         </activity>
 
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon"

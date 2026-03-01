@@ -47,6 +47,16 @@ export function CapacitorInit() {
         // can exchange the auth code and set the session
         const parsed = new URL(url);
         window.location.href = `${window.location.origin}${parsed.pathname}${parsed.search}`;
+        return;
+      }
+
+      // Handle product deep links (bfg.darisi.in/products/... or /preview/...)
+      const productMatch = url.match(
+        /bfg\.darisi\.in\/(products|preview)\/([a-z0-9-]+)/
+      );
+      if (productMatch) {
+        window.location.href = `${window.location.origin}/products/${productMatch[2]}`;
+        return;
       }
     });
 
