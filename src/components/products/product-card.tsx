@@ -16,6 +16,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const t = useTranslations("products.card");
+  const td = useTranslations("products.detail");
   const tc = useTranslations("constants");
   const locale = useLocale();
 
@@ -81,11 +82,14 @@ export function ProductCard({ product }: ProductCardProps) {
               size="sm"
             />
           ) : product.is_rental && product.rental_price ? (
-            <PriceDisplay
-              price={product.rental_price}
-              discountPrice={product.rental_discount_price}
-              size="sm"
-            />
+            <div className="flex items-baseline gap-0.5">
+              <PriceDisplay
+                price={product.rental_price}
+                discountPrice={product.rental_discount_price}
+                size="sm"
+              />
+              <span className="text-xs text-muted-foreground">{td("perDay")}</span>
+            </div>
           ) : (
             <PriceDisplay
               price={product.price}

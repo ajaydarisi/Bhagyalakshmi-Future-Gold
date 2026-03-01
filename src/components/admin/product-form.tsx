@@ -459,13 +459,13 @@ export function ProductForm({ product, categories }: ProductFormProps) {
                       name="rental_price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Rental Price</FormLabel>
+                          <FormLabel>Rental Price (per day)</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               step="0.01"
                               min="0"
-                              placeholder="Per rental"
+                              placeholder="Price per day"
                               value={field.value ?? ""}
                               onChange={(e) =>
                                 field.onChange(
