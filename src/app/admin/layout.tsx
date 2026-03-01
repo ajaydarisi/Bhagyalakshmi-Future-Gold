@@ -54,7 +54,7 @@ export default async function AdminLayout({
           </main>
         </div>
       </div>
-      <Toaster position="bottom-right" />
+      <Toaster />
     </ThemeProvider>
     </>
   );
