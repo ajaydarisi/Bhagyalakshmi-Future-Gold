@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef } f
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "./use-auth";
 import { useNetwork } from "./use-network";
+import { enqueue, replayQueue } from "@/lib/operation-queue";
 
 interface WishlistContextType {
   items: string[]; // product IDs
@@ -107,7 +108,9 @@ export function useWishlistProvider(): WishlistContextType {
   // Sync on reconnect: when isOnline transitions false → true
   useEffect(() => {
     if (isOnline && !prevIsOnlineRef.current && user) {
-      // Just came back online — sync local wishlist to DB
+      // Just came back online — replay queued operations, then sync
+      replayQueue().catch(() => {});
+
       const localItems = itemsRef.current;
 
       supabase
@@ -176,8 +179,12 @@ export function useWishlistProvider(): WishlistContextType {
           .insert({ user_id: user.id, product_id: productId });
         setLocalWishlist(itemsRef.current);
       } catch {
-        // Offline — persist locally
+        // Offline — persist locally and enqueue for replay
         setLocalWishlist(itemsRef.current);
+        enqueue("wishlist-add", {
+          userId: user.id,
+          productId,
+        }).catch(() => {});
       }
     },
     [user]
@@ -196,8 +203,12 @@ export function useWishlistProvider(): WishlistContextType {
           .eq("product_id", productId);
         setLocalWishlist(itemsRef.current);
       } catch {
-        // Offline — persist locally
+        // Offline — persist locally and enqueue for replay
         setLocalWishlist(itemsRef.current);
+        enqueue("wishlist-remove", {
+          userId: user.id,
+          productId,
+        }).catch(() => {});
       }
     },
     [user]

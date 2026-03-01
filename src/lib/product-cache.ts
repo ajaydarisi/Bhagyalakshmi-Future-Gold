@@ -2,6 +2,7 @@ import type { ProductWithCategory } from "@/types/product";
 
 const CACHE_KEY = "bfg-product-cache";
 const MAX_ENTRIES = 20;
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 interface CachedProduct {
   product: ProductWithCategory;
@@ -43,8 +44,12 @@ export function getCachedProductBySlug(
   slug: string,
 ): ProductWithCategory | null {
   const cache = readCache();
-  for (const { product } of cache.values()) {
-    if (product.slug === slug) return product;
+  for (const { product, cachedAt } of cache.values()) {
+    if (product.slug === slug) {
+      // Return null if cached data is older than TTL
+      if (Date.now() - cachedAt > CACHE_TTL) return null;
+      return product;
+    }
   }
   return null;
 }

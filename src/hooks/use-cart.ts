@@ -14,6 +14,7 @@ import {
 } from "react";
 import { useAuth } from "./use-auth";
 import { useNetwork } from "./use-network";
+import { enqueue, replayQueue } from "@/lib/operation-queue";
 
 interface CartContextType {
   items: CartItem[];
@@ -98,6 +99,46 @@ export function useCartProvider(): CartContextType {
     }
   }, []);
 
+  // Refresh product prices in cart items from database
+  const refreshCartPrices = useCallback(async () => {
+    const currentItems = itemsRef.current;
+    if (currentItems.length === 0) return;
+
+    try {
+      const productIds = currentItems.map((i) => i.product.id);
+      const { data } = await supabase
+        .from("products")
+        .select("id, price, discount_price, stock")
+        .in("id", productIds);
+
+      if (!data || data.length === 0) return;
+
+      type FreshPrice = { id: string; price: number; discount_price: number | null; stock: number };
+      const priceMap = new Map<string, FreshPrice>(
+        (data as FreshPrice[]).map((p) => [p.id, p]),
+      );
+
+      const updated = currentItems.map((item) => {
+        const fresh = priceMap.get(item.product.id);
+        if (!fresh) return item;
+        return {
+          ...item,
+          product: {
+            ...item.product,
+            price: fresh.price,
+            discount_price: fresh.discount_price,
+            stock: fresh.stock,
+          },
+        };
+      });
+
+      setItems(updated);
+      setLocalCart(updated);
+    } catch {
+      // Offline — keep existing prices
+    }
+  }, []);
+
   const mergeLocalCartToDB = useCallback(async (userId: string) => {
     const localItems = getLocalCart();
     if (localItems.length === 0) return;
@@ -128,30 +169,39 @@ export function useCartProvider(): CartContextType {
         .finally(() => setIsLoading(false));
     } else {
       Promise.resolve().then(() => {
-        setItems(getLocalCart());
+        const localCart = getLocalCart();
+        setItems(localCart);
         setIsLoading(false);
+        // Refresh prices for guest cart items if online
+        if (localCart.length > 0) {
+          refreshCartPrices();
+        }
       });
     }
-  }, [user?.id, authLoading, fetchCartFromDB, mergeLocalCartToDB]);
+  }, [user?.id, authLoading, fetchCartFromDB, mergeLocalCartToDB, refreshCartPrices]);
 
   // Sync on reconnect: when isOnline transitions false → true
   useEffect(() => {
     if (isOnline && !prevIsOnlineRef.current && user) {
-      // Just came back online — upsert local state to DB and re-fetch
-      const localItems = itemsRef.current;
-      if (localItems.length > 0) {
-        const upsertItems = localItems.map((item) => ({
-          user_id: user.id,
-          product_id: item.product.id,
-          quantity: item.quantity,
-        }));
-        supabase
-          .from("cart_items")
-          .upsert(upsertItems, { onConflict: "user_id,product_id" })
-          .then(() => fetchCartFromDB(user.id));
-      } else {
-        fetchCartFromDB(user.id);
-      }
+      // Just came back online — replay queued operations, then upsert and re-fetch
+      replayQueue()
+        .catch(() => {})
+        .then(() => {
+          const localItems = itemsRef.current;
+          if (localItems.length > 0) {
+            const upsertItems = localItems.map((item) => ({
+              user_id: user.id,
+              product_id: item.product.id,
+              quantity: item.quantity,
+            }));
+            supabase
+              .from("cart_items")
+              .upsert(upsertItems, { onConflict: "user_id,product_id" })
+              .then(() => fetchCartFromDB(user.id));
+          } else {
+            fetchCartFromDB(user.id);
+          }
+        });
     }
     prevIsOnlineRef.current = isOnline;
   }, [isOnline, user, fetchCartFromDB]);
@@ -159,13 +209,16 @@ export function useCartProvider(): CartContextType {
   // Sync on app resume
   useEffect(() => {
     const handler = () => {
-      if (user && isOnline) {
+      if (!isOnline) return;
+      if (user) {
         fetchCartFromDB(user.id);
+      } else {
+        refreshCartPrices();
       }
     };
     window.addEventListener("bfg:app-resume", handler);
     return () => window.removeEventListener("bfg:app-resume", handler);
-  }, [user, isOnline, fetchCartFromDB]);
+  }, [user, isOnline, fetchCartFromDB, refreshCartPrices]);
 
   const addItem = useCallback(
     async (product: Product, quantity = 1) => {
@@ -201,8 +254,13 @@ export function useCartProvider(): CartContextType {
           // Keep snapshot in sync after successful write
           setLocalCart(itemsRef.current);
         } catch {
-          // Offline — persist optimistic state locally
+          // Offline — persist optimistic state locally and enqueue for replay
           setLocalCart(itemsRef.current);
+          enqueue(existing ? "cart-update" : "cart-add", {
+            userId: user.id,
+            productId: product.id,
+            quantity: existing ? existing.quantity + quantity : quantity,
+          }).catch(() => {});
         }
       } else {
         setLocalCart(itemsRef.current);
@@ -228,8 +286,12 @@ export function useCartProvider(): CartContextType {
             .eq("product_id", productId);
           setLocalCart(newItems);
         } catch {
-          // Offline — persist optimistic state locally
+          // Offline — persist optimistic state locally and enqueue for replay
           setLocalCart(newItems);
+          enqueue("cart-remove", {
+            userId: user.id,
+            productId,
+          }).catch(() => {});
         }
       } else {
         setLocalCart(newItems);
@@ -262,8 +324,13 @@ export function useCartProvider(): CartContextType {
             .eq("product_id", productId);
           setLocalCart(newItems);
         } catch {
-          // Offline — persist optimistic state locally
+          // Offline — persist optimistic state locally and enqueue for replay
           setLocalCart(newItems);
+          enqueue("cart-update", {
+            userId: user.id,
+            productId,
+            quantity,
+          }).catch(() => {});
         }
       } else {
         setLocalCart(newItems);
@@ -279,7 +346,8 @@ export function useCartProvider(): CartContextType {
       try {
         await supabase.from("cart_items").delete().eq("user_id", user.id);
       } catch {
-        // Offline — state already cleared optimistically
+        // Offline — enqueue for replay
+        enqueue("cart-clear", { userId: user.id }).catch(() => {});
       }
     }
     localStorage.removeItem(CART_STORAGE_KEY);

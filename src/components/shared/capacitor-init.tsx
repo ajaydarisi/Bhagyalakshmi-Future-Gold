@@ -7,8 +7,22 @@ import { Browser } from "@capacitor/browser";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { initPushNotifications } from "@/lib/push-notifications";
+import { startBackgroundTask } from "@/lib/background-task";
 
 export function CapacitorInit() {
+  // Send Supabase config to service worker for background sync
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.ready.then((reg) => {
+        reg.active?.postMessage({
+          type: "CONFIG",
+          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+          supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        });
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -29,10 +43,12 @@ export function CapacitorInit() {
       }
     });
 
-    // Dispatch app-resume event for cart/wishlist sync on foreground
+    // Dispatch app-resume event on foreground, start background task on background
     App.addListener("appStateChange", ({ isActive }) => {
       if (isActive) {
         window.dispatchEvent(new CustomEvent("bfg:app-resume"));
+      } else {
+        startBackgroundTask().catch(() => {});
       }
     });
 

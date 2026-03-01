@@ -5,6 +5,7 @@ import { CartProvider } from "@/components/cart/cart-provider";
 import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
 import { PushTokenLinker } from "@/components/shared/push-token-linker";
 import { OfflineBanner } from "@/components/shared/offline-banner";
+import { PrefetchProvider } from "@/components/shared/prefetch-provider";
 import { NetworkProvider } from "@/hooks/use-network";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,6 +23,7 @@ export default async function StoreLayout({
         <WishlistProvider>
           <div className="flex min-h-screen flex-col">
             {user && <PushTokenLinker userId={user.id} />}
+            <PrefetchProvider />
             <OfflineBanner />
             <Header />
             <main className="flex-1 pb-20 lg:pb-0">{children}</main>

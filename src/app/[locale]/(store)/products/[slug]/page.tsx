@@ -36,7 +36,7 @@ const getProduct = unstable_cache(
     return data;
   },
   ["product"],
-  { revalidate: 3600 }
+  { revalidate: 300 }
 );
 
 const getRelatedProducts = unstable_cache(
@@ -52,7 +52,7 @@ const getRelatedProducts = unstable_cache(
     return data;
   },
   ["related-products"],
-  { revalidate: 3600 }
+  { revalidate: 300 }
 );
 
 export async function generateStaticParams() {
