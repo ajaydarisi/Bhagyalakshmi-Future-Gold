@@ -9,7 +9,7 @@ import Image from "next/image";
 import { Languages, Loader2, Trash2, Upload } from "lucide-react";
 
 import { productSchema, type ProductInput } from "@/lib/validators";
-import { generateSlug } from "@/lib/formatters";
+
 import { MATERIALS, PRODUCT_TAGS } from "@/lib/constants";
 import { createProduct, updateProduct, translateToTelugu } from "@/app/admin/actions";
 import { uploadProductImage, deleteProductImage } from "@/lib/supabase/storage";
@@ -113,9 +113,6 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
 
   function handleNameChange(name: string) {
     form.setValue("name", name);
-    if (!product) {
-      form.setValue("slug", generateSlug(name));
-    }
   }
 
   async function handleAutoTranslate(
