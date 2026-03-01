@@ -291,7 +291,7 @@ export function CouponsManager({ coupons }: CouponsManagerProps) {
                       step={discountType === "percentage" ? "1" : "0.01"}
                       value={discountValue || ""}
                       onChange={(e) =>
-                        setDiscountValue(parseFloat(e.target.value) || 0)
+                        setDiscountValue(Math.round((parseFloat(e.target.value) || 0) * 100) / 100)
                       }
                     />
                   </div>
@@ -305,7 +305,7 @@ export function CouponsManager({ coupons }: CouponsManagerProps) {
                       min="0"
                       value={minOrderAmount || ""}
                       onChange={(e) =>
-                        setMinOrderAmount(parseFloat(e.target.value) || 0)
+                        setMinOrderAmount(Math.round((parseFloat(e.target.value) || 0) * 100) / 100)
                       }
                     />
                   </div>

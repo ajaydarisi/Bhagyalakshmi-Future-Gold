@@ -454,7 +454,7 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
                             onChange={(e) =>
                               field.onChange(
                                 e.target.value
-                                  ? parseFloat(e.target.value)
+                                  ? Math.round(parseFloat(e.target.value) * 100) / 100
                                   : 0
                               )
                             }
@@ -481,7 +481,7 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
                             onChange={(e) =>
                               field.onChange(
                                 e.target.value
-                                  ? parseFloat(e.target.value)
+                                  ? Math.round(parseFloat(e.target.value) * 100) / 100
                                   : null
                               )
                             }
@@ -545,7 +545,7 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
                               onChange={(e) =>
                                 field.onChange(
                                   e.target.value
-                                    ? parseFloat(e.target.value)
+                                    ? Math.round(parseFloat(e.target.value) * 100) / 100
                                     : null
                                 )
                               }
@@ -572,7 +572,7 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
                               onChange={(e) =>
                                 field.onChange(
                                   e.target.value
-                                    ? parseFloat(e.target.value)
+                                    ? Math.round(parseFloat(e.target.value) * 100) / 100
                                     : null
                                 )
                               }
@@ -599,7 +599,7 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
                               onChange={(e) =>
                                 field.onChange(
                                   e.target.value
-                                    ? parseFloat(e.target.value)
+                                    ? Math.round(parseFloat(e.target.value) * 100) / 100
                                     : null
                                 )
                               }
