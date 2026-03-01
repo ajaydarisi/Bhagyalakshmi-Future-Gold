@@ -82,7 +82,7 @@ export function ProductCard({ product }: ProductCardProps) {
               size="sm"
             />
           ) : product.is_rental && product.rental_price ? (
-            <div className="flex items-baseline gap-0.5">
+            <div className="flex flex-wrap items-baseline gap-x-0.5 gap-y-0.5">
               <PriceDisplay
                 price={product.rental_price}
                 discountPrice={product.rental_discount_price}
