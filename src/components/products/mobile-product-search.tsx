@@ -31,6 +31,7 @@ export function MobileProductSearch() {
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [debouncedQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

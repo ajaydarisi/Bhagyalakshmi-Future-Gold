@@ -109,6 +109,7 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
   const [expandedParents, setExpandedParents] = useState<Set<string>>(() => {
     const set = new Set<string>();
@@ -166,6 +167,7 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function toggleMaterial(material: string) {
@@ -185,6 +187,7 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function toggleTag(tag: string) {
@@ -204,6 +207,7 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function updateType(value: string) {
@@ -221,6 +225,7 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function applyPriceFilter() {
@@ -242,6 +247,7 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function clearFilters() {
@@ -258,6 +264,7 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     setSearchQuery("");
     setLoading(true);
     router.push("/products");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function toggleParent(parentId: string) {

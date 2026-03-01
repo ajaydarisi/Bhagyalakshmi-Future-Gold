@@ -69,6 +69,7 @@ export function MobileFilterSheet({ categories }: MobileFilterSheetProps) {
     setTimeout(() => {
       setLoading(true);
       router.push(url);
+      window.scrollTo({ top: 0, behavior: "smooth" });
       setApplying(false);
     }, 350);
   }
@@ -86,6 +87,7 @@ export function MobileFilterSheet({ categories }: MobileFilterSheetProps) {
     setTimeout(() => {
       setLoading(true);
       router.push(buildUrl(filtersRef.current));
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }, 350);
   }
 
