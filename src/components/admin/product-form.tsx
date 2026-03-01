@@ -43,6 +43,7 @@ import {
 
 interface ProductFormProps {
   product?: Product;
+  copyFrom?: Product;
   categories: Category[];
 }
 
@@ -64,12 +65,14 @@ function buildCategoryTree(categories: Category[]) {
   }));
 }
 
-export function ProductForm({ product, categories }: ProductFormProps) {
+export function ProductForm({ product, copyFrom, categories }: ProductFormProps) {
+  // Use copyFrom as source for defaults, but clear name/slug/images
+  const source = product ?? copyFrom;
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<ImageEntry[]>(
-    product?.images.map((url) => ({ url })) ?? []
+    product?.images?.map((url) => ({ url })) ?? []
   );
   const [isUploading, setIsUploading] = useState(false);
   const [notifications, setNotifications] = useState<string[]>([]);
@@ -83,23 +86,23 @@ export function ProductForm({ product, categories }: ProductFormProps) {
       name: product?.name ?? "",
       name_telugu: product?.name_telugu ?? null,
       slug: product?.slug ?? "",
-      description: product?.description ?? "",
-      description_telugu: product?.description_telugu ?? null,
-      price: product?.price ?? 0,
-      discount_price: product?.discount_price ?? null,
-      category_id: product?.category_id ?? "a0000000-0000-0000-0000-000000000008",
-      stock: product?.stock ?? 0,
-      material: product?.material ?? "Gold Plated",
-      tags: product?.tags ?? [],
+      description: source?.description ?? "",
+      description_telugu: source?.description_telugu ?? null,
+      price: source?.price ?? 0,
+      discount_price: source?.discount_price ?? null,
+      category_id: source?.category_id ?? "a0000000-0000-0000-0000-000000000008",
+      stock: source?.stock ?? 0,
+      material: source?.material ?? "Gold Plated",
+      tags: source?.tags ?? [],
       images: product?.images ?? [],
-      is_active: product?.is_active ?? true,
-      featured: product?.featured ?? false,
-      is_sale: product?.is_sale ?? false,
-      is_rental: product?.is_rental ?? true,
-      rental_price: product?.rental_price ?? null,
-      rental_discount_price: product?.rental_discount_price ?? null,
-      rental_deposit: product?.rental_deposit ?? null,
-      max_rental_days: product?.max_rental_days ?? null,
+      is_active: source?.is_active ?? true,
+      featured: source?.featured ?? false,
+      is_sale: source?.is_sale ?? false,
+      is_rental: source?.is_rental ?? true,
+      rental_price: source?.rental_price ?? null,
+      rental_discount_price: source?.rental_discount_price ?? null,
+      rental_deposit: source?.rental_deposit ?? null,
+      max_rental_days: source?.max_rental_days ?? null,
     },
   });
 

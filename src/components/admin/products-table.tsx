@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import type { ColumnDef, Table as TanStackTable } from "@tanstack/react-table";
-import { MoreHorizontal, Pencil, Search, Trash2, X } from "lucide-react";
+import { Copy, MoreHorizontal, Pencil, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -174,6 +174,12 @@ const columns: ColumnDef<ProductWithCategory>[] = [
                 Edit
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/admin/products/new?copyFrom=${product.id}`}>
+                <Copy className="size-4" />
+                Copy
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem variant="destructive" onClick={handleDelete}>
               <Trash2 className="size-4" />
               Delete
@@ -236,6 +242,12 @@ function ProductMobileCard({ product }: { product: ProductWithCategory }) {
               <Link href={`/admin/products/${product.id}/edit`}>
                 <Pencil className="size-4" />
                 Edit
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/admin/products/new?copyFrom=${product.id}`}>
+                <Copy className="size-4" />
+                Copy
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem variant="destructive" onClick={handleDelete}>
