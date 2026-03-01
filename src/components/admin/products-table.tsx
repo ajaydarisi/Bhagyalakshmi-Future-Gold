@@ -115,6 +115,22 @@ const columns: ColumnDef<ProductWithCategory>[] = [
     },
   },
   {
+    id: "type",
+    header: "Type",
+    cell: ({ row }) => {
+      const { is_sale, is_rental } = row.original;
+      if (is_sale && is_rental) return <Badge variant="outline">Sale & Rental</Badge>;
+      if (is_rental) return <Badge variant="outline">Rental</Badge>;
+      return <Badge variant="outline">Sale</Badge>;
+    },
+    filterFn: (row, _columnId, filterValue) => {
+      if (!filterValue || filterValue === "all") return true;
+      if (filterValue === "sale") return row.original.is_sale;
+      if (filterValue === "rental") return row.original.is_rental;
+      return true;
+    },
+  },
+  {
     id: "actions",
     cell: function ActionCell({ row }) {
       const router = useRouter();
@@ -253,8 +269,9 @@ function ProductsToolbar({
   const nameFilter = (table.getColumn("name")?.getFilterValue() as string) ?? "";
   const categoryFilter = (table.getColumn("category")?.getFilterValue() as string) ?? "";
   const statusFilter = (table.getColumn("is_active")?.getFilterValue() as string) ?? "all";
+  const typeFilter = (table.getColumn("type")?.getFilterValue() as string) ?? "all";
 
-  const isFiltered = nameFilter || categoryFilter || statusFilter !== "all";
+  const isFiltered = nameFilter || categoryFilter || statusFilter !== "all" || typeFilter !== "all";
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -300,6 +317,22 @@ function ProductsToolbar({
           <SelectItem value="all">All Statuses</SelectItem>
           <SelectItem value="active">Active</SelectItem>
           <SelectItem value="draft">Draft</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={typeFilter}
+        onValueChange={(value) =>
+          table.getColumn("type")?.setFilterValue(value)
+        }
+      >
+        <SelectTrigger className="w-35">
+          <SelectValue placeholder="All Types" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Types</SelectItem>
+          <SelectItem value="sale">For Sale</SelectItem>
+          <SelectItem value="rental">For Rent</SelectItem>
         </SelectContent>
       </Select>
 

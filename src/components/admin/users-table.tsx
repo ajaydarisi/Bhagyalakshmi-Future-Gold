@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, Table as TanStackTable } from "@tanstack/react-table";
 import { toast } from "sonner";
-import { Trash2, ShieldBan, ShieldCheck } from "lucide-react";
+import { Trash2, ShieldBan, ShieldCheck, Search, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -25,6 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, SortableHeader } from "@/components/admin/data-table";
 import { formatDate } from "@/lib/formatters";
@@ -123,9 +124,9 @@ function ActionsCell({
         title={isBanned ? "Enable user" : "Disable user"}
       >
         {isBanned ? (
-          <ShieldBan className="h-4 w-4 text-yellow-600" />
-        ) : (
           <ShieldCheck className="h-4 w-4 text-green-600" />
+        ) : (
+          <ShieldBan className="h-4 w-4 text-yellow-600" />
         )}
       </Button>
 
@@ -185,6 +186,13 @@ function createColumns(
           {row.original.full_name || "No name"}
         </span>
       ),
+      filterFn: (row, _columnId, filterValue) => {
+        if (!filterValue) return true;
+        const search = (filterValue as string).toLowerCase();
+        const name = (row.original.full_name || "").toLowerCase();
+        const email = (row.original.email || "").toLowerCase();
+        return name.includes(search) || email.includes(search);
+      },
     },
     {
       accessorKey: "email",
@@ -196,6 +204,10 @@ function createColumns(
       accessorKey: "role",
       header: "Role",
       cell: ({ row }) => <RoleCell user={row.original} />,
+      filterFn: (row, _columnId, filterValue) => {
+        if (!filterValue || filterValue === "all") return true;
+        return row.original.role === filterValue;
+      },
     },
     {
       id: "status",
@@ -207,6 +219,13 @@ function createColumns(
         ) : (
           <Badge variant="secondary">Active</Badge>
         );
+      },
+      filterFn: (row, _columnId, filterValue) => {
+        if (!filterValue || filterValue === "all") return true;
+        const isBanned = bannedSet.has(row.original.id);
+        if (filterValue === "active") return !isBanned;
+        if (filterValue === "disabled") return isBanned;
+        return true;
       },
     },
     {
@@ -228,6 +247,77 @@ function createColumns(
       ),
     },
   ];
+}
+
+function UsersToolbar({ table }: { table: TanStackTable<Profile> }) {
+  const searchFilter =
+    (table.getColumn("full_name")?.getFilterValue() as string) ?? "";
+  const roleFilter =
+    (table.getColumn("role")?.getFilterValue() as string) ?? "all";
+  const statusFilter =
+    (table.getColumn("status")?.getFilterValue() as string) ?? "all";
+
+  const isFiltered =
+    searchFilter || roleFilter !== "all" || statusFilter !== "all";
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="relative w-full sm:flex-1 sm:min-w-50 sm:max-w-sm">
+        <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name or email..."
+          value={searchFilter}
+          onChange={(e) =>
+            table.getColumn("full_name")?.setFilterValue(e.target.value)
+          }
+          className="pl-9"
+        />
+      </div>
+
+      <Select
+        value={roleFilter}
+        onValueChange={(value) =>
+          table.getColumn("role")?.setFilterValue(value)
+        }
+      >
+        <SelectTrigger className="w-35">
+          <SelectValue placeholder="All Roles" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Roles</SelectItem>
+          <SelectItem value="customer">Customer</SelectItem>
+          <SelectItem value="admin">Admin</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={statusFilter}
+        onValueChange={(value) =>
+          table.getColumn("status")?.setFilterValue(value)
+        }
+      >
+        <SelectTrigger className="w-35">
+          <SelectValue placeholder="All Statuses" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Statuses</SelectItem>
+          <SelectItem value="active">Active</SelectItem>
+          <SelectItem value="disabled">Disabled</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {isFiltered && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => table.resetColumnFilters()}
+        >
+          Reset
+          <X className="ml-1 size-4" />
+        </Button>
+      )}
+    </div>
+  );
 }
 
 function UserMobileCard({
@@ -284,6 +374,9 @@ export function UsersTable({
     <DataTable
       columns={columns}
       data={users}
+      toolbar={(table) => (
+        <UsersToolbar table={table as TanStackTable<Profile>} />
+      )}
       mobileCard={(user) => (
         <UserMobileCard
           user={user}

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import type { ColumnDef } from "@tanstack/react-table";
-import { Eye } from "lucide-react";
+import type { ColumnDef, Table as TanStackTable } from "@tanstack/react-table";
+import { Eye, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -38,6 +38,12 @@ const columns: ColumnDef<OrderWithEmail>[] = [
   {
     accessorKey: "customer_email",
     header: "Customer",
+    filterFn: (row, _columnId, filterValue) => {
+      if (!filterValue) return true;
+      return row.original.customer_email
+        .toLowerCase()
+        .includes((filterValue as string).toLowerCase());
+    },
   },
   {
     accessorKey: "created_at",
@@ -45,11 +51,46 @@ const columns: ColumnDef<OrderWithEmail>[] = [
       <SortableHeader column={column}>Date</SortableHeader>
     ),
     cell: ({ row }) => formatDate(row.original.created_at),
+    filterFn: (row, _columnId, filterValue) => {
+      if (!filterValue || filterValue === "all") return true;
+      const orderDate = new Date(row.original.created_at);
+      const now = new Date();
+      const startOfToday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+      switch (filterValue) {
+        case "today":
+          return orderDate >= startOfToday;
+        case "7days": {
+          const d = new Date(startOfToday);
+          d.setDate(d.getDate() - 7);
+          return orderDate >= d;
+        }
+        case "30days": {
+          const d = new Date(startOfToday);
+          d.setDate(d.getDate() - 30);
+          return orderDate >= d;
+        }
+        case "90days": {
+          const d = new Date(startOfToday);
+          d.setDate(d.getDate() - 90);
+          return orderDate >= d;
+        }
+        default:
+          return true;
+      }
+    },
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <OrderStatusBadge status={row.original.status} />,
+    filterFn: (row, _columnId, filterValue) => {
+      if (!filterValue || filterValue === "all") return true;
+      return row.original.status === filterValue;
+    },
   },
   {
     accessorKey: "total",
@@ -99,40 +140,99 @@ function OrderMobileCard({ order }: { order: OrderWithEmail }) {
   );
 }
 
+function OrdersToolbar({
+  table,
+}: {
+  table: TanStackTable<OrderWithEmail>;
+}) {
+  const customerFilter =
+    (table.getColumn("customer_email")?.getFilterValue() as string) ?? "";
+  const statusFilter =
+    (table.getColumn("status")?.getFilterValue() as string) ?? "all";
+  const dateFilter =
+    (table.getColumn("created_at")?.getFilterValue() as string) ?? "all";
+
+  const isFiltered =
+    customerFilter || statusFilter !== "all" || dateFilter !== "all";
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="relative w-full sm:flex-1 sm:min-w-50 sm:max-w-sm">
+        <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by customer..."
+          value={customerFilter}
+          onChange={(e) =>
+            table.getColumn("customer_email")?.setFilterValue(e.target.value)
+          }
+          className="pl-9"
+        />
+      </div>
+
+      <Select
+        value={statusFilter}
+        onValueChange={(value) =>
+          table.getColumn("status")?.setFilterValue(value)
+        }
+      >
+        <SelectTrigger className="w-45">
+          <SelectValue placeholder="All Statuses" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Statuses</SelectItem>
+          {ORDER_STATUSES.map((s) => (
+            <SelectItem key={s.value} value={s.value}>
+              {s.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={dateFilter}
+        onValueChange={(value) =>
+          table.getColumn("created_at")?.setFilterValue(value)
+        }
+      >
+        <SelectTrigger className="w-40">
+          <SelectValue placeholder="All Time" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Time</SelectItem>
+          <SelectItem value="today">Today</SelectItem>
+          <SelectItem value="7days">Last 7 Days</SelectItem>
+          <SelectItem value="30days">Last 30 Days</SelectItem>
+          <SelectItem value="90days">Last 90 Days</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {isFiltered && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => table.resetColumnFilters()}
+        >
+          Reset
+          <X className="ml-1 size-4" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 interface OrdersTableProps {
   orders: OrderWithEmail[];
 }
 
 export function OrdersTable({ orders }: OrdersTableProps) {
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-
-  const filtered =
-    statusFilter === "all"
-      ? orders
-      : orders.filter((o) => o.status === statusFilter);
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-45">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            {ORDER_STATUSES.map((s) => (
-              <SelectItem key={s.value} value={s.value}>
-                {s.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <DataTable
-        columns={columns}
-        data={filtered}
-        mobileCard={(order) => <OrderMobileCard order={order} />}
-      />
-    </div>
+    <DataTable
+      columns={columns}
+      data={orders}
+      toolbar={(table) => (
+        <OrdersToolbar table={table as TanStackTable<OrderWithEmail>} />
+      )}
+      mobileCard={(order) => <OrderMobileCard order={order} />}
+    />
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 
 import { formatPrice, formatDate } from "@/lib/formatters";
 import {
@@ -54,6 +54,11 @@ export function CouponsManager({ coupons }: CouponsManagerProps) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Coupon | null>(null);
 
+  // Filter state
+  const [searchFilter, setSearchFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+
   // Form state
   const [code, setCode] = useState("");
   const [description, setDescription] = useState("");
@@ -65,6 +70,38 @@ export function CouponsManager({ coupons }: CouponsManagerProps) {
   const [maxUses, setMaxUses] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [expiresAt, setExpiresAt] = useState("");
+
+  const isFiltered =
+    searchFilter || statusFilter !== "all" || typeFilter !== "all";
+
+  const filtered = useMemo(() => {
+    return coupons.filter((coupon) => {
+      if (
+        searchFilter &&
+        !coupon.code.toLowerCase().includes(searchFilter.toLowerCase())
+      ) {
+        return false;
+      }
+      if (statusFilter !== "all") {
+        const isExpired =
+          coupon.expires_at && new Date(coupon.expires_at) < new Date();
+        if (statusFilter === "active" && (!coupon.is_active || isExpired))
+          return false;
+        if (statusFilter === "inactive" && coupon.is_active) return false;
+        if (statusFilter === "expired" && !isExpired) return false;
+      }
+      if (typeFilter !== "all" && coupon.discount_type !== typeFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [coupons, searchFilter, statusFilter, typeFilter]);
+
+  function resetFilters() {
+    setSearchFilter("");
+    setStatusFilter("all");
+    setTypeFilter("all");
+  }
 
   function resetForm() {
     setCode("");
@@ -149,137 +186,179 @@ export function CouponsManager({ coupons }: CouponsManagerProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
-              <Plus className="size-4" />
-              Add Coupon
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>
-                {editing ? "Edit Coupon" : "New Coupon"}
-              </DialogTitle>
-            </DialogHeader>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-full sm:flex-1 sm:min-w-50 sm:max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by code..."
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            className="pl-9"
+          />
+        </div>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Code</Label>
-                <Input
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  placeholder="SAVE20"
-                />
-              </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-35">
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="expired">Expired</SelectItem>
+          </SelectContent>
+        </Select>
 
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Input
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Optional description"
-                />
-              </div>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="percentage">Percentage</SelectItem>
+            <SelectItem value="fixed">Fixed Amount</SelectItem>
+          </SelectContent>
+        </Select>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Discount Type</Label>
-                  <Select
-                    value={discountType}
-                    onValueChange={(v) =>
-                      setDiscountType(v as "percentage" | "fixed")
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percentage">Percentage</SelectItem>
-                      <SelectItem value="fixed">Fixed Amount</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+        {isFiltered && (
+          <Button variant="ghost" size="sm" onClick={resetFilters}>
+            Reset
+            <X className="ml-1 size-4" />
+          </Button>
+        )}
 
-                <div className="space-y-2">
-                  <Label>
-                    Discount Value{" "}
-                    {discountType === "percentage" ? "(%)" : "(INR)"}
-                  </Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step={discountType === "percentage" ? "1" : "0.01"}
-                    value={discountValue || ""}
-                    onChange={(e) =>
-                      setDiscountValue(parseFloat(e.target.value) || 0)
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Min Order Amount</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={minOrderAmount || ""}
-                    onChange={(e) =>
-                      setMinOrderAmount(parseFloat(e.target.value) || 0)
-                    }
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Max Uses (leave empty for unlimited)</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={maxUses}
-                    onChange={(e) => setMaxUses(e.target.value)}
-                    placeholder="Unlimited"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Expires At</Label>
-                <Input
-                  type="date"
-                  value={expiresAt}
-                  onChange={(e) => setExpiresAt(e.target.value)}
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Switch checked={isActive} onCheckedChange={setIsActive} />
-                <Label>Active</Label>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={isPending}
-              >
-                Cancel
+        <div className="ml-auto">
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openCreateDialog}>
+                <Plus className="size-4" />
+                Add Coupon
               </Button>
-              <Button onClick={handleSubmit} disabled={isPending || !code}>
-                {isPending && <Loader2 className="size-4 animate-spin" />}
-                {editing ? "Update" : "Create"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>
+                  {editing ? "Edit Coupon" : "New Coupon"}
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Code</Label>
+                  <Input
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.toUpperCase())}
+                    placeholder="SAVE20"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Input
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Optional description"
+                  />
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Discount Type</Label>
+                    <Select
+                      value={discountType}
+                      onValueChange={(v) =>
+                        setDiscountType(v as "percentage" | "fixed")
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percentage">Percentage</SelectItem>
+                        <SelectItem value="fixed">Fixed Amount</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>
+                      Discount Value{" "}
+                      {discountType === "percentage" ? "(%)" : "(INR)"}
+                    </Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step={discountType === "percentage" ? "1" : "0.01"}
+                      value={discountValue || ""}
+                      onChange={(e) =>
+                        setDiscountValue(parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Min Order Amount</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={minOrderAmount || ""}
+                      onChange={(e) =>
+                        setMinOrderAmount(parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Max Uses (leave empty for unlimited)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={maxUses}
+                      onChange={(e) => setMaxUses(e.target.value)}
+                      placeholder="Unlimited"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Expires At</Label>
+                  <Input
+                    type="date"
+                    value={expiresAt}
+                    onChange={(e) => setExpiresAt(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch checked={isActive} onCheckedChange={setIsActive} />
+                  <Label>Active</Label>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  disabled={isPending}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSubmit} disabled={isPending || !code}>
+                  {isPending && <Loader2 className="size-4 animate-spin" />}
+                  {editing ? "Update" : "Create"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Mobile card view */}
       <div className="space-y-3 lg:hidden">
-        {coupons.length > 0 ? (
-          coupons.map((coupon) => (
+        {filtered.length > 0 ? (
+          filtered.map((coupon) => (
             <div key={coupon.id} className="rounded-md border bg-card p-3 space-y-1">
               <div className="flex items-center justify-between">
                 <span className="font-mono font-medium">{coupon.code}</span>
@@ -330,7 +409,9 @@ export function CouponsManager({ coupons }: CouponsManagerProps) {
           ))
         ) : (
           <p className="py-8 text-center text-muted-foreground">
-            No coupons yet. Create one to get started.
+            {coupons.length === 0
+              ? "No coupons yet. Create one to get started."
+              : "No coupons match the current filters."}
           </p>
         )}
       </div>
@@ -350,8 +431,8 @@ export function CouponsManager({ coupons }: CouponsManagerProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {coupons.length > 0 ? (
-              coupons.map((coupon) => (
+            {filtered.length > 0 ? (
+              filtered.map((coupon) => (
                 <TableRow key={coupon.id}>
                   <TableCell className="font-mono font-medium">
                     {coupon.code}
@@ -404,7 +485,9 @@ export function CouponsManager({ coupons }: CouponsManagerProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
-                  No coupons yet. Create one to get started.
+                  {coupons.length === 0
+                    ? "No coupons yet. Create one to get started."
+                    : "No coupons match the current filters."}
                 </TableCell>
               </TableRow>
             )}
