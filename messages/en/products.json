@@ -31,6 +31,11 @@
     "availability": "Availability",
     "inStock": "In Stock ({count} available)",
     "outOfStock": "Out of Stock",
+    "notifyMe": "Notify Me When Available",
+    "notifySubscribed": "You'll Be Notified",
+    "notifySuccess": "We'll notify you when this product is back in stock",
+    "notifyRemoved": "Stock alert removed",
+    "notifyError": "Something went wrong. Please try again.",
     "relatedProducts": "You May Also Like",
     "notFoundMeta": "Product Not Found",
     "metaDescription": "Shop {name} at Bhagyalakshmi Future Gold Commerce"
@@ -43,7 +48,8 @@
     "priceRange": "Price Range",
     "applyPrice": "Apply Price",
     "material": "Material",
-    "applyFilters": "Apply Filters"
+    "applyFilters": "Apply Filters",
+    "searchPlaceholder": "Search products..."
   },
   "sort": {
     "placeholder": "Sort by"

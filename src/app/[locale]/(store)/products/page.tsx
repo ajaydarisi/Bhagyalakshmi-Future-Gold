@@ -11,6 +11,7 @@ import { ProductGridSkeleton } from "@/components/shared/loading-skeleton";
 import { APP_NAME, PRODUCTS_PER_PAGE } from "@/lib/constants";
 import type { ProductWithCategory, SortOption } from "@/types/product";
 import { MobileFilterSheet } from "@/components/products/mobile-filter-sheet";
+import { MobileProductSearch } from "@/components/products/mobile-product-search";
 import { FilterLoadingProvider } from "@/components/products/filter-loading-context";
 import { ProductsHeading } from "@/components/products/products-heading";
 import { Search } from "lucide-react";
@@ -27,6 +28,7 @@ interface ProductsPageProps {
     sort?: string;
     page?: string;
     type?: string;
+    search?: string;
   }>;
 }
 
@@ -52,7 +54,8 @@ const getProductCount = unstable_cache(
     materials: string[],
     type: string,
     minPrice: number,
-    maxPrice: number
+    maxPrice: number,
+    search: string
   ) => {
     const supabase = createAdminClient();
 
@@ -73,6 +76,7 @@ const getProductCount = unstable_cache(
     else if (type === "rental") query = query.eq("is_rental", true);
     if (minPrice > 0) query = query.gte("price", minPrice);
     if (maxPrice > 0) query = query.lte("price", maxPrice);
+    if (search) query = query.ilike("name", `%${search}%`);
 
     const { count } = await query;
     return count;
@@ -90,7 +94,8 @@ const getFilteredProducts = unstable_cache(
     maxPrice: number,
     sort: string,
     page: number,
-    locale: string
+    locale: string,
+    search: string
   ) => {
     const supabase = createAdminClient();
 
@@ -111,6 +116,7 @@ const getFilteredProducts = unstable_cache(
     else if (type === "rental") query = query.eq("is_rental", true);
     if (minPrice > 0) query = query.gte("price", minPrice);
     if (maxPrice > 0) query = query.lte("price", maxPrice);
+    if (search) query = query.ilike("name", `%${search}%`);
 
     switch (sort) {
       case "price-asc":
@@ -168,6 +174,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const sort = (params.sort as SortOption) || "newest";
   const page = Number(params.page) || 1;
   const type = params.type || "";
+  const search = params.search || "";
 
   const locale = await getLocale();
   const t = await getTranslations("products.listing");
@@ -195,8 +202,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   // Fetch products and count in parallel (both independently cached)
   const [products, count] = await Promise.all([
-    getFilteredProducts(categoryIds, materials, type, minPrice, maxPrice, sort, page, locale),
-    getProductCount(categoryIds, materials, type, minPrice, maxPrice),
+    getFilteredProducts(categoryIds, materials, type, minPrice, maxPrice, sort, page, locale, search),
+    getProductCount(categoryIds, materials, type, minPrice, maxPrice, search),
   ]);
 
   const totalPages = Math.ceil((count || 0) / PRODUCTS_PER_PAGE);
@@ -230,6 +237,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             </Suspense>
           </div>
         </div>
+
+        <Suspense>
+          <MobileProductSearch />
+        </Suspense>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[250px_1fr]">
           {/* Sidebar Filters */}

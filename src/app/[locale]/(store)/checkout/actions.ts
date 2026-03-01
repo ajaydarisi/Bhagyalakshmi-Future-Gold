@@ -123,6 +123,11 @@ export async function createOrder(
 
   if (orderError || !order) throw new Error("Failed to create order");
 
+  // Record initial status in history
+  await admin
+    .from("order_status_history")
+    .insert({ order_id: order.id, status: "pending" });
+
   // Create order items
   const orderItems = cartItems.map((item) => {
     const product = item.product as unknown as {
@@ -217,6 +222,11 @@ export async function verifyPayment(
     .from("orders")
     .update({ status: "paid" })
     .eq("id", orderId);
+
+  // Record paid status in history
+  await admin
+    .from("order_status_history")
+    .insert({ order_id: orderId, status: "paid" });
 
   // Decrement stock and get order user_id in parallel
   const [{ data: orderItems }, { data: order }] = await Promise.all([

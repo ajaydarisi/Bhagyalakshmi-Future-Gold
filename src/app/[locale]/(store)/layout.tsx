@@ -7,6 +7,7 @@ import { PushTokenLinker } from "@/components/shared/push-token-linker";
 import { OfflineBanner } from "@/components/shared/offline-banner";
 import { PrefetchProvider } from "@/components/shared/prefetch-provider";
 import { NetworkProvider } from "@/hooks/use-network";
+
 import { createClient } from "@/lib/supabase/server";
 
 export default async function StoreLayout({
@@ -29,6 +30,7 @@ export default async function StoreLayout({
             <main className="flex-1 pb-20 lg:pb-0">{children}</main>
             <Footer />
             <BottomNav />
+
           </div>
         </WishlistProvider>
       </CartProvider>

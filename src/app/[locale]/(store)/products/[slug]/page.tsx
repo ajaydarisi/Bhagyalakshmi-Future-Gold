@@ -1,5 +1,6 @@
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { CheckAvailabilityButton } from "@/components/products/check-availability-button";
+import { NotifyStockButton } from "@/components/products/notify-stock-button";
 import { ProductCacheWriter } from "@/components/products/product-cache-writer";
 import { ProductGrid } from "@/components/products/product-grid";
 import { ProductImages } from "@/components/products/product-images";
@@ -360,6 +361,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   <span className="text-red-600">{t("outOfStock")}</span>
                 )}
               </p>
+              {typedProduct.stock <= 0 && (
+                <NotifyStockButton productId={typedProduct.id} />
+              )}
             </div>
           )}
 

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
-import { formatPrice, formatDate } from "@/lib/formatters";
+import { formatPrice, formatDate, formatDateTime } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { getTranslations } from "next-intl/server";
@@ -32,12 +32,19 @@ export default async function OrderDetailPage({
 
   if (!user) redirect(`/login?redirect=/account/orders/${id}`);
 
-  const { data: order } = await supabase
-    .from("orders")
-    .select("*, order_items:order_items(*)")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .single();
+  const [{ data: order }, { data: statusHistory }] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("*, order_items:order_items(*)")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single(),
+    supabase
+      .from("order_status_history")
+      .select("status, changed_at")
+      .eq("order_id", id)
+      .order("changed_at", { ascending: true }),
+  ]);
 
   if (!order) notFound();
 
@@ -55,6 +62,17 @@ export default async function OrderDetailPage({
 
   const currentStatusIndex = STATUS_FLOW.indexOf(order.status);
   const isCancelled = order.status === "cancelled" || order.status === "refunded";
+
+  // Build a map of status -> timestamp from history
+  const statusTimestamps: Record<string, string> = {};
+  if (statusHistory) {
+    for (const entry of statusHistory) {
+      // Keep the first occurrence of each status
+      if (!statusTimestamps[entry.status]) {
+        statusTimestamps[entry.status] = entry.changed_at;
+      }
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -74,10 +92,12 @@ export default async function OrderDetailPage({
       {!isCancelled && (
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            {/* Desktop: horizontal timeline */}
+            <div className="hidden sm:flex items-center justify-between">
               {STATUS_FLOW.map((status, index) => {
                 const isCompleted = index <= currentStatusIndex;
                 const isCurrent = index === currentStatusIndex;
+                const timestamp = statusTimestamps[status];
                 return (
                   <div
                     key={status}
@@ -127,6 +147,68 @@ export default async function OrderDetailPage({
                     >
                       {t(`orderStatuses.${status}`)}
                     </span>
+                    {timestamp && (
+                      <span className="mt-0.5 text-[10px] text-muted-foreground">
+                        {formatDateTime(timestamp)}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Mobile: vertical timeline */}
+            <div className="flex flex-col gap-0 sm:hidden">
+              {STATUS_FLOW.map((status, index) => {
+                const isCompleted = index <= currentStatusIndex;
+                const isCurrent = index === currentStatusIndex;
+                const timestamp = statusTimestamps[status];
+                const isLast = index === STATUS_FLOW.length - 1;
+                return (
+                  <div key={status} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={cn(
+                          "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border-2",
+                          isCompleted
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-muted bg-background"
+                        )}
+                      >
+                        {isCompleted ? (
+                          <Check className="h-3.5 w-3.5" />
+                        ) : (
+                          <span className="text-[10px]">{index + 1}</span>
+                        )}
+                      </div>
+                      {!isLast && (
+                        <div
+                          className={cn(
+                            "w-0.5 flex-1 min-h-6",
+                            isCompleted && index < currentStatusIndex
+                              ? "bg-primary"
+                              : "bg-muted"
+                          )}
+                        />
+                      )}
+                    </div>
+                    <div className={cn("pb-4", isLast && "pb-0")}>
+                      <span
+                        className={cn(
+                          "text-sm",
+                          isCurrent
+                            ? "font-medium text-primary"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        {t(`orderStatuses.${status}`)}
+                      </span>
+                      {timestamp && (
+                        <p className="text-[11px] text-muted-foreground">
+                          {formatDateTime(timestamp)}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 );
               })}

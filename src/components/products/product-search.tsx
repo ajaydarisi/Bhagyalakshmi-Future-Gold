@@ -54,7 +54,7 @@ export function ProductSearch({ open, onOpenChange }: ProductSearchProps) {
       const { data } = await supabase
         .from("products")
         .select("id, name, slug, price, discount_price")
-        .textSearch("fts", debouncedQuery, { type: "websearch" })
+        .ilike("name", `%${debouncedQuery}%`)
         .eq("is_active", true)
         .limit(8);
 

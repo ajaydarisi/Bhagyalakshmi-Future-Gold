@@ -38,6 +38,7 @@ export function MobileFilterSheet({ categories }: MobileFilterSheetProps) {
       Number(searchParams.get("minPrice")) || 0,
       Number(searchParams.get("maxPrice")) || 10000,
     ],
+    search: searchParams.get("search") || "",
   });
 
   const handleFiltersChange = useCallback((filters: PendingFilters) => {
@@ -51,6 +52,7 @@ export function MobileFilterSheet({ categories }: MobileFilterSheetProps) {
     if (filters.type && filters.type !== "all") params.set("type", filters.type);
     if (filters.priceRange[0] > 0) params.set("minPrice", filters.priceRange[0].toString());
     if (filters.priceRange[1] < 10000) params.set("maxPrice", filters.priceRange[1].toString());
+    if (filters.search) params.set("search", filters.search);
     const currentSort = searchParams.get("sort");
     if (currentSort) params.set("sort", currentSort);
     const qs = params.toString();
@@ -75,6 +77,7 @@ export function MobileFilterSheet({ categories }: MobileFilterSheetProps) {
       materials: [],
       type: "",
       priceRange: [0, 10000],
+      search: "",
     };
     setOpen(false);
     setTimeout(() => {

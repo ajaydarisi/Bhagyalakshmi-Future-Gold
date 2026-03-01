@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
@@ -11,9 +12,10 @@ import { Separator } from "@/components/ui/separator";
 import { MATERIALS, PRODUCT_TYPES } from "@/lib/constants";
 import { formatPrice } from "@/lib/formatters";
 import { getCategoryName } from "@/lib/i18n-helpers";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useFilterLoading } from "./filter-loading-context";
-import { useState } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronDown, X, Search } from "lucide-react";
 import type { Category } from "@/types/product";
 
 export interface PendingFilters {
@@ -21,6 +23,7 @@ export interface PendingFilters {
   materials: string[];
   type: string;
   priceRange: number[];
+  search: string;
 }
 
 interface ProductFiltersProps {
@@ -52,6 +55,7 @@ export function getFilterCount(searchParams: URLSearchParams): number {
   if (searchParams.get("type")) count++;
   if (Number(searchParams.get("minPrice")) > 0) count++;
   if (Number(searchParams.get("maxPrice")) > 0 && Number(searchParams.get("maxPrice")) < 10000) count++;
+  if (searchParams.get("search")) count++;
   return count;
 }
 
@@ -76,12 +80,34 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
   const urlType = searchParams.get("type") || "";
   const urlMinPrice = Number(searchParams.get("minPrice")) || 0;
   const urlMaxPrice = Number(searchParams.get("maxPrice")) || 10000;
+  const urlSearch = searchParams.get("search") || "";
 
   // In deferred mode, all selections are local state
   const [pendingCategories, setPendingCategories] = useState(urlCategories);
   const [pendingMaterials, setPendingMaterials] = useState(urlMaterials);
   const [pendingType, setPendingType] = useState(urlType);
   const [priceRange, setPriceRange] = useState([urlMinPrice, urlMaxPrice]);
+  const [searchQuery, setSearchQuery] = useState(urlSearch);
+  const debouncedSearch = useDebounce(searchQuery, 400);
+  const isFirstRender = useRef(true);
+
+  // Auto-apply search when debounced value changes (immediate mode only)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (isDeferred) return;
+    const params = new URLSearchParams(searchParams.toString());
+    if (debouncedSearch) {
+      params.set("search", debouncedSearch);
+    } else {
+      params.delete("search");
+    }
+    params.delete("page");
+    setLoading(true);
+    router.push(`?${params.toString()}`);
+  }, [debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
   const [expandedParents, setExpandedParents] = useState<Set<string>>(() => {
     const set = new Set<string>();
     const cats = isDeferred ? pendingCategories : urlCategories;
@@ -113,6 +139,7 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
         materials: pendingMaterials,
         type: pendingType,
         priceRange,
+        search: searchQuery,
         ...overrides,
       });
     }
@@ -200,9 +227,11 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
       setPendingMaterials([]);
       setPendingType("");
       setPriceRange([0, 10000]);
-      notifyChange({ categories: [], materials: [], type: "", priceRange: [0, 10000] });
+      setSearchQuery("");
+      notifyChange({ categories: [], materials: [], type: "", priceRange: [0, 10000], search: "" });
       return;
     }
+    setSearchQuery("");
     setLoading(true);
     router.push("/products");
   }
@@ -219,7 +248,7 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     });
   }
 
-  const hasFilters = currentCategories.length > 0 || currentMaterials.length > 0 || currentType || (isDeferred ? priceRange[0] > 0 || priceRange[1] < 10000 : urlMinPrice > 0 || urlMaxPrice < 10000);
+  const hasFilters = currentCategories.length > 0 || currentMaterials.length > 0 || currentType || searchQuery || (isDeferred ? priceRange[0] > 0 || priceRange[1] < 10000 : urlMinPrice > 0 || urlMaxPrice < 10000);
   const filterCount = getFilterCount(searchParams);
 
   return (
@@ -245,6 +274,34 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
           <Separator />
         </>
       )}
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder={t("searchPlaceholder")}
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            if (isDeferred) notifyChange({ search: e.target.value });
+          }}
+          className="pl-9 pr-8 h-9"
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery("");
+              if (isDeferred) notifyChange({ search: "" });
+            }}
+            className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      <Separator />
 
       {/* Type: Sale / Rental */}
       <div>

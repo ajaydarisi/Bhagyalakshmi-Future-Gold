@@ -151,6 +151,14 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     return { error: error.message };
   }
 
+  // Record status change in history
+  await supabase
+    .from("order_status_history")
+    .insert({ order_id: orderId, status })
+    .then(({ error: histError }) => {
+      if (histError) console.error("Failed to record status history:", histError.message);
+    });
+
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
 
