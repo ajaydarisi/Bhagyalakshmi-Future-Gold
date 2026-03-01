@@ -9,6 +9,7 @@ import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProductGridSkeleton } from "@/components/shared/loading-skeleton";
 import { APP_NAME, PRODUCTS_PER_PAGE } from "@/lib/constants";
+import { calculateDiscount } from "@/lib/formatters";
 import type { ProductWithCategory, SortOption } from "@/types/product";
 import { MobileFilterSheet } from "@/components/products/mobile-filter-sheet";
 import { MobileProductSearch } from "@/components/products/mobile-product-search";
@@ -125,6 +126,8 @@ const getFilteredProducts = unstable_cache(
     if (maxPrice > 0) query = query.lte(priceCol, maxPrice);
     if (search) query = query.ilike("name", `%${search}%`);
 
+    const isDiscountSort = sort === "discount";
+
     switch (sort) {
       case "price-asc":
         query = query.order(priceCol, { ascending: true });
@@ -136,7 +139,7 @@ const getFilteredProducts = unstable_cache(
         query = query.order(locale === "te" ? "name_telugu" : "name", { ascending: true });
         break;
       case "discount":
-        query = query.order("discount_price", { ascending: true, nullsFirst: false });
+        // Fetches all products, sorts by discount percentage in-app below
         break;
       default:
         query = query.order("created_at", { ascending: false });
@@ -144,9 +147,27 @@ const getFilteredProducts = unstable_cache(
 
     const from = (page - 1) * PRODUCTS_PER_PAGE;
     const to = from + PRODUCTS_PER_PAGE - 1;
-    query = query.range(from, to);
+
+    if (!isDiscountSort) {
+      query = query.range(from, to);
+    }
 
     const { data } = await query;
+
+    if (isDiscountSort && data) {
+      const getDiscountPct = (p: (typeof data)[number]) => {
+        if (p.is_sale) {
+          return calculateDiscount(p.price, p.discount_price) ?? -1;
+        }
+        if (p.is_rental && p.rental_price) {
+          return calculateDiscount(p.rental_price, p.rental_discount_price) ?? -1;
+        }
+        return calculateDiscount(p.price, p.discount_price) ?? -1;
+      };
+      data.sort((a, b) => getDiscountPct(b) - getDiscountPct(a));
+      return data.slice(from, to + 1);
+    }
+
     return data;
   },
   ["filtered-products"],
