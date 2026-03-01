@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import {
@@ -12,6 +13,14 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 
+const ImageGalleryLightbox = dynamic(
+  () =>
+    import("./image-gallery-lightbox").then((m) => ({
+      default: m.ImageGalleryLightbox,
+    })),
+  { ssr: false }
+);
+
 interface ProductImagesProps {
   images: string[];
   name: string;
@@ -20,6 +29,13 @@ interface ProductImagesProps {
 export function ProductImages({ images, name }: ProductImagesProps) {
   const [api, setApi] = useState<CarouselApi>();
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
 
   useEffect(() => {
     if (!api) return;
@@ -49,7 +65,12 @@ export function ProductImages({ images, name }: ProductImagesProps) {
         <CarouselContent className="ml-0">
           {images.map((image, index) => (
             <CarouselItem key={index} className="pl-0">
-              <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+              <button
+                type="button"
+                onClick={() => openLightbox(index)}
+                className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted cursor-zoom-in"
+                aria-label={`View ${name} - Image ${index + 1} fullscreen`}
+              >
                 <Image
                   src={image}
                   alt={`${name} - Image ${index + 1}`}
@@ -58,7 +79,7 @@ export function ProductImages({ images, name }: ProductImagesProps) {
                   className="object-cover"
                   priority={index === 0}
                 />
-              </div>
+              </button>
             </CarouselItem>
           ))}
         </CarouselContent>
@@ -110,6 +131,13 @@ export function ProductImages({ images, name }: ProductImagesProps) {
           </div>
         </>
       )}
+      <ImageGalleryLightbox
+        images={images}
+        name={name}
+        open={lightboxOpen}
+        index={lightboxIndex}
+        onClose={() => setLightboxOpen(false)}
+      />
     </div>
   );
 }

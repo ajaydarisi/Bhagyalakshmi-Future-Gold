@@ -59,6 +59,12 @@
     "heading": "ఉత్పత్తులు",
     "searchAll": "\"{query}\" కోసం అన్నింటిలో వెతకండి"
   },
+  "gallery": {
+    "viewFullscreen": "పూర్తి స్క్రీన్‌లో చూడండి",
+    "close": "మూసివేయి",
+    "zoomIn": "జూమ్ ఇన్",
+    "zoomOut": "జూమ్ అవుట్"
+  },
   "share": {
     "button": "షేర్ చేయి",
     "shareProduct": "ఈ ఉత్పత్తిని షేర్ చేయండి",

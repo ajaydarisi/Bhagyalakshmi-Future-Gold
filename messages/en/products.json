@@ -59,6 +59,12 @@
     "heading": "Products",
     "searchAll": "Search all for \"{query}\""
   },
+  "gallery": {
+    "viewFullscreen": "View fullscreen",
+    "close": "Close",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
+  },
   "share": {
     "button": "Share",
     "shareProduct": "Share this product",

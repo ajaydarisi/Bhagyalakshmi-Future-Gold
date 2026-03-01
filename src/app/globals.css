@@ -148,6 +148,13 @@
   --sidebar-accent-foreground: oklch(0.25 0.015 60);
   --sidebar-border: oklch(0.90 0.01 75);
   --sidebar-ring: oklch(0.55 0.06 45);
+
+  /* Lightbox gallery */
+  --yarl__color_backdrop: oklch(0.12 0.01 45 / 0.95);
+  --yarl__color_button: oklch(0.98 0.005 80);
+  --yarl__color_button_active: oklch(0.75 0.08 45);
+  --yarl__color_button_disabled: oklch(0.98 0.005 80 / 0.3);
+  --yarl__button_filter: drop-shadow(1px 1px 3px oklch(0.12 0.02 45 / 0.6));
 }
 
 .dark {
@@ -207,6 +214,13 @@
   --sidebar-accent-foreground: oklch(0.95 0.008 75);
   --sidebar-border: oklch(0.95 0.005 60 / 12%);
   --sidebar-ring: oklch(0.55 0.06 45);
+
+  /* Lightbox gallery */
+  --yarl__color_backdrop: oklch(0.10 0.01 60 / 0.95);
+  --yarl__color_button: oklch(0.95 0.008 75);
+  --yarl__color_button_active: oklch(0.75 0.08 45);
+  --yarl__color_button_disabled: oklch(0.95 0.008 75 / 0.3);
+  --yarl__button_filter: drop-shadow(1px 1px 3px oklch(0.05 0.01 60 / 0.6));
 }
 
 @layer base {
