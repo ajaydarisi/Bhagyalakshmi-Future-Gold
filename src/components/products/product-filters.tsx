@@ -93,14 +93,12 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
   const [priceRange, setPriceRange] = useState([urlMinPrice, urlMaxPrice]);
   const [searchQuery, setSearchQuery] = useState(urlSearch);
   const debouncedSearch = useDebounce(searchQuery, 400);
-  const isFirstRender = useRef(true);
+  const prevDebouncedSearch = useRef(debouncedSearch);
 
   // Auto-apply search when debounced value changes (immediate mode only)
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    if (debouncedSearch === prevDebouncedSearch.current) return;
+    prevDebouncedSearch.current = debouncedSearch;
     if (isDeferred) return;
     const params = new URLSearchParams(searchParams.toString());
     if (debouncedSearch) {

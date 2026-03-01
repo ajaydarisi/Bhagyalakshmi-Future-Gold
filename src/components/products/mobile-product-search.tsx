@@ -17,13 +17,11 @@ export function MobileProductSearch() {
   const urlSearch = searchParams.get("search") || "";
   const [query, setQuery] = useState(urlSearch);
   const debouncedQuery = useDebounce(query, 400);
-  const isFirstRender = useRef(true);
+  const prevDebouncedQuery = useRef(debouncedQuery);
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    if (debouncedQuery === prevDebouncedQuery.current) return;
+    prevDebouncedQuery.current = debouncedQuery;
     const params = new URLSearchParams(searchParams.toString());
     if (debouncedQuery) {
       params.set("search", debouncedQuery);

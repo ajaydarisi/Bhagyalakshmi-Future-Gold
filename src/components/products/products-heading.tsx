@@ -25,6 +25,13 @@ export function ProductsHeading({ title, countLabel }: ProductsHeadingProps) {
     }
   }, [searchParams, setLoading]);
 
+  // Safety timeout: auto-reset loading if stuck for more than 5 seconds
+  useEffect(() => {
+    if (!loading) return;
+    const timer = setTimeout(() => setLoading(false), 5000);
+    return () => clearTimeout(timer);
+  }, [loading, setLoading]);
+
   return (
     <div>
       <h1 className="flex items-center gap-2 text-2xl font-bold md:text-3xl">
