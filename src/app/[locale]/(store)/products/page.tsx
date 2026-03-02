@@ -13,7 +13,6 @@ import { MobileProductSearch } from "@/components/products/mobile-product-search
 import { FilterLoadingProvider } from "@/components/products/filter-loading-context";
 import { ProductsHeading } from "@/components/products/products-heading";
 import { ProductsContent } from "@/components/products/products-content";
-import { ScrollToTop } from "@/components/shared/scroll-to-top";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { unstable_cache } from "next/cache";
@@ -270,9 +269,6 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   return (
     <FilterLoadingProvider>
-      <Suspense>
-        <ScrollToTop />
-      </Suspense>
       <div className="container mx-auto px-4 py-8">
         <Breadcrumbs
           homeLabel={tRoot("breadcrumbHome")}
