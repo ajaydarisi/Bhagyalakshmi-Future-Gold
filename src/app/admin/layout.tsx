@@ -5,6 +5,7 @@ import { AdminSidebar, AdminMobileNav, AdminHeader } from "@/components/layout/a
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { SetHtmlLang } from "@/components/shared/set-html-lang";
 import { Toaster } from "@/components/ui/sonner";
+import { NavProgress } from "@/components/shared/nav-progress";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -39,6 +40,7 @@ export default async function AdminLayout({
   return (
     <>
     <SetHtmlLang locale="en" />
+    <NavProgress />
     <ThemeProvider
       attribute="class"
       defaultTheme="system"
