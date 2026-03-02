@@ -75,7 +75,8 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Supabase storage images: cache-first (images are content-addressed)
-  if (url.hostname.includes("supabase.co") && url.pathname.includes("/storage/")) {
+  const supabaseHost = supabaseConfig?.url ? new URL(supabaseConfig.url).hostname : null;
+  if (supabaseHost && url.hostname === supabaseHost && url.pathname.includes("/storage/")) {
     event.respondWith(
       caches.open(IMAGES_CACHE).then(async (cache) => {
         const cached = await cache.match(event.request);

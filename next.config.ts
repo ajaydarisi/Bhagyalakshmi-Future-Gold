@@ -30,6 +30,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "bfg.jiobase.com",
+        pathname: "/storage/v1/object/public/**",
+      },
+      {
+        protocol: "https",
         hostname: "images.unsplash.com",
       },
       {

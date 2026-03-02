@@ -15,6 +15,7 @@ const config: CapacitorConfig = {
     allowNavigation: [
       "bfg.darisi.in",
       "*.supabase.co",
+      "bfg.jiobase.com",
       "checkout.razorpay.com",
       "api.razorpay.com",
       "accounts.google.com",

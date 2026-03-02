@@ -8,8 +8,9 @@ export function preloadProductImages(imageUrls: string[]): void {
   }
 
   // Only preload Supabase storage images
+  const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const supabaseUrls = imageUrls.filter(
-    (url) => url.includes("supabase.co") && url.includes("/storage/"),
+    (url) => url.includes(supabaseHost) && url.includes("/storage/"),
   );
   if (supabaseUrls.length === 0) return;
 

@@ -167,7 +167,7 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
     const entry = images[index];
 
     // If it's an already-uploaded Supabase URL, delete from storage
-    if (entry.url && entry.url.includes("supabase.co/storage")) {
+    if (entry.url && entry.url.includes(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage`)) {
       await deleteProductImage(entry.url);
     }
 
