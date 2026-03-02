@@ -1,12 +1,9 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ProductGrid } from "@/components/products/product-grid";
 import { ProductFilters } from "@/components/products/product-filters";
 import { ProductSort } from "@/components/products/product-sort";
-import { Pagination } from "@/components/shared/pagination";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
-import { EmptyState } from "@/components/shared/empty-state";
 import { ProductGridSkeleton } from "@/components/shared/loading-skeleton";
 import { APP_NAME, PRODUCTS_PER_PAGE } from "@/lib/constants";
 import { calculateDiscount } from "@/lib/formatters";
@@ -15,8 +12,8 @@ import { MobileFilterSheet } from "@/components/products/mobile-filter-sheet";
 import { MobileProductSearch } from "@/components/products/mobile-product-search";
 import { FilterLoadingProvider } from "@/components/products/filter-loading-context";
 import { ProductsHeading } from "@/components/products/products-heading";
+import { ProductsContent } from "@/components/products/products-content";
 import { ScrollToTop } from "@/components/shared/scroll-to-top";
-import { Search } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { unstable_cache } from "next/cache";
@@ -317,26 +314,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           {/* Product Grid */}
           <div>
             <Suspense fallback={<ProductGridSkeleton />}>
-              {products && products.length > 0 ? (
-                <>
-                  <ProductGrid
-                    products={products as unknown as ProductWithCategory[]}
-                  />
-                  <div className="mt-8">
-                    <Suspense>
-                      <Pagination currentPage={page} totalPages={totalPages} />
-                    </Suspense>
-                  </div>
-                </>
-              ) : (
-                <EmptyState
-                  icon={<Search className="h-16 w-16" />}
-                  title={t("noProducts")}
-                  description={t("noProductsDesc")}
-                  actionLabel={t("clearFilters")}
-                  actionHref="/products"
-                />
-              )}
+              <ProductsContent
+                initialProducts={products as unknown as ProductWithCategory[]}
+                initialCount={count || 0}
+                filterParams={{ categoryIds, materials, tags, type, minPrice, maxPrice, sort, page, locale, search }}
+                page={page}
+              />
             </Suspense>
           </div>
         </div>

@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "./use-auth";
 import { useNetwork } from "./use-network";
 import { enqueue, replayQueue } from "@/lib/operation-queue";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queries/keys";
 
 interface WishlistContextType {
   items: string[]; // product IDs
@@ -48,6 +50,7 @@ export function useWishlistProvider(): WishlistContextType {
   const [fetchCount, setFetchCount] = useState(0);
   const { user, isLoading: authLoading } = useAuth();
   const { isOnline } = useNetwork();
+  const queryClient = useQueryClient();
   const prevUserIdRef = useRef<string | undefined>(undefined);
   const prevIsOnlineRef = useRef(true);
   const itemsRef = useRef(items);
@@ -186,8 +189,9 @@ export function useWishlistProvider(): WishlistContextType {
           productId,
         }).catch(() => {});
       }
+      queryClient.invalidateQueries({ queryKey: queryKeys.wishlist.all });
     },
-    [user]
+    [user, queryClient]
   );
 
   const removeItem = useCallback(
@@ -210,8 +214,9 @@ export function useWishlistProvider(): WishlistContextType {
           productId,
         }).catch(() => {});
       }
+      queryClient.invalidateQueries({ queryKey: queryKeys.wishlist.all });
     },
-    [user]
+    [user, queryClient]
   );
 
   const isInWishlist = useCallback(

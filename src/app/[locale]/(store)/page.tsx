@@ -1,4 +1,3 @@
-import { ProductGrid } from "@/components/products/product-grid";
 import { Button } from "@/components/ui/button";
 import {
   APP_DESCRIPTION,
@@ -10,6 +9,8 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProductWithCategory } from "@/types/product";
 import { ExternalLink } from "@/components/shared/external-link";
+import { FeaturedProductsSection } from "@/components/home/featured-products-section";
+import { NewArrivalsSection } from "@/components/home/new-arrivals-section";
 import { ArrowRight, Clock, Mail, MapPin, Phone } from "lucide-react";
 import { unstable_cache } from "next/cache";
 import Image from "next/image";
@@ -302,27 +303,9 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Products */}
-      {featuredProducts && featuredProducts.length > 0 && (
-        <section className="container mx-auto px-4 py-10 lg:py-20">
-          <div className="mb-8 lg:mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                <span className="underline decoration-primary underline-offset-4 decoration-2">{t("featured.label")}</span>
-              </p>
-              <h2 className="text-3xl md:text-4xl">{t("featured.title")}</h2>
-            </div>
-            <Button variant="link" className="text-primary underline-offset-4" asChild>
-              <Link href={ROUTES.products}>
-                {t("featured.viewAll")}
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-          <ProductGrid
-            products={featuredProducts as unknown as ProductWithCategory[]}
-          />
-        </section>
-      )}
+      <FeaturedProductsSection
+        initialProducts={(featuredProducts ?? []) as unknown as ProductWithCategory[]}
+      />
 
       {/* Wishlist CTA — offline only */}
       {!IS_ONLINE && (
@@ -348,29 +331,9 @@ export default async function HomePage() {
       )}
 
       {/* New Arrivals */}
-      {newProducts && newProducts.length > 0 && (
-        <section className="border-t border-b">
-          <div className="container mx-auto px-4 py-10 lg:py-20">
-            <div className="mb-8 lg:mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                  <span className="underline decoration-primary underline-offset-4 decoration-2">{t("newArrivals.label")}</span>
-                </p>
-                <h2 className="text-3xl md:text-4xl">{t("newArrivals.title")}</h2>
-              </div>
-              <Button variant="link" className="text-primary underline-offset-4" asChild>
-                <Link href={`${ROUTES.products}?sort=newest`}>
-                  {t("newArrivals.shopNew")}
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-            <ProductGrid
-              products={newProducts as unknown as ProductWithCategory[]}
-            />
-          </div>
-        </section>
-      )}
+      <NewArrivalsSection
+        initialProducts={(newProducts ?? []) as unknown as ProductWithCategory[]}
+      />
 
       {/* Trust Bar */}
       <section className="container mx-auto px-4 py-10 lg:py-16">

@@ -1,18 +1,9 @@
-import { AddToCartButton } from "@/components/cart/add-to-cart-button";
-import { CheckAvailabilityButton } from "@/components/products/check-availability-button";
-import { NotifyStockButton } from "@/components/products/notify-stock-button";
 import { ProductCacheWriter } from "@/components/products/product-cache-writer";
-import { ProductGrid } from "@/components/products/product-grid";
-import { ProductImages } from "@/components/products/product-images";
-import { ShareButton } from "@/components/products/share-button";
+import { ProductDetailContent } from "@/components/products/product-detail-content";
+import { RelatedProductsContent } from "@/components/products/related-products-content";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { ProductGridSkeleton } from "@/components/shared/loading-skeleton";
-import { PriceDisplay } from "@/components/shared/price-display";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { WishlistButton } from "@/components/wishlist/wishlist-button";
-import { APP_NAME, IS_ONLINE, ROUTES } from "@/lib/constants";
-import { formatPrice } from "@/lib/formatters";
+import { APP_NAME, ROUTES } from "@/lib/constants";
 import { getCategoryName, getProductDescription, getProductName } from "@/lib/i18n-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProductWithCategory } from "@/types/product";
@@ -109,7 +100,7 @@ export async function generateMetadata({
   };
 }
 
-async function RelatedProducts({
+async function RelatedProductsServer({
   categoryId,
   productId,
 }: {
@@ -117,17 +108,13 @@ async function RelatedProducts({
   productId: string;
 }) {
   const relatedProducts = await getRelatedProducts(categoryId, productId);
-  const t = await getTranslations("products.detail");
-
-  if (!relatedProducts || relatedProducts.length === 0) return null;
 
   return (
-    <section className="mt-16">
-      <h2 className="mb-6 text-xl font-bold">{t("relatedProducts")}</h2>
-      <ProductGrid
-        products={relatedProducts as unknown as ProductWithCategory[]}
-      />
-    </section>
+    <RelatedProductsContent
+      initialProducts={(relatedProducts ?? []) as unknown as ProductWithCategory[]}
+      categoryId={categoryId}
+      excludeId={productId}
+    />
   );
 }
 
@@ -138,9 +125,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product) notFound();
 
   const locale = await getLocale();
-  const t = await getTranslations("products.detail");
   const tl = await getTranslations("products.listing");
-  const tc = await getTranslations("constants");
   const tCommon = await getTranslations();
 
   const SITE_URL =
@@ -149,7 +134,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const typedProduct = product as unknown as ProductWithCategory;
   const displayName = getProductName(typedProduct, locale);
-  const displayDescription = getProductDescription(typedProduct, locale);
 
   const productJsonLd = {
     "@context": "https://schema.org",
@@ -237,153 +221,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
         ]}
       />
 
-      <div className="mt-8 grid gap-8 md:grid-cols-2">
-        {/* Images */}
-        <ProductImages images={typedProduct.images} name={displayName} />
-
-        {/* Details */}
-        <div className="space-y-6">
-          <div>
-            {typedProduct.category && (
-              <p className="text-sm text-muted-foreground">
-                {getCategoryName(typedProduct.category, locale)}
-              </p>
-            )}
-
-            <div className="flex items-center justify-between gap-2">
-              <h1 className="text-2xl font-bold md:text-3xl">
-                {displayName}
-              </h1>
-              <div className="flex items-center gap-2">
-                <ShareButton productName={displayName} productSlug={typedProduct.slug} variant="icon" />
-                <WishlistButton productId={typedProduct.id} variant="icon" />
-              </div>
-            </div>
-            {typedProduct.set_number && (
-              <p className="text-sm text-muted-foreground">
-                {t("setNumber", { number: typedProduct.set_number })}
-              </p>
-            )}
-          </div>
-
-          {typedProduct.is_sale && (
-            <PriceDisplay
-              price={typedProduct.price}
-              discountPrice={typedProduct.discount_price}
-              size="lg"
-            />
-          )}
-
-          <div className="flex flex-wrap gap-2">
-            {typedProduct.is_sale && (
-              <Badge variant="default">{t("forSale")}</Badge>
-            )}
-            {typedProduct.is_rental && (
-              <Badge variant="outline">{t("forRent")}</Badge>
-            )}
-            {typedProduct.tags.map((tag) => (
-              <Badge key={tag} variant="secondary">
-                {tc(`tags.${tag}`)}
-              </Badge>
-            ))}
-          </div>
-
-          {/* Rental Pricing */}
-          {!typedProduct.is_sale && typedProduct.is_rental && typedProduct.rental_price && (
-            <div className="rounded-lg border bg-accent/50 p-4 space-y-2">
-              <h3 className="font-semibold">{t("rentalDetails")}</h3>
-              <div className="grid sm:grid-cols-2 gap-2 text-sm">
-                <div className="flex">
-                  <span className="text-muted-foreground">{t("rentalPrice")}</span>
-                  <div className="ml-2">
-                    <PriceDisplay
-                      price={typedProduct.rental_price}
-                      discountPrice={typedProduct.rental_discount_price}
-                      size="sm"
-                    />
-                  </div>
-                </div>
-                {typedProduct.rental_deposit && (
-                  <div>
-                    <span className="text-muted-foreground">{t("deposit")}</span>
-                    <span className="ml-2 font-medium">
-                      {formatPrice(typedProduct.rental_deposit)}
-                    </span>
-                  </div>
-                )}
-                {typedProduct.max_rental_days && (
-                  <div>
-                    <span className="text-muted-foreground">{t("maxDuration")}</span>
-                    <span className="ml-2 font-medium">
-                      {t("days", { count: typedProduct.max_rental_days })}
-                    </span>
-                  </div>
-                )}
-              </div>
-              {typedProduct.category?.slug === "marriage-rental-sets" && (
-                <p className="text-sm text-muted-foreground italic mt-2">
-                  {t("rentalSetNote")}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div>
-            {IS_ONLINE ? (
-              <AddToCartButton product={typedProduct} />
-            ) : (
-              <CheckAvailabilityButton
-                productName={displayName}
-                productSlug={typedProduct.slug}
-              />
-            )}
-          </div>
-
-          <Separator />
-
-          {displayDescription && (
-            <div>
-              <h3 className="font-semibold">{t("description")}</h3>
-              <p className="mt-2 text-muted-foreground whitespace-pre-line">
-                {displayDescription}
-              </p>
-            </div>
-          )}
-
-          {typedProduct.material && (
-            <div>
-              <h3 className="font-semibold">{t("material")}</h3>
-              <p className="mt-1 text-muted-foreground">
-                {tc(`materials.${typedProduct.material}`)}
-              </p>
-            </div>
-          )}
-
-          {IS_ONLINE && (
-            <div>
-              <h3 className="font-semibold">{t("availability")}</h3>
-              <p className="mt-1">
-                {typedProduct.stock > 0 ? (
-                  <span className="text-green-600">
-                    {t("inStock", { count: typedProduct.stock })}
-                  </span>
-                ) : (
-                  <span className="text-red-600">{t("outOfStock")}</span>
-                )}
-              </p>
-              {typedProduct.stock <= 0 && (
-                <NotifyStockButton productId={typedProduct.id} />
-              )}
-            </div>
-          )}
-
-        </div>
-      </div>
+      <ProductDetailContent initialProduct={typedProduct} />
 
       {/* Related Products */}
       {typedProduct.category_id && (
         <Suspense fallback={<div className="mt-16"><ProductGridSkeleton count={4} /></div>}>
-          <RelatedProducts
+          <RelatedProductsServer
             categoryId={typedProduct.category_id}
             productId={typedProduct.id}
           />

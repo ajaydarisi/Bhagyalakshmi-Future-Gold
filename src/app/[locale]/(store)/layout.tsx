@@ -7,6 +7,7 @@ import { PushTokenLinker } from "@/components/shared/push-token-linker";
 import { OfflineBanner } from "@/components/shared/offline-banner";
 import { PrefetchProvider } from "@/components/shared/prefetch-provider";
 import { NetworkProvider } from "@/hooks/use-network";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,21 +20,22 @@ export default async function StoreLayout({
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <NetworkProvider>
-      <CartProvider>
-        <WishlistProvider>
-          <div className="flex min-h-screen flex-col">
-            {user && <PushTokenLinker userId={user.id} />}
-            <PrefetchProvider />
-            <OfflineBanner />
-            <Header />
-            <main className="flex-1 pb-20 lg:pb-0">{children}</main>
-            <Footer />
-            <BottomNav />
-
-          </div>
-        </WishlistProvider>
-      </CartProvider>
-    </NetworkProvider>
+    <QueryProvider>
+      <NetworkProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <div className="flex min-h-screen flex-col">
+              {user && <PushTokenLinker userId={user.id} />}
+              <PrefetchProvider />
+              <OfflineBanner />
+              <Header />
+              <main className="flex-1 pb-20 lg:pb-0">{children}</main>
+              <Footer />
+              <BottomNav />
+            </div>
+          </WishlistProvider>
+        </CartProvider>
+      </NetworkProvider>
+    </QueryProvider>
   );
 }

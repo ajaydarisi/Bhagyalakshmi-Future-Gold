@@ -5,6 +5,10 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   experimental: {
+    staleTimes: {
+      dynamic: 30,
+      static: 300,
+    },
     inlineCss: true,
     optimizePackageImports: ["lucide-react", "recharts", "cmdk"],
   },

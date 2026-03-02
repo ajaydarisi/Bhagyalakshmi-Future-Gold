@@ -9,7 +9,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { ProductSearch } from "@/components/products/product-search";
 import { ROUTES } from "@/lib/constants";
 import { hapticImpact } from "@/lib/haptics";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queries/keys";
+import { fetchWishlistProducts } from "@/lib/queries/products";
 
 const HIDDEN_ROUTES = ["/checkout", "/admin"];
 
@@ -19,6 +22,20 @@ export function BottomNav() {
   const { items: wishlistItems } = useWishlist();
   const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handlePrefetch = useCallback(
+    (key: string) => {
+      if (key === "wishlist" && user) {
+        queryClient.prefetchQuery({
+          queryKey: queryKeys.wishlist.products(user.id),
+          queryFn: () => fetchWishlistProducts(user.id),
+          staleTime: 60 * 1000,
+        });
+      }
+    },
+    [user, queryClient]
+  );
 
   if (HIDDEN_ROUTES.some((r) => pathname.startsWith(r))) return null;
 
@@ -76,6 +93,7 @@ export function BottomNav() {
                 key={tab.key}
                 href={tab.href!}
                 onClick={() => hapticImpact("light")}
+                onTouchStart={() => handlePrefetch(tab.key)}
                 className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 transition-colors ${
                   active ? "text-primary" : "text-muted-foreground"
                 }`}

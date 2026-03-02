@@ -15,16 +15,27 @@ import { getProductName } from "@/lib/i18n-helpers";
 import { useLocale, useTranslations } from "next-intl";
 import type { ProductWithCategory } from "@/types/product";
 import { hapticNotification } from "@/lib/haptics";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/queries/keys";
+import { fetchWishlistProducts } from "@/lib/queries/products";
 
 interface WishlistContentProps {
-  products: ProductWithCategory[];
+  initialProducts: ProductWithCategory[];
+  userId: string;
 }
 
-export function WishlistContent({ products }: WishlistContentProps) {
+export function WishlistContent({ initialProducts, userId }: WishlistContentProps) {
   const t = useTranslations("wishlist");
   const locale = useLocale();
   const { items, isLoading, removeItem } = useWishlist();
   const { addItem } = useCart();
+
+  const { data: products = initialProducts } = useQuery({
+    queryKey: queryKeys.wishlist.products(userId),
+    queryFn: () => fetchWishlistProducts(userId),
+    initialData: initialProducts,
+    staleTime: 60 * 1000,
+  });
 
   const wishlistedProducts = isLoading
     ? products
