@@ -53,7 +53,20 @@ export function CapacitorInit() {
     });
 
     App.addListener("appUrlOpen", ({ url }) => {
-      // Handle Google OAuth callback (direct ID token flow)
+      // Handle Google OAuth custom-scheme fallback (when App Links didn't intercept)
+      // Must be checked before the generic /auth/google check below
+      if (url.startsWith("bhagyalakshmifuturegold://auth/google-callback")) {
+        Browser.close().catch(() => {});
+        const parsed = new URL(url);
+        const idToken = parsed.searchParams.get("id_token");
+        const state = parsed.searchParams.get("state");
+        // Navigate to the auth/google page in the WebView with the credentials
+        // so the token exchange happens within the app's cookie context
+        window.location.href = `${window.location.origin}/auth/google#id_token=${encodeURIComponent(idToken || "")}&state=${encodeURIComponent(state || "")}`;
+        return;
+      }
+
+      // Handle Google OAuth callback via App Links (direct ID token flow)
       if (url.includes("/auth/google")) {
         Browser.close().catch(() => {});
         const parsed = new URL(url);
