@@ -15,6 +15,7 @@ import { MobileFilterSheet } from "@/components/products/mobile-filter-sheet";
 import { MobileProductSearch } from "@/components/products/mobile-product-search";
 import { FilterLoadingProvider } from "@/components/products/filter-loading-context";
 import { ProductsHeading } from "@/components/products/products-heading";
+import { ScrollToTop } from "@/components/shared/scroll-to-top";
 import { Search } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
@@ -272,6 +273,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   return (
     <FilterLoadingProvider>
+      <Suspense>
+        <ScrollToTop />
+      </Suspense>
       <div className="container mx-auto px-4 py-8">
         <Breadcrumbs
           homeLabel={tRoot("breadcrumbHome")}

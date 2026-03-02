@@ -19,7 +19,6 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", page.toString());
     router.push(`?${params.toString()}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   const pages: number[] = [];

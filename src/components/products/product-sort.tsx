@@ -26,7 +26,6 @@ export function ProductSort() {
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (

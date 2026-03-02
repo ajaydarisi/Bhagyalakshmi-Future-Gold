@@ -109,7 +109,6 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
   const [expandedParents, setExpandedParents] = useState<Set<string>>(() => {
     const set = new Set<string>();
@@ -167,7 +166,6 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function toggleMaterial(material: string) {
@@ -187,7 +185,6 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function toggleTag(tag: string) {
@@ -207,7 +204,6 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function updateType(value: string) {
@@ -225,7 +221,6 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function applyPriceFilter() {
@@ -247,7 +242,6 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function clearFilters() {
@@ -258,13 +252,12 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
       setPendingType("");
       setPriceRange([0, 10000]);
       setSearchQuery("");
-      notifyChange({ categories: [], materials: [], tags: [], type: "", priceRange: [0, 10000], search: "" });
+      notifyChange({ categories: [], materials: [], tags: [], type: "", priceRange: [0, 10000] });
       return;
     }
     setSearchQuery("");
     setLoading(true);
     router.push("/products");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function toggleParent(parentId: string) {
@@ -306,33 +299,35 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
         </>
       )}
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={t("searchPlaceholder")}
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            if (isDeferred) notifyChange({ search: e.target.value });
-          }}
-          className="pl-9 pr-8 h-9"
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchQuery("");
-              if (isDeferred) notifyChange({ search: "" });
-            }}
-            className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
+      {/* Search — only in desktop sidebar (immediate mode); mobile has MobileProductSearch outside the sheet */}
+      {!isDeferred && (
+        <>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t("searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+              }}
+              className="pl-9 pr-8 h-9"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                }}
+                className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-      <Separator />
+          <Separator />
+        </>
+      )}
 
       {/* Type: Sale / Rental */}
       <div>

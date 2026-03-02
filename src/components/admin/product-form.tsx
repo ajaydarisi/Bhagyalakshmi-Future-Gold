@@ -6,7 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import Image from "next/image";
-import { Languages, Loader2, Trash2, Upload } from "lucide-react";
+import { Languages, Loader2, Sparkles, Trash2, Upload } from "lucide-react";
+import { AIImageCompareDialog } from "@/components/admin/ai-image-compare-dialog";
 
 import { productSchema, type ProductInput } from "@/lib/validators";
 import { generateSlug } from "@/lib/formatters";
@@ -52,6 +53,7 @@ interface ImageEntry {
   url: string;
   file?: File;
   preview?: string;
+  aiEnhanced?: boolean;
 }
 
 function buildCategoryTree(categories: Category[]) {
@@ -83,6 +85,12 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
   const [translatingName, setTranslatingName] = useState(false);
   const [translatingDescription, setTranslatingDescription] = useState(false);
   const [notifications, setNotifications] = useState<string[]>([]);
+  const [compareDialog, setCompareDialog] = useState<{
+    open: boolean;
+    imageIndex: number;
+    originalSrc: string;
+    file: File;
+  } | null>(null);
 
   const categoryTree = buildCategoryTree(categories);
 
@@ -180,6 +188,54 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
       "images",
       updated.filter((e) => e.url).map((e) => e.url)
     );
+  }
+
+  async function handleAIEnhance(index: number) {
+    const entry = images[index];
+    let file = entry.file;
+
+    if (!file && entry.url) {
+      try {
+        const res = await fetch(entry.url);
+        const blob = await res.blob();
+        file = new File(
+          [blob],
+          `image-${index}.${blob.type.split("/")[1] || "png"}`,
+          { type: blob.type }
+        );
+      } catch {
+        toast.error("Failed to load image for AI enhancement");
+        return;
+      }
+    }
+
+    if (!file) return;
+
+    setCompareDialog({
+      open: true,
+      imageIndex: index,
+      originalSrc: entry.preview || entry.url,
+      file,
+    });
+  }
+
+  function handleApproveAI(enhancedFile: File, enhancedSrc: string) {
+    if (!compareDialog) return;
+    const { imageIndex } = compareDialog;
+
+    setImages((prev) =>
+      prev.map((entry, i) =>
+        i === imageIndex
+          ? {
+              url: "",
+              file: enhancedFile,
+              preview: enhancedSrc,
+              aiEnhanced: true,
+            }
+          : entry
+      )
+    );
+    setCompareDialog(null);
   }
 
   async function uploadPendingImages(): Promise<string[]> {
@@ -698,6 +754,22 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
                         >
                           <Trash2 className="size-3.5" />
                         </button>
+
+                        {!entry.aiEnhanced && (
+                          <button
+                            type="button"
+                            onClick={() => handleAIEnhance(index)}
+                            className="absolute left-2 top-2 rounded-full bg-amber-500 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                          >
+                            <Sparkles className="size-3.5" />
+                          </button>
+                        )}
+
+                        {entry.aiEnhanced && (
+                          <span className="absolute left-2 top-2 rounded bg-amber-500 px-1.5 py-0.5 text-xs font-medium text-white">
+                            AI
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -998,6 +1070,17 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
           </Button>
         </div>
       </form>
+
+      {compareDialog && (
+        <AIImageCompareDialog
+          open={compareDialog.open}
+          onOpenChange={(open) => !open && setCompareDialog(null)}
+          originalSrc={compareDialog.originalSrc}
+          file={compareDialog.file}
+          onApprove={handleApproveAI}
+          onReject={() => setCompareDialog(null)}
+        />
+      )}
     </Form>
   );
 }
