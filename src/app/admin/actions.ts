@@ -175,8 +175,7 @@ export async function deleteProduct(id: string) {
     return { error: error.message };
   }
 
-  revalidatePath("/admin/products");
-  revalidatePath("/products");
+  revalidatePath("/", "layout");
   return { success: true };
 }
 

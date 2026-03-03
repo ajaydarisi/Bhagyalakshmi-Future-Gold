@@ -34,13 +34,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Eye, EyeOff, Loader2, LogOut, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, LogOut, Pencil, Check, X, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { changePassword, deleteMyAccount } from "./actions";
 
 function ChangePasswordCard() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -76,6 +77,7 @@ function ChangePasswordCard() {
 
       toast.success(t("successToast"));
       form.reset();
+      setIsEditing(false);
     } catch {
       toast.error(t("errorToast"));
     } finally {
@@ -83,11 +85,55 @@ function ChangePasswordCard() {
     }
   }
 
+  function handleCancel() {
+    form.reset();
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+    setIsEditing(false);
+  }
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{t("title")}</CardTitle>
+        {isEditing ? (
+          <div className="flex gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleCancel}
+              disabled={isLoading}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={form.handleSubmit(onSubmit)}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsEditing(true)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
       </CardHeader>
+      {isEditing && (
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -103,6 +149,7 @@ function ChangePasswordCard() {
                         type={showCurrentPassword ? "text" : "password"}
                         placeholder={t("currentPasswordPlaceholder")}
                         className="pr-10"
+                        disabled={!isEditing}
                         {...field}
                       />
                       <button
@@ -131,6 +178,7 @@ function ChangePasswordCard() {
                         type={showNewPassword ? "text" : "password"}
                         placeholder={t("newPasswordPlaceholder")}
                         className="pr-10"
+                        disabled={!isEditing}
                         {...field}
                       />
                       <button
@@ -159,6 +207,7 @@ function ChangePasswordCard() {
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder={t("confirmPlaceholder")}
                         className="pr-10"
+                        disabled={!isEditing}
                         {...field}
                       />
                       <button
@@ -175,19 +224,17 @@ function ChangePasswordCard() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t("submit")}
-            </Button>
           </form>
         </Form>
       </CardContent>
+      )}
     </Card>
   );
 }
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const { profile, user, isLoading: isAuthLoading } = useAuth();
   const t = useTranslations("account.profile");
 
@@ -216,8 +263,14 @@ export default function ProfilePage() {
       toast.error(t("updateError"));
     } else {
       toast.success(t("updateSuccess"));
+      setIsEditing(false);
     }
     setIsLoading(false);
+  }
+
+  function handleCancel() {
+    form.reset();
+    setIsEditing(false);
   }
 
   if (isAuthLoading) {
@@ -231,8 +284,43 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{t("title")}</CardTitle>
+          {isEditing ? (
+            <div className="flex gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleCancel}
+                disabled={isLoading}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsEditing(true)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -252,7 +340,7 @@ export default function ProfilePage() {
                   <FormItem>
                     <FormLabel>{t("fullName")}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t("fullNamePlaceholder")} {...field} />
+                      <Input placeholder={t("fullNamePlaceholder")} disabled={!isEditing} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -266,17 +354,12 @@ export default function ProfilePage() {
                   <FormItem>
                     <FormLabel>{t("phone")}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t("phonePlaceholder")} {...field} />
+                      <Input placeholder={t("phonePlaceholder")} disabled={!isEditing} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t("save")}
-              </Button>
             </form>
           </Form>
         </CardContent>

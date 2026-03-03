@@ -36,20 +36,32 @@ function applyFilters(query: any, params: FetchProductsParams) {
   if (type === "sale") query = query.eq("is_sale", true);
   else if (type === "rental") query = query.eq("is_rental", true);
   if (type === "rental") {
-    if (minPrice > 0) query = query.gte("rental_price", minPrice);
-    if (maxPrice > 0) query = query.lte("rental_price", maxPrice);
+    if (minPrice > 0)
+      query = query.or(
+        `and(rental_discount_price.not.is.null,rental_discount_price.gte.${minPrice}),and(rental_discount_price.is.null,rental_price.gte.${minPrice})`
+      );
+    if (maxPrice > 0)
+      query = query.or(
+        `and(rental_discount_price.not.is.null,rental_discount_price.lte.${maxPrice}),and(rental_discount_price.is.null,rental_price.lte.${maxPrice})`
+      );
   } else if (type === "sale") {
-    if (minPrice > 0) query = query.gte("price", minPrice);
-    if (maxPrice > 0) query = query.lte("price", maxPrice);
+    if (minPrice > 0)
+      query = query.or(
+        `and(discount_price.not.is.null,discount_price.gte.${minPrice}),and(discount_price.is.null,price.gte.${minPrice})`
+      );
+    if (maxPrice > 0)
+      query = query.or(
+        `and(discount_price.not.is.null,discount_price.lte.${maxPrice}),and(discount_price.is.null,price.lte.${maxPrice})`
+      );
   } else {
     if (minPrice > 0) {
       query = query.or(
-        `and(is_rental.eq.true,rental_price.gte.${minPrice}),and(is_rental.eq.false,price.gte.${minPrice})`
+        `and(is_rental.eq.true,rental_discount_price.not.is.null,rental_discount_price.gte.${minPrice}),and(is_rental.eq.true,rental_discount_price.is.null,rental_price.gte.${minPrice}),and(is_rental.eq.false,discount_price.not.is.null,discount_price.gte.${minPrice}),and(is_rental.eq.false,discount_price.is.null,price.gte.${minPrice})`
       );
     }
     if (maxPrice > 0) {
       query = query.or(
-        `and(is_rental.eq.true,rental_price.lte.${maxPrice}),and(is_rental.eq.false,price.lte.${maxPrice})`
+        `and(is_rental.eq.true,rental_discount_price.not.is.null,rental_discount_price.lte.${maxPrice}),and(is_rental.eq.true,rental_discount_price.is.null,rental_price.lte.${maxPrice}),and(is_rental.eq.false,discount_price.not.is.null,discount_price.lte.${maxPrice}),and(is_rental.eq.false,discount_price.is.null,price.lte.${maxPrice})`
       );
     }
   }

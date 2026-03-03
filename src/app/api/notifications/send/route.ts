@@ -110,19 +110,24 @@ export async function POST(request: Request) {
         sentCount = response.successCount;
         failedCount = response.failureCount;
 
-        // Deactivate stale tokens
-        response.responses.forEach((resp, idx) => {
-          if (
-            resp.error?.code ===
-            "messaging/registration-token-not-registered"
-          ) {
-            admin
-              .from("device_tokens")
-              .update({ is_active: false })
-              .eq("token", tokens[idx])
-              .then(() => {});
-          }
-        });
+        // Collect and deactivate stale tokens
+        const staleTokens = response.responses
+          .map((resp, idx) =>
+            resp.error?.code === "messaging/registration-token-not-registered"
+              ? tokens[idx]
+              : null
+          )
+          .filter(Boolean) as string[];
+
+        if (staleTokens.length > 0) {
+          await admin
+            .from("device_tokens")
+            .update({ is_active: false })
+            .in("token", staleTokens);
+
+          // Don't count stale token failures as real failures
+          failedCount -= staleTokens.length;
+        }
       }
     }
 
