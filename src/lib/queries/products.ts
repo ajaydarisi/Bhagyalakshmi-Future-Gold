@@ -53,7 +53,9 @@ function applyFilters(query: any, params: FetchProductsParams) {
       );
     }
   }
-  if (search) query = query.ilike("name", `%${search}%`);
+  if (search) {
+    query = query.or(`name.ilike.%${search}%,name_telugu.ilike.%${search}%`);
+  }
 
   return query;
 }

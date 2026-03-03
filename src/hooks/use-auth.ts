@@ -44,25 +44,9 @@ export function useAuthProvider(): AuthContextType {
   }, []);
 
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        }
-      } catch {
-        setUser(null);
-        setProfile(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initAuth();
-
+    // onAuthStateChange fires INITIAL_SESSION on first subscription,
+    // so we don't need a separate getSession() call (which would race
+    // for the same Navigator LockManager lock and cause timeouts).
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
@@ -80,23 +64,26 @@ export function useAuthProvider(): AuthContextType {
       }
     });
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        initAuth();
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
     // Re-verify auth when Capacitor app resumes from background
-    // (visibilitychange doesn't reliably fire in native WebViews)
-    const handleAppResume = () => {
-      initAuth();
+    // (visibilitychange doesn't reliably fire in native WebViews).
+    // Use getUser() to force a server-side token refresh.
+    const handleAppResume = async () => {
+      try {
+        const { data: { user: freshUser } } = await supabase.auth.getUser();
+        setUser(freshUser);
+        if (freshUser) {
+          await fetchProfile(freshUser.id);
+        } else {
+          setProfile(null);
+        }
+      } catch {
+        // Silently handle — onAuthStateChange will correct state if needed
+      }
     };
     window.addEventListener("bfg:app-resume", handleAppResume);
 
     return () => {
       subscription.unsubscribe();
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("bfg:app-resume", handleAppResume);
     };
   }, [fetchProfile]);

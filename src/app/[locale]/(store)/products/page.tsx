@@ -47,174 +47,202 @@ const getAllCategories = unstable_cache(
   { revalidate: 300 }
 );
 
-const getProductCount = unstable_cache(
-  async (
-    categoryIds: string[],
-    materials: string[],
-    tags: string[],
-    type: string,
-    minPrice: number,
-    maxPrice: number,
-    search: string
-  ) => {
-    const supabase = createAdminClient();
+async function getProductCount(
+  categoryIds: string[],
+  materials: string[],
+  tags: string[],
+  type: string,
+  minPrice: number,
+  maxPrice: number,
+  search: string
+) {
+  return unstable_cache(
+    async () => {
+      const supabase = createAdminClient();
 
-    let query = supabase
-      .from("products")
-      .select("id", { count: "exact", head: true })
-      .eq("is_active", true);
+      let query = supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true);
 
-    if (categoryIds.length === 1) {
-      query = query.eq("category_id", categoryIds[0]);
-    } else if (categoryIds.length > 1) {
-      query = query.in("category_id", categoryIds);
-    }
-
-    if (materials.length === 1) query = query.eq("material", materials[0]);
-    else if (materials.length > 1) query = query.in("material", materials);
-    if (tags.length > 0) query = query.overlaps("tags", tags);
-    if (type === "sale") query = query.eq("is_sale", true);
-    else if (type === "rental") query = query.eq("is_rental", true);
-    if (type === "rental") {
-      if (minPrice > 0) query = query.gte("rental_price", minPrice);
-      if (maxPrice > 0) query = query.lte("rental_price", maxPrice);
-    } else if (type === "sale") {
-      if (minPrice > 0) query = query.gte("price", minPrice);
-      if (maxPrice > 0) query = query.lte("price", maxPrice);
-    } else {
-      if (minPrice > 0) {
-        query = query.or(
-          `and(is_rental.eq.true,rental_price.gte.${minPrice}),and(is_rental.eq.false,price.gte.${minPrice})`
-        );
+      if (categoryIds.length === 1) {
+        query = query.eq("category_id", categoryIds[0]);
+      } else if (categoryIds.length > 1) {
+        query = query.in("category_id", categoryIds);
       }
-      if (maxPrice > 0) {
-        query = query.or(
-          `and(is_rental.eq.true,rental_price.lte.${maxPrice}),and(is_rental.eq.false,price.lte.${maxPrice})`
-        );
-      }
-    }
-    if (search) query = query.ilike("name", `%${search}%`);
 
-    const { count } = await query;
-    return count;
-  },
-  ["product-count"],
-  { revalidate: 60 }
-);
-
-const getFilteredProducts = unstable_cache(
-  async (
-    categoryIds: string[],
-    materials: string[],
-    tags: string[],
-    type: string,
-    minPrice: number,
-    maxPrice: number,
-    sort: string,
-    page: number,
-    locale: string,
-    search: string
-  ) => {
-    const supabase = createAdminClient();
-
-    let query = supabase
-      .from("products")
-      .select(PRODUCT_LIST_FIELDS)
-      .eq("is_active", true);
-
-    if (categoryIds.length === 1) {
-      query = query.eq("category_id", categoryIds[0]);
-    } else if (categoryIds.length > 1) {
-      query = query.in("category_id", categoryIds);
-    }
-
-    if (materials.length === 1) query = query.eq("material", materials[0]);
-    else if (materials.length > 1) query = query.in("material", materials);
-    if (tags.length > 0) query = query.overlaps("tags", tags);
-    if (type === "sale") query = query.eq("is_sale", true);
-    else if (type === "rental") query = query.eq("is_rental", true);
-    const priceCol = type === "rental" ? "rental_price" : "price";
-    if (type === "rental") {
-      if (minPrice > 0) query = query.gte("rental_price", minPrice);
-      if (maxPrice > 0) query = query.lte("rental_price", maxPrice);
-    } else if (type === "sale") {
-      if (minPrice > 0) query = query.gte("price", minPrice);
-      if (maxPrice > 0) query = query.lte("price", maxPrice);
-    } else {
-      if (minPrice > 0) {
-        query = query.or(
-          `and(is_rental.eq.true,rental_price.gte.${minPrice}),and(is_rental.eq.false,price.gte.${minPrice})`
-        );
-      }
-      if (maxPrice > 0) {
-        query = query.or(
-          `and(is_rental.eq.true,rental_price.lte.${maxPrice}),and(is_rental.eq.false,price.lte.${maxPrice})`
-        );
-      }
-    }
-    if (search) query = query.ilike("name", `%${search}%`);
-
-    const isDiscountSort = sort === "discount";
-    const isPriceSort = sort === "price-asc" || sort === "price-desc";
-
-    switch (sort) {
-      case "price-asc":
-      case "price-desc":
-        // Sort in-app by effective displayed price (considers discounts)
-        break;
-      case "name-asc":
-        query = query.order(locale === "te" ? "name_telugu" : "name", { ascending: true });
-        break;
-      case "discount":
-        // Fetches all products, sorts by discount percentage in-app below
-        break;
-      default:
-        query = query.order("created_at", { ascending: false });
-    }
-
-    const from = (page - 1) * PRODUCTS_PER_PAGE;
-    const to = from + PRODUCTS_PER_PAGE - 1;
-
-    if (!isDiscountSort && !isPriceSort) {
-      query = query.range(from, to);
-    }
-
-    const { data } = await query;
-
-    if (isPriceSort && data) {
-      const getEffectivePrice = (p: (typeof data)[number]) => {
-        if (p.is_rental && p.rental_price) {
-          return p.rental_discount_price ?? p.rental_price;
+      if (materials.length === 1) query = query.eq("material", materials[0]);
+      else if (materials.length > 1) query = query.in("material", materials);
+      if (tags.length > 0) query = query.overlaps("tags", tags);
+      if (type === "sale") query = query.eq("is_sale", true);
+      else if (type === "rental") query = query.eq("is_rental", true);
+      if (type === "rental") {
+        if (minPrice > 0) query = query.gte("rental_price", minPrice);
+        if (maxPrice > 0) query = query.lte("rental_price", maxPrice);
+      } else if (type === "sale") {
+        if (minPrice > 0) query = query.gte("price", minPrice);
+        if (maxPrice > 0) query = query.lte("price", maxPrice);
+      } else {
+        if (minPrice > 0) {
+          query = query.or(
+            `and(is_rental.eq.true,rental_price.gte.${minPrice}),and(is_rental.eq.false,price.gte.${minPrice})`
+          );
         }
-        return p.discount_price ?? p.price;
-      };
-      const asc = sort === "price-asc";
-      data.sort((a, b) => asc
-        ? getEffectivePrice(a) - getEffectivePrice(b)
-        : getEffectivePrice(b) - getEffectivePrice(a)
-      );
-      return data.slice(from, to + 1);
-    }
+        if (maxPrice > 0) {
+          query = query.or(
+            `and(is_rental.eq.true,rental_price.lte.${maxPrice}),and(is_rental.eq.false,price.lte.${maxPrice})`
+          );
+        }
+      }
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,name_telugu.ilike.%${search}%`);
+      }
 
-    if (isDiscountSort && data) {
-      const getDiscountPct = (p: (typeof data)[number]) => {
-        if (p.is_sale) {
+      const { count, error } = await query;
+      if (error) console.error("[getProductCount] Supabase error:", error);
+      return count;
+    },
+    [
+      "product-count",
+      categoryIds.join(","),
+      materials.join(","),
+      tags.join(","),
+      type,
+      String(minPrice),
+      String(maxPrice),
+      search,
+    ],
+    { revalidate: 60 }
+  )();
+}
+
+async function getFilteredProducts(
+  categoryIds: string[],
+  materials: string[],
+  tags: string[],
+  type: string,
+  minPrice: number,
+  maxPrice: number,
+  sort: string,
+  page: number,
+  locale: string,
+  search: string
+) {
+  return unstable_cache(
+    async () => {
+      const supabase = createAdminClient();
+
+      let query = supabase
+        .from("products")
+        .select(PRODUCT_LIST_FIELDS)
+        .eq("is_active", true);
+
+      if (categoryIds.length === 1) {
+        query = query.eq("category_id", categoryIds[0]);
+      } else if (categoryIds.length > 1) {
+        query = query.in("category_id", categoryIds);
+      }
+
+      if (materials.length === 1) query = query.eq("material", materials[0]);
+      else if (materials.length > 1) query = query.in("material", materials);
+      if (tags.length > 0) query = query.overlaps("tags", tags);
+      if (type === "sale") query = query.eq("is_sale", true);
+      else if (type === "rental") query = query.eq("is_rental", true);
+      if (type === "rental") {
+        if (minPrice > 0) query = query.gte("rental_price", minPrice);
+        if (maxPrice > 0) query = query.lte("rental_price", maxPrice);
+      } else if (type === "sale") {
+        if (minPrice > 0) query = query.gte("price", minPrice);
+        if (maxPrice > 0) query = query.lte("price", maxPrice);
+      } else {
+        if (minPrice > 0) {
+          query = query.or(
+            `and(is_rental.eq.true,rental_price.gte.${minPrice}),and(is_rental.eq.false,price.gte.${minPrice})`
+          );
+        }
+        if (maxPrice > 0) {
+          query = query.or(
+            `and(is_rental.eq.true,rental_price.lte.${maxPrice}),and(is_rental.eq.false,price.lte.${maxPrice})`
+          );
+        }
+      }
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,name_telugu.ilike.%${search}%`);
+      }
+
+      const isDiscountSort = sort === "discount";
+      const isPriceSort = sort === "price-asc" || sort === "price-desc";
+
+      switch (sort) {
+        case "price-asc":
+        case "price-desc":
+          break;
+        case "name-asc":
+          query = query.order(locale === "te" ? "name_telugu" : "name", { ascending: true });
+          break;
+        case "discount":
+          break;
+        default:
+          query = query.order("created_at", { ascending: false });
+      }
+
+      const from = (page - 1) * PRODUCTS_PER_PAGE;
+      const to = from + PRODUCTS_PER_PAGE - 1;
+
+      if (!isDiscountSort && !isPriceSort) {
+        query = query.range(from, to);
+      }
+
+      const { data, error } = await query;
+      if (error) console.error("[getFilteredProducts] Supabase error:", error);
+
+      if (isPriceSort && data) {
+        const getEffectivePrice = (p: (typeof data)[number]) => {
+          if (p.is_rental && p.rental_price) {
+            return p.rental_discount_price ?? p.rental_price;
+          }
+          return p.discount_price ?? p.price;
+        };
+        const asc = sort === "price-asc";
+        data.sort((a, b) => asc
+          ? getEffectivePrice(a) - getEffectivePrice(b)
+          : getEffectivePrice(b) - getEffectivePrice(a)
+        );
+        return data.slice(from, to + 1);
+      }
+
+      if (isDiscountSort && data) {
+        const getDiscountPct = (p: (typeof data)[number]) => {
+          if (p.is_sale) {
+            return calculateDiscount(p.price, p.discount_price) ?? -1;
+          }
+          if (p.is_rental && p.rental_price) {
+            return calculateDiscount(p.rental_price, p.rental_discount_price) ?? -1;
+          }
           return calculateDiscount(p.price, p.discount_price) ?? -1;
-        }
-        if (p.is_rental && p.rental_price) {
-          return calculateDiscount(p.rental_price, p.rental_discount_price) ?? -1;
-        }
-        return calculateDiscount(p.price, p.discount_price) ?? -1;
-      };
-      data.sort((a, b) => getDiscountPct(b) - getDiscountPct(a));
-      return data.slice(from, to + 1);
-    }
+        };
+        data.sort((a, b) => getDiscountPct(b) - getDiscountPct(a));
+        return data.slice(from, to + 1);
+      }
 
-    return data;
-  },
-  ["filtered-products"],
-  { revalidate: 60 }
-);
+      return data;
+    },
+    [
+      "filtered-products",
+      locale,
+      sort,
+      String(page),
+      type,
+      search,
+      categoryIds.join(","),
+      materials.join(","),
+      tags.join(","),
+      String(minPrice),
+      String(maxPrice),
+    ],
+    { revalidate: 60 }
+  )();
+}
 
 export async function generateMetadata({
   searchParams,

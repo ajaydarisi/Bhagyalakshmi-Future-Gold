@@ -11,7 +11,7 @@ import { Pagination } from "@/components/shared/pagination";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PRODUCTS_PER_PAGE } from "@/lib/constants";
 import { Search } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { ProductWithCategory } from "@/types/product";
 
 interface ProductsContentProps {
@@ -28,6 +28,7 @@ export function ProductsContent({
   page,
 }: ProductsContentProps) {
   const t = useTranslations("products.listing");
+  const locale = useLocale();
 
   const { data } = useQuery({
     queryKey: queryKeys.products.list(
@@ -49,7 +50,7 @@ export function ProductsContent({
         title={t("noProducts")}
         description={t("noProductsDesc")}
         actionLabel={t("clearFilters")}
-        actionHref="/products"
+        actionHref={locale === "en" ? "/products" : `/${locale}/products`}
       />
     );
   }

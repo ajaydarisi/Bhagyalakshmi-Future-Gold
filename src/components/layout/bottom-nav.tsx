@@ -2,11 +2,11 @@
 
 import { Link, usePathname } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
-import { Home, LayoutGrid, Search, Heart, User } from "lucide-react";
+import { Home, LayoutGrid, Heart, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useAuth } from "@/hooks/use-auth";
-import { ProductSearch } from "@/components/products/product-search";
+// import { ProductSearch } from "@/components/products/product-search";
 import { ROUTES } from "@/lib/constants";
 import { hapticImpact } from "@/lib/haptics";
 import { useState, useCallback } from "react";
@@ -21,7 +21,7 @@ export function BottomNav() {
   const t = useTranslations("nav");
   const { items: wishlistItems } = useWishlist();
   const { user } = useAuth();
-  const [searchOpen, setSearchOpen] = useState(false);
+  // const [searchOpen, setSearchOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const handlePrefetch = useCallback(
@@ -42,7 +42,7 @@ export function BottomNav() {
   const tabs = [
     { key: "home", href: ROUTES.home, icon: Home, label: t("home") },
     { key: "shop", href: ROUTES.products, icon: LayoutGrid, label: t("shop") },
-    { key: "search", href: null, icon: Search, label: t("search") },
+    // { key: "search", href: null, icon: Search, label: t("search") },
     {
       key: "wishlist",
       href: ROUTES.wishlist,
@@ -71,22 +71,6 @@ export function BottomNav() {
           {tabs.map((tab) => {
             const active = isActive(tab.key, tab.href);
             const Icon = tab.icon;
-
-            if (tab.key === "search") {
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => {
-                    hapticImpact("light");
-                    setSearchOpen(true);
-                  }}
-                  className="flex flex-col items-center justify-center gap-0.5 px-3 py-1 text-muted-foreground"
-                >
-                  <Icon className="h-5 w-5" strokeWidth={1.5} />
-                  <span className="text-[10px]">{tab.label}</span>
-                </button>
-              );
-            }
 
             return (
               <Link
@@ -118,7 +102,7 @@ export function BottomNav() {
         </div>
       </nav>
 
-      <ProductSearch open={searchOpen} onOpenChange={setSearchOpen} />
+      {/* <ProductSearch open={searchOpen} onOpenChange={setSearchOpen} /> */}
     </>
   );
 }

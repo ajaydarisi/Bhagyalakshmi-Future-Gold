@@ -5,7 +5,6 @@ import { useRouter } from "@/i18n/routing";
 import { useTranslations, useLocale } from "next-intl";
 import { useState } from "react";
 import {
-  Search,
   ShoppingBag,
   Heart,
   User,
@@ -33,7 +32,7 @@ import {
 import { MobileNav } from "./mobile-nav";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
-import { ProductSearch } from "@/components/products/product-search";
+// import { ProductSearch } from "@/components/products/product-search";
 import { useTheme } from "next-themes";
 import { locales } from "@/i18n/config";
 import { useAuth } from "@/hooks/use-auth";
@@ -58,7 +57,7 @@ export function Header({ categories }: { categories: NavCategory[] }) {
   const locale = useLocale();
   const { resolvedTheme, setTheme } = useTheme();
   const themeToggle = () => setTheme(resolvedTheme === "dark" ? "light" : "dark");
-  const [searchOpen, setSearchOpen] = useState(false);
+  // const [searchOpen, setSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [langDialogOpen, setLangDialogOpen] = useState(false);
 
@@ -172,14 +171,14 @@ export function Header({ categories }: { categories: NavCategory[] }) {
             <div className="hidden md:flex items-center gap-2">
               <LanguageSwitcher />
               <ThemeToggle />
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setSearchOpen(true)}
                 aria-label={t("search")}
               >
                 <Search className="h-5 w-5" strokeWidth={1.5} />
-              </Button>
+              </Button> */}
 
               <Button variant="ghost" size="icon" asChild aria-label={t("wishlist")}>
                 <Link href={ROUTES.wishlist} className="relative">
@@ -281,7 +280,7 @@ export function Header({ categories }: { categories: NavCategory[] }) {
         </div>
       </header>
 
-      <ProductSearch open={searchOpen} onOpenChange={setSearchOpen} />
+      {/* <ProductSearch open={searchOpen} onOpenChange={setSearchOpen} /> */}
       <Dialog open={langDialogOpen} onOpenChange={setLangDialogOpen}>
         <DialogContent className="sm:max-w-xs">
           <DialogHeader>
@@ -311,7 +310,7 @@ export function Header({ categories }: { categories: NavCategory[] }) {
         isAdmin={isAdmin}
         isLoading={isLoading}
         wishlistCount={wishlistItems.length}
-        onSearchOpen={() => setSearchOpen(true)}
+        onSearchOpen={() => {}}
         onSignOut={handleSignOut}
         onLangDialogOpen={() => setLangDialogOpen(true)}
         theme={resolvedTheme}
