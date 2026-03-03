@@ -4,19 +4,22 @@ import { Header } from "@/components/layout/header";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { getTopCategories } from "@/lib/queries";
 import Image from "next/image";
 
-export default function AuthLayout({
+export default async function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const categories = await getTopCategories();
+
   return (
     <QueryProvider>
       <CartProvider>
         <WishlistProvider>
           <div className="flex min-h-screen flex-col bg-muted/50">
-            <Header />
+            <Header categories={categories} />
             <div className="flex flex-1 flex-col items-center justify-center px-4">
               <Link
                 href="/"

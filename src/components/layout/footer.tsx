@@ -1,7 +1,9 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { BUSINESS_INFO, CATEGORIES, IS_ONLINE, ROUTES } from "@/lib/constants";
+import { BUSINESS_INFO, IS_ONLINE, ROUTES } from "@/lib/constants";
+import { getCategoryName } from "@/lib/i18n-helpers";
+import type { NavCategory } from "@/lib/queries";
 import { createClient } from "@/lib/supabase/client";
 import { FeedbackDialog } from "@/components/feedback/feedback-form";
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
@@ -12,12 +14,11 @@ import { toast } from "sonner";
 
 const supabase = createClient();
 
-export function Footer() {
+export function Footer({ categories }: { categories: NavCategory[] }) {
   const { isLoggedIn } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations("footer");
-  const tc = useTranslations("constants");
   const tCommon = useTranslations();
   const locale = useLocale();
 
@@ -69,13 +70,13 @@ export function Footer() {
               {t("categories")}
             </h3>
             <ul className="space-y-2.5">
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <li key={cat.slug}>
                   <Link
                     href={`${ROUTES.products}?category=${cat.slug}`}
                     className="text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {tc(`categories.${cat.slug}`)}
+                    {getCategoryName(cat, locale)}
                   </Link>
                 </li>
               ))}

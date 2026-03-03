@@ -18,6 +18,7 @@ import { Link } from "@/i18n/routing";
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "next-intl/server";
 import { getCategoryName } from "@/lib/i18n-helpers";
+import { getTopCategories } from "@/lib/queries";
 import dynamic from "next/dynamic";
 
 const Confetti = dynamic(() =>
@@ -57,21 +58,6 @@ const getNewProducts = unstable_cache(
   ["new-products"],
   { revalidate: 300 }
 );
-
-const getTopCategories = unstable_cache(
-  async () => {
-    const supabase = createAdminClient();
-    const { data } = await supabase
-      .from("categories")
-      .select("name, name_telugu, slug")
-      .is("parent_id", null)
-      .order("sort_order");
-    return data;
-  },
-  ["top-categories"],
-  { revalidate: 300 }
-);
-
 
 export default async function HomePage() {
   const [featuredProducts, newProducts, topCategories] = await Promise.all([

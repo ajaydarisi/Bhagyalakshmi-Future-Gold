@@ -40,14 +40,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { createClient } from "@/lib/supabase/client";
-import { CATEGORIES, IS_ONLINE, ROUTES } from "@/lib/constants";
+import { IS_ONLINE, ROUTES } from "@/lib/constants";
+import { getCategoryName } from "@/lib/i18n-helpers";
+import type { NavCategory } from "@/lib/queries";
 import { toast } from "sonner";
 import Image from "next/image";
 import NextLink from "next/link";
 
-export function Header() {
+export function Header({ categories }: { categories: NavCategory[] }) {
   const t = useTranslations("nav");
-  const tc = useTranslations("constants");
   const tCommon = useTranslations();
   const { user, profile, isAdmin, isLoading } = useAuth();
   const { itemCount } = useCart();
@@ -122,10 +123,10 @@ export function Header() {
                 {t("categories")}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" className="w-56">
-                {CATEGORIES.map((cat) => (
+                {categories.map((cat) => (
                   <DropdownMenuItem key={cat.slug} asChild>
                     <Link href={`${ROUTES.products}?category=${cat.slug}`}>
-                      {tc(`categories.${cat.slug}`)}
+                      {getCategoryName(cat, locale)}
                     </Link>
                   </DropdownMenuItem>
                 ))}
@@ -303,6 +304,7 @@ export function Header() {
       <MobileNav
         open={mobileNavOpen}
         onOpenChange={setMobileNavOpen}
+        categories={categories}
         itemCount={itemCount}
         user={user}
         profile={profile}

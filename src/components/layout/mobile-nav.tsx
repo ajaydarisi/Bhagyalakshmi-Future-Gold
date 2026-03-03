@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/routing";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   ShoppingBag,
   Search,
@@ -23,13 +23,16 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { CATEGORIES, IS_ONLINE, ROUTES } from "@/lib/constants";
+import { IS_ONLINE, ROUTES } from "@/lib/constants";
+import { getCategoryName } from "@/lib/i18n-helpers";
+import type { NavCategory } from "@/lib/queries";
 import Image from "next/image";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface MobileNavProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  categories: NavCategory[];
   itemCount: number;
   user: SupabaseUser | null;
   profile: { full_name: string | null } | null;
@@ -47,6 +50,7 @@ interface MobileNavProps {
 export function MobileNav({
   open,
   onOpenChange,
+  categories,
   itemCount,
   user,
   profile,
@@ -61,8 +65,8 @@ export function MobileNav({
   pathname,
 }: MobileNavProps) {
   const t = useTranslations("nav");
-  const tc = useTranslations("constants");
   const tCommon = useTranslations();
+  const locale = useLocale();
 
   function close() {
     onOpenChange(false);
@@ -103,14 +107,14 @@ export function MobileNav({
               {t("categories")}
             </h3>
             <div className="flex flex-col gap-1">
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <Link
                   key={cat.slug}
                   href={`${ROUTES.products}?category=${cat.slug}`}
                   onClick={close}
                   className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
                 >
-                  {tc(`categories.${cat.slug}`)}
+                  {getCategoryName(cat, locale)}
                 </Link>
               ))}
             </div>

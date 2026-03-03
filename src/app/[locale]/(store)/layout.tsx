@@ -12,14 +12,18 @@ import { NetworkProvider } from "@/hooks/use-network";
 import { QueryProvider } from "@/components/providers/query-provider";
 
 import { createClient } from "@/lib/supabase/server";
+import { getTopCategories } from "@/lib/queries";
 
 export default async function StoreLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const [supabaseClient, categories] = await Promise.all([
+    createClient(),
+    getTopCategories(),
+  ]);
+  const { data: { user } } = await supabaseClient.auth.getUser();
 
   return (
     <QueryProvider>
@@ -33,9 +37,9 @@ export default async function StoreLayout({
                 <ScrollToTop />
               </Suspense>
               <OfflineBanner />
-              <Header />
+              <Header categories={categories} />
               <main className="flex-1 pb-20 lg:pb-0">{children}</main>
-              <Footer />
+              <Footer categories={categories} />
               <BottomNav />
             </div>
           </WishlistProvider>
