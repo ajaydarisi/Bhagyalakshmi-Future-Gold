@@ -335,6 +335,7 @@ export default async function AboutPage() {
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
                   title="Bhagyalakshmi Future Gold location on Google Maps"
                 />
               ) : (

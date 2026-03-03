@@ -59,9 +59,15 @@ export async function updateSession(
   // Use getUser() to verify the token with Supabase server.
   // getSession() only reads from cookies without verification, which can
   // cause stale/expired sessions to appear valid and break auth flows.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Wrapped in try-catch so network failures or Supabase downtime degrade
+  // gracefully (guest state) instead of crashing the entire request with 500.
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // Network error or Supabase unreachable — treat as unauthenticated
+  }
 
   const { pathname } = request.nextUrl;
   const strippedPath = stripLocale(pathname);

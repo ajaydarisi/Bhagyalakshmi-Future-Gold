@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -236,6 +236,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { profile, user, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
   const t = useTranslations("account.profile");
 
   const form = useForm<ProfileUpdateInput>({
@@ -273,7 +274,14 @@ export default function ProfilePage() {
     setIsEditing(false);
   }
 
-  if (isAuthLoading) {
+  // Redirect to login if auth resolved but no user (session fully expired)
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      router.replace("/login?redirect=/account");
+    }
+  }, [isAuthLoading, user, router]);
+
+  if (isAuthLoading || !user) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
