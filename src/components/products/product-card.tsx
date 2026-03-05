@@ -54,9 +54,6 @@ export function ProductCard({ product }: ProductCardProps) {
             ))}
           </div>
         )}
-        <div className="absolute right-2 top-2 z-10">
-          <WishlistButton productId={product.id} variant="icon" />
-        </div>
         {IS_ONLINE && product.stock === 0 && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
             <span className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
@@ -66,11 +63,14 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
       </div>
       <div className="space-y-1">
-        {product.category && (
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {getCategoryName(product.category, locale)}
-          </p>
-        )}
+        <div className="flex items-center justify-between">
+          {product.category && (
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {getCategoryName(product.category, locale)}
+            </p>
+          )}
+          <WishlistButton productId={product.id} variant="icon" />
+        </div>
         <h3 className="font-sans text-sm font-medium leading-snug group-hover:text-primary transition-colors">
           {displayName}
         </h3>
