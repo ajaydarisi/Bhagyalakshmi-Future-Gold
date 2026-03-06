@@ -138,6 +138,8 @@ export function ProductDetailContent({ initialProduct }: ProductDetailContentPro
             <CheckAvailabilityButton
               productName={displayName}
               productSlug={p.slug}
+              isRental={p.is_rental}
+              maxRentalDays={p.max_rental_days}
             />
           )}
         </div>

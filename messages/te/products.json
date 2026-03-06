@@ -18,6 +18,13 @@
     "errorToast": "కార్ట్‌కు జోడించడం విఫలమైంది"
   },
   "whatsappMessage": "హాయ్, ఇది అందుబాటులో ఉందా?",
+  "whatsappRentalMessage": "హాయ్, ఇది అద్దెకు అందుబాటులో ఉందా?",
+  "rentalDateTitle": "అద్దె తేదీలను ఎంచుకోండి",
+  "rentalStartDate": "ప్రారంభ తేదీ",
+  "rentalEndDate": "ముగింపు తేదీ",
+  "sendOnWhatsapp": "WhatsApp లో పంపండి",
+  "fromDate": "నుండి",
+  "toDate": "వరకు",
   "detail": {
     "forSale": "అమ్మకానికి",
     "forRent": "అద్దెకు",

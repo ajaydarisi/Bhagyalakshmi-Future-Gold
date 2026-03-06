@@ -114,6 +114,8 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
                     productName={displayName}
                     productSlug={product.slug}
                     size="sm"
+                    isRental={product.is_rental}
+                    maxRentalDays={product.max_rental_days}
                   />
                 )}
                 <Button

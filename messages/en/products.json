@@ -18,6 +18,13 @@
     "errorToast": "Failed to add to cart"
   },
   "whatsappMessage": "Hi, is this available?",
+  "whatsappRentalMessage": "Hi, is this available for rent?",
+  "rentalDateTitle": "Select Rental Dates",
+  "rentalStartDate": "Start Date",
+  "rentalEndDate": "End Date",
+  "sendOnWhatsapp": "Send on WhatsApp",
+  "fromDate": "From",
+  "toDate": "To",
   "detail": {
     "forSale": "For Sale",
     "forRent": "For Rent",
