@@ -83,14 +83,24 @@ export function useAuthProvider(): AuthContextType {
       if (!authResolved.current) {
         setIsLoading(false);
       }
-    }, 5_000);
+    }, 3_000);
 
-    // Re-verify auth when Capacitor app resumes from background
-    // (visibilitychange doesn't reliably fire in native WebViews).
-    // Use getUser() to force a server-side token refresh.
-    // Race against a 10s timeout to prevent hanging if LockManager is stuck.
+    // Re-verify auth when Capacitor app resumes from background.
+    // Do NOT set isLoading=true here — the user already sees valid auth
+    // state from the previous session. Refresh silently in the background
+    // and transition directly (e.g. signed-in -> signed-out) if needed.
+    // This prevents the loading skeleton from getting stuck forever when
+    // the LockManager hangs in Capacitor WebViews after long background.
+    const resumeGeneration = { current: 0 };
+
     const handleAppResume = async () => {
-      setIsLoading(true);
+      const gen = ++resumeGeneration.current;
+
+      // Safety: guarantee isLoading=false even if everything below hangs
+      const safetyTimer = setTimeout(() => {
+        if (resumeGeneration.current === gen) setIsLoading(false);
+      }, 8_000);
+
       try {
         const result = await Promise.race([
           supabase.auth.getUser(),
@@ -98,6 +108,9 @@ export function useAuthProvider(): AuthContextType {
             setTimeout(() => resolve({ data: { user: null } }), 10_000)
           ),
         ]);
+        // Discard result if a newer resume has started
+        if (resumeGeneration.current !== gen) return;
+
         const freshUser = result.data.user;
         setUser(freshUser);
         if (freshUser) {
@@ -106,9 +119,10 @@ export function useAuthProvider(): AuthContextType {
           setProfile(null);
         }
       } catch {
-        // Silently handle — onAuthStateChange will correct state if needed
+        // onAuthStateChange will correct state if needed
       } finally {
-        setIsLoading(false);
+        clearTimeout(safetyTimer);
+        if (resumeGeneration.current === gen) setIsLoading(false);
       }
     };
     window.addEventListener("bfg:app-resume", handleAppResume);
