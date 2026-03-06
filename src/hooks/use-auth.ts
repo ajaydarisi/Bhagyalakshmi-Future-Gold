@@ -35,15 +35,25 @@ export function useAuthProvider(): AuthContextType {
   const safetyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    try {
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-      setProfile(data);
-    } catch {
-      setProfile(null);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", userId)
+          .single();
+        if (error) throw error;
+        setProfile(data);
+        return;
+      } catch (err) {
+        if (attempt === 0) {
+          // Retry once after a short delay (network hiccup, cold start, etc.)
+          await new Promise((r) => setTimeout(r, 1_000));
+          continue;
+        }
+        console.warn("[auth] Profile fetch failed after retry:", err);
+        setProfile(null);
+      }
     }
   }, []);
 

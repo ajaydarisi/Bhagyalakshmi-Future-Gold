@@ -9,6 +9,7 @@ export default function GoogleAuthCallbackPage() {
   useEffect(() => {
     if (processed.current) return;
     processed.current = true;
+    const controller = new AbortController();
 
     async function handleCallback() {
       // Extract id_token from URL hash fragment (#id_token=...&state=...)
@@ -59,6 +60,7 @@ export default function GoogleAuthCallbackPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id_token: idToken, nonce, next }),
+          signal: controller.signal,
         });
 
         const data = await res.json();
@@ -82,6 +84,8 @@ export default function GoogleAuthCallbackPage() {
     }
 
     handleCallback();
+
+    return () => controller.abort();
   }, []);
 
   return (
