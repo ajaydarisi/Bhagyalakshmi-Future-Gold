@@ -25,7 +25,11 @@ export async function shareProduct(
       const { Share } = await import("@capacitor/share");
       const result = await Share.share({ title, text, url, dialogTitle: title });
       return result.activityType ? "shared" : "dismissed";
-    } catch {
+    } catch (err) {
+      // On Android, dismissing the share sheet throws an error
+      if (err instanceof Error && (err.message?.includes("canceled") || err.message?.includes("dismissed"))) {
+        return "dismissed";
+      }
       return "failed";
     }
   }
