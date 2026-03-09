@@ -5,6 +5,23 @@ import { createClient } from "@/lib/supabase/client";
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import type { Profile } from "@/types/user";
 
+/**
+ * Read the cached Supabase user from localStorage without acquiring the
+ * Navigator LockManager lock.  Used as a fallback when onAuthStateChange
+ * hangs in Capacitor WebViews so the UI can show the correct auth state
+ * instead of defaulting to "signed out".
+ */
+function getCachedUser(): User | null {
+  try {
+    const ref = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname.split(".")[0];
+    const raw = localStorage.getItem(`sb-${ref}-auth-token`);
+    if (!raw) return null;
+    return JSON.parse(raw)?.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
@@ -86,11 +103,18 @@ export function useAuthProvider(): AuthContextType {
       }
     });
 
-    // Safety timeout: if onAuthStateChange hasn't fired within 5 seconds
+    // Safety timeout: if onAuthStateChange hasn't fired within 3 seconds
     // (e.g. Navigator LockManager stuck in Capacitor WebView after long
     // background period), force isLoading = false so the UI never freezes.
+    // Read the cached user from localStorage so the UI shows the correct
+    // auth state instead of defaulting to "signed out".
     safetyTimeoutRef.current = setTimeout(() => {
       if (!authResolved.current) {
+        const cached = getCachedUser();
+        if (cached) {
+          setUser(cached);
+          fetchProfile(cached.id).catch(() => {});
+        }
         setIsLoading(false);
       }
     }, 3_000);
@@ -112,14 +136,19 @@ export function useAuthProvider(): AuthContextType {
       }, 8_000);
 
       try {
+        const TIMEOUT = Symbol("timeout");
         const result = await Promise.race([
           supabase.auth.getUser(),
-          new Promise<{ data: { user: null } }>((resolve) =>
-            setTimeout(() => resolve({ data: { user: null } }), 10_000)
+          new Promise<typeof TIMEOUT>((resolve) =>
+            setTimeout(() => resolve(TIMEOUT), 10_000)
           ),
         ]);
         // Discard result if a newer resume has started
         if (resumeGeneration.current !== gen) return;
+
+        // If getUser() timed out (LockManager hung), keep existing user
+        // state rather than falsely setting user to null.
+        if (typeof result === "symbol") return;
 
         const freshUser = result.data.user;
         setUser(freshUser);

@@ -20,7 +20,7 @@ export function BottomNav() {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const { items: wishlistItems } = useWishlist();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   // const [searchOpen, setSearchOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -52,7 +52,7 @@ export function BottomNav() {
     },
     {
       key: "account",
-      href: user ? ROUTES.account : ROUTES.login,
+      href: authLoading || user ? ROUTES.account : ROUTES.login,
       icon: User,
       label: t("account"),
     },
