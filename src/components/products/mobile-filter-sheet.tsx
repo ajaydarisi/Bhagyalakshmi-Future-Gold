@@ -73,7 +73,7 @@ export function MobileFilterSheet({ categories }: MobileFilterSheetProps) {
       setLoading(true);
       router.push(url);
       setApplying(false);
-    }, 350);
+    }, 250);
   }
 
   function handleClear() {
@@ -89,7 +89,7 @@ export function MobileFilterSheet({ categories }: MobileFilterSheetProps) {
     setTimeout(() => {
       setLoading(true);
       router.push(buildUrl(filtersRef.current));
-    }, 350);
+    }, 250);
   }
 
   return (
