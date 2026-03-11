@@ -373,6 +373,17 @@
   --dir: left;
 }
 
+/* GPU-accelerated sheet animations for smooth Capacitor transitions */
+[data-slot="sheet-content"] {
+  -webkit-transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+}
+
+[data-slot="sheet-overlay"] {
+  -webkit-backface-visibility: hidden;
+}
+
 /* Override Sonner's forced full-width on mobile */
 @media (max-width: 600px) {
   [data-sonner-toaster] {
