@@ -1,47 +1,84 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useRef, useEffect, useCallback } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
 import {
   fetchProducts,
   type FetchProductsParams,
 } from "@/lib/queries/products";
 import { ProductGrid } from "./product-grid";
-import { Pagination } from "@/components/shared/pagination";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PRODUCTS_PER_PAGE } from "@/lib/constants";
-import { Search } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { Search, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { ProductWithCategory } from "@/types/product";
 
 interface ProductsContentProps {
   initialProducts: ProductWithCategory[];
   initialCount: number;
   filterParams: FetchProductsParams;
-  page: number;
 }
 
 export function ProductsContent({
   initialProducts,
   initialCount,
   filterParams,
-  page,
 }: ProductsContentProps) {
   const t = useTranslations("products.listing");
-  const locale = useLocale();
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const { data } = useQuery({
+  // Exclude page from the query key so all pages share one cache entry
+  const { page: _, ...queryKeyParams } = filterParams;
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: queryKeys.products.list(
-      filterParams as unknown as Record<string, unknown>
+      queryKeyParams as unknown as Record<string, unknown>
     ),
-    queryFn: () => fetchProducts(filterParams),
-    initialData: { products: initialProducts, count: initialCount },
+    queryFn: ({ pageParam }) =>
+      fetchProducts({ ...filterParams, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      const totalFetched = allPages.reduce(
+        (sum, p) => sum + p.products.length,
+        0
+      );
+      return totalFetched < lastPage.count ? allPages.length + 1 : undefined;
+    },
+    initialData: {
+      pages: [{ products: initialProducts, count: initialCount }],
+      pageParams: [1],
+    },
     staleTime: 60 * 1000,
   });
 
-  const products = data?.products ?? initialProducts;
-  const count = data?.count ?? initialCount;
-  const totalPages = Math.ceil(count / PRODUCTS_PER_PAGE);
+  const products = data?.pages.flatMap((p) => p.products) ?? initialProducts;
+  const count = data?.pages[0]?.count ?? initialCount;
+
+  const handleIntersect = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage]
+  );
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(handleIntersect, {
+      rootMargin: "200px",
+    });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [handleIntersect]);
 
   if (products.length === 0) {
     return (
@@ -58,9 +95,22 @@ export function ProductsContent({
   return (
     <>
       <ProductGrid products={products} />
-      <div className="mt-8">
-        <Pagination currentPage={page} totalPages={totalPages} />
-      </div>
+
+      {/* Sentinel element for IntersectionObserver */}
+      <div ref={sentinelRef} className="h-1" />
+
+      {isFetchingNextPage && (
+        <div className="mt-8 flex items-center justify-center gap-2 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm">{t("loadingMore")}</span>
+        </div>
+      )}
+
+      {!hasNextPage && count > PRODUCTS_PER_PAGE && (
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          {t("noMoreProducts")}
+        </p>
+      )}
     </>
   );
 }

@@ -9,7 +9,9 @@
     "noProductsDesc": "Try adjusting your filters or search criteria",
     "clearFilters": "Clear Filters",
     "metaProductsSuffix": "Products",
-    "metaDescription": "Browse quality-checked fashion jewellery at {brand}. Shop necklaces, earrings, bracelets, rings and more with free shipping above ₹999."
+    "metaDescription": "Browse quality-checked fashion jewellery at {brand}. Shop necklaces, earrings, bracelets, rings and more with free shipping above ₹999.",
+    "loadingMore": "Loading more products...",
+    "noMoreProducts": "You've seen all products"
   },
   "addToCart": {
     "outOfStock": "Out of Stock",

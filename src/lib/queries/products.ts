@@ -14,7 +14,7 @@ export interface FetchProductsParams {
   minPrice: number;
   maxPrice: number;
   sort: string;
-  page: number;
+  page?: number;
   locale: string;
   search: string;
 }
@@ -76,7 +76,7 @@ export async function fetchProducts(
   params: FetchProductsParams
 ): Promise<{ products: ProductWithCategory[]; count: number }> {
   const supabase = createClient();
-  const { sort, page, locale } = params;
+  const { sort, page = 1, locale } = params;
 
   const countQuery = applyFilters(
     supabase

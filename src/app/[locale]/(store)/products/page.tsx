@@ -294,7 +294,6 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const minPrice = Number(params.minPrice) || 0;
   const maxPrice = Number(params.maxPrice) || 0;
   const sort = (params.sort as SortOption) || "newest";
-  const page = Number(params.page) || 1;
   const type = params.type || "";
   const tags = params.tag ? params.tag.split(",").filter(Boolean) : [];
   const search = params.search || "";
@@ -325,11 +324,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   // Fetch products and count in parallel (both independently cached)
   const [products, count] = await Promise.all([
-    getFilteredProducts(categoryIds, materials, tags, type, minPrice, maxPrice, sort, page, locale, search),
+    getFilteredProducts(categoryIds, materials, tags, type, minPrice, maxPrice, sort, 1, locale, search),
     getProductCount(categoryIds, materials, tags, type, minPrice, maxPrice, search),
   ]);
-
-  const totalPages = Math.ceil((count || 0) / PRODUCTS_PER_PAGE);
 
   const headingTitle = `${t("allProducts")}${type === "rental" ? ` — ${t("forRent")}` : ""}${type === "sale" ? ` — ${t("forSale")}` : ""}`;
 
@@ -379,8 +376,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               <ProductsContent
                 initialProducts={products as unknown as ProductWithCategory[]}
                 initialCount={count || 0}
-                filterParams={{ categoryIds, materials, tags, type, minPrice, maxPrice, sort, page, locale, search }}
-                page={page}
+                filterParams={{ categoryIds, materials, tags, type, minPrice, maxPrice, sort, locale, search }}
               />
             </Suspense>
           </div>
