@@ -1,5 +1,6 @@
 import { DM_Sans, Marcellus, Noto_Sans_Telugu, Playfair_Display } from "next/font/google";
 import Script from "next/script";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CapacitorInit } from "@/components/shared/capacitor-init";
 import "./globals.css";
 
@@ -64,6 +65,7 @@ export default function RootLayout({
         </Script>
         <CapacitorInit />
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
