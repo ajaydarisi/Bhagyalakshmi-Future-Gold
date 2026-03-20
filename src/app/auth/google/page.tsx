@@ -42,11 +42,21 @@ export default function GoogleAuthCallbackPage() {
       }
 
       // If this page loaded in a mobile browser (App Links didn't intercept the redirect),
-      // send the credentials back to the native app via custom URL scheme.
+      // send the credentials back to the native app via custom URL scheme or Intent.
       // The app's WebView will do the token exchange so the session is properly established.
-      const isAndroid = /Android/i.test(navigator.userAgent);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const isCapacitor = typeof window !== "undefined" && (window as any).Capacitor?.isNativePlatform?.();
+      const isAndroid = /Android/i.test(navigator.userAgent) && !isCapacitor;
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !isCapacitor;
+
       if (isAndroid) {
-        console.log("[auth/google] Android browser detected, redirecting to native app via custom scheme");
+        console.log("[auth/google] Android browser detected, redirecting to native app via intent");
+        const intentUrl = `intent://auth/google-callback?id_token=${encodeURIComponent(idToken)}&state=${encodeURIComponent(stateParam || "")}#Intent;scheme=bhagyalakshmifuturegold;package=com.bhagyalakshmifuturegold.app;end;`;
+        window.location.href = intentUrl;
+        // Fallback: if the app isn't installed, exchange token in browser after a delay
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      } else if (isIOS) {
+        console.log("[auth/google] iOS browser detected, redirecting to native app via custom scheme");
         const appUrl = `bhagyalakshmifuturegold://auth/google-callback?id_token=${encodeURIComponent(idToken)}&state=${encodeURIComponent(stateParam || "")}`;
         window.location.href = appUrl;
         // Fallback: if the app isn't installed, exchange token in browser after a delay
