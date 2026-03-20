@@ -101,6 +101,13 @@ export function ProductFilters({ categories = [], mode = "immediate", onFiltersC
     setPriceRange([urlMinPrice, urlMaxPrice]);
   }
 
+  // Sync search query when URL params change
+  const [prevUrlSearch, setPrevUrlSearch] = useState(urlSearch);
+  if (!isDeferred && urlSearch !== prevUrlSearch) {
+    setPrevUrlSearch(urlSearch);
+    setSearchQuery(urlSearch);
+  }
+
   const debouncedSearch = useDebounce(searchQuery, 400);
   const prevDebouncedSearch = useRef(debouncedSearch);
 

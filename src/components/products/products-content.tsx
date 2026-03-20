@@ -45,19 +45,19 @@ export function ProductsContent({
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       const totalFetched = allPages.reduce(
-        (sum, p) => sum + p.products.length,
+        (sum, p) => sum + (p.products?.length || 0),
         0
       );
-      return totalFetched < lastPage.count ? allPages.length + 1 : undefined;
+      return totalFetched < (lastPage?.count || 0) ? allPages.length + 1 : undefined;
     },
     initialData: {
-      pages: [{ products: initialProducts, count: initialCount }],
+      pages: [{ products: initialProducts || [], count: initialCount || 0 }],
       pageParams: [1],
     },
     staleTime: 60 * 1000,
   });
 
-  const products = data?.pages.flatMap((p) => p.products) ?? initialProducts;
+  const products = data?.pages.flatMap((p) => p.products || []) ?? (initialProducts || []);
   const count = data?.pages[0]?.count ?? initialCount;
 
   const handleIntersect = useCallback(

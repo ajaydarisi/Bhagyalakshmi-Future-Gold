@@ -26,16 +26,12 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    minimumCacheTTL: 2592000, // cache optimized images for 30 days
+    unoptimized: process.env.NODE_ENV === "development",
+    minimumCacheTTL: 2592000,
     remotePatterns: [
       {
         protocol: "https",
         hostname: "*.supabase.co",
-        pathname: "/storage/v1/object/public/**",
-      },
-      {
-        protocol: "https",
-        hostname: "bfg.jiobase.com",
         pathname: "/storage/v1/object/public/**",
       },
       {
