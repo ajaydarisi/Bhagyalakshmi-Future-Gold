@@ -229,7 +229,7 @@ function ProductMobileCard({ product }: { product: ProductWithCategory }) {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{product.name}</p>
+          <p className="font-medium">{product.name}</p>
           <p className="text-sm text-muted-foreground">
             {product.category?.name ?? "Uncategorized"}
           </p>
@@ -310,7 +310,7 @@ function ProductsToolbar({
   const isFiltered = nameFilter || categoryFilter || statusFilter !== "all" || typeFilter !== "all" || tagFilter !== "all";
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
       <div className="relative w-full sm:flex-1 sm:min-w-50 sm:max-w-sm">
         <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
         <Input
@@ -327,7 +327,7 @@ function ProductsToolbar({
           table.getColumn("category")?.setFilterValue(value === "all" ? "" : value)
         }
       >
-        <SelectTrigger className="w-45">
+        <SelectTrigger className="flex-1 min-w-[calc(50%-0.25rem)] sm:min-w-0 sm:flex-none sm:w-45">
           <SelectValue placeholder="All Categories" />
         </SelectTrigger>
         <SelectContent>
@@ -346,7 +346,7 @@ function ProductsToolbar({
           table.getColumn("is_active")?.setFilterValue(value)
         }
       >
-        <SelectTrigger className="w-35">
+        <SelectTrigger className="flex-1 min-w-[calc(50%-0.25rem)] sm:min-w-0 sm:flex-none sm:w-35">
           <SelectValue placeholder="All Statuses" />
         </SelectTrigger>
         <SelectContent>
@@ -362,7 +362,7 @@ function ProductsToolbar({
           table.getColumn("type")?.setFilterValue(value)
         }
       >
-        <SelectTrigger className="w-35">
+        <SelectTrigger className="flex-1 min-w-[calc(50%-0.25rem)] sm:min-w-0 sm:flex-none sm:w-35">
           <SelectValue placeholder="All Types" />
         </SelectTrigger>
         <SelectContent>
@@ -378,7 +378,7 @@ function ProductsToolbar({
           table.getColumn("tags")?.setFilterValue(value)
         }
       >
-        <SelectTrigger className="w-40">
+        <SelectTrigger className="flex-1 min-w-[calc(50%-0.25rem)] sm:min-w-0 sm:flex-none sm:w-40">
           <SelectValue placeholder="All Tags" />
         </SelectTrigger>
         <SelectContent>
