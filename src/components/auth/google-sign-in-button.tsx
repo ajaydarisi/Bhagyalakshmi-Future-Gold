@@ -40,7 +40,8 @@ async function buildGoogleAuthUrl(next: string, localePrefix: string): Promise<s
   // Supabase hashes the raw nonce we send and compares it to the nonce in the token.
   // So we send the SHA-256 hash to Google (embedded in token) and the raw nonce to Supabase.
   const hashedNonce = await sha256hex(rawNonce);
-  const state = btoa(JSON.stringify({ next, locale_prefix: localePrefix, nonce: rawNonce }));
+  const platform = Capacitor.getPlatform();
+  const state = btoa(JSON.stringify({ next, locale_prefix: localePrefix, nonce: rawNonce, platform }));
 
   const params = new URLSearchParams({
     client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,

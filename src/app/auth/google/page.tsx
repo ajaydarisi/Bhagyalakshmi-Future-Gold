@@ -21,6 +21,8 @@ export default function GoogleAuthCallbackPage() {
       // Decode state to get redirect info and nonce
       let next = "/";
       let nonce: string | undefined;
+      let initPlatform = "web";
+
       if (stateParam) {
         try {
           const state = JSON.parse(atob(stateParam));
@@ -29,6 +31,9 @@ export default function GoogleAuthCallbackPage() {
           }
           if (typeof state.nonce === "string") {
             nonce = state.nonce;
+          }
+          if (typeof state.platform === "string") {
+            initPlatform = state.platform;
           }
         } catch {
           // Invalid state, use default redirect
@@ -46,8 +51,10 @@ export default function GoogleAuthCallbackPage() {
       // The app's WebView will do the token exchange so the session is properly established.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const isCapacitor = typeof window !== "undefined" && (window as any).Capacitor?.isNativePlatform?.();
-      const isAndroid = /Android/i.test(navigator.userAgent) && !isCapacitor;
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !isCapacitor;
+      const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+
+      const isAndroid = !isCapacitor && (initPlatform === "android" || (initPlatform === "web" && /Android/i.test(ua)));
+      const isIOS = !isCapacitor && (initPlatform === "ios" || (initPlatform === "web" && /iPhone|iPad|iPod/i.test(ua)));
 
       if (isAndroid) {
         console.log("[auth/google] Android browser detected, redirecting to native app via intent");
