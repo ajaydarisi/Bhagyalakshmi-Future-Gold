@@ -48,3 +48,6 @@ android/app/build/
 android/.gradle/
 ios/App/Pods/
 ios/App/build/
+
+context.md
+playwright-report

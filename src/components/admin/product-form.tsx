@@ -92,6 +92,43 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
     file: File;
   } | null>(null);
 
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+    setImages((prev) => {
+      const newImages = [...prev];
+      const draggedItem = newImages[draggedIndex];
+      newImages.splice(draggedIndex, 1);
+      newImages.splice(targetIndex, 0, draggedItem);
+      
+      form.setValue(
+        "images",
+        newImages.filter((entry) => entry.url).map((entry) => entry.url)
+      );
+      
+      return newImages;
+    });
+    setDraggedIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
   const categoryTree = buildCategoryTree(categories);
 
   const form = useForm<ProductInput>({
@@ -235,6 +272,23 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
           : entry
       )
     );
+    setCompareDialog(null);
+  }
+
+  function handleApproveBoth(enhancedFile: File, enhancedSrc: string) {
+    if (!compareDialog) return;
+    const { imageIndex } = compareDialog;
+
+    setImages((prev) => {
+      const newImages = [...prev];
+      newImages.splice(imageIndex + 1, 0, {
+        url: "",
+        file: enhancedFile,
+        preview: enhancedSrc,
+        aiEnhanced: true,
+      });
+      return newImages;
+    });
     setCompareDialog(null);
   }
 
@@ -738,7 +792,14 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
                     {images.map((entry, index) => (
                       <div
                         key={index}
-                        className="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={(e) => handleDragOver(e)}
+                        onDrop={(e) => handleDrop(e, index)}
+                        onDragEnd={handleDragEnd}
+                        className={`group relative aspect-square overflow-hidden rounded-lg border bg-muted cursor-move transition-opacity ${
+                          draggedIndex === index ? "opacity-50" : ""
+                        }`}
                       >
                         <Image
                           src={entry.preview || entry.url}
@@ -750,7 +811,7 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute right-2 top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                          className="absolute right-2 top-2 rounded-full bg-destructive p-1.5 text-destructive-foreground opacity-100 transition-opacity shadow-sm"
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -759,7 +820,7 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
                           <button
                             type="button"
                             onClick={() => handleAIEnhance(index)}
-                            className="absolute left-2 top-2 rounded-full bg-amber-500 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                            className="absolute left-2 top-2 rounded-full bg-amber-500 p-1.5 text-white opacity-100 transition-opacity shadow-sm"
                           >
                             <Sparkles className="size-3.5" />
                           </button>
@@ -1078,6 +1139,7 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
           originalSrc={compareDialog.originalSrc}
           file={compareDialog.file}
           onApprove={handleApproveAI}
+          onApproveBoth={handleApproveBoth}
           onReject={() => setCompareDialog(null)}
         />
       )}

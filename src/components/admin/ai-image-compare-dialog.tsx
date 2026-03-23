@@ -26,6 +26,7 @@ interface AIImageCompareDialogProps {
   originalSrc: string;
   file: File;
   onApprove: (enhancedFile: File, enhancedSrc: string) => void;
+  onApproveBoth?: (enhancedFile: File, enhancedSrc: string) => void;
   onReject: () => void;
 }
 
@@ -35,6 +36,7 @@ export function AIImageCompareDialog({
   originalSrc,
   file,
   onApprove,
+  onApproveBoth,
   onReject,
 }: AIImageCompareDialogProps) {
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
@@ -75,6 +77,15 @@ export function AIImageCompareDialog({
   function handleApprove() {
     if (enhancedFile && enhancedSrc) {
       onApprove(enhancedFile, enhancedSrc);
+      setEnhancedSrc(null);
+      setEnhancedFile(null);
+      setPrompt(DEFAULT_PROMPT);
+    }
+  }
+
+  function handleApproveBoth() {
+    if (enhancedFile && enhancedSrc && onApproveBoth) {
+      onApproveBoth(enhancedFile, enhancedSrc);
       setEnhancedSrc(null);
       setEnhancedFile(null);
       setPrompt(DEFAULT_PROMPT);
@@ -183,6 +194,11 @@ export function AIImageCompareDialog({
                 )}
                 Regenerate
               </Button>
+              {onApproveBoth && (
+                <Button onClick={handleApproveBoth} disabled={isGenerating}>
+                  Use Both
+                </Button>
+              )}
               <Button onClick={handleApprove} disabled={isGenerating}>
                 Use AI Version
               </Button>
