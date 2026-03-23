@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 import { PRODUCTS_PER_PAGE } from "@/lib/constants";
 import { calculateDiscount } from "@/lib/formatters";
 import type { ProductWithCategory } from "@/types/product";
+import type { CatalogSearchResponse } from "@/types/search";
 
 export const PRODUCT_LIST_FIELDS =
   "id, name, name_telugu, slug, price, discount_price, images, tags, stock, is_sale, is_rental, rental_price, rental_discount_price, material, set_number, category:categories(name, name_telugu, slug)";
@@ -17,6 +18,13 @@ export interface FetchProductsParams {
   page?: number;
   locale: string;
   search: string;
+}
+
+export interface FetchProductsResponse {
+  products: ProductWithCategory[];
+  count: number;
+  hasMore?: boolean;
+  nextOffset?: number | null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -74,7 +82,53 @@ function applyFilters(query: any, params: FetchProductsParams) {
 
 export async function fetchProducts(
   params: FetchProductsParams
-): Promise<{ products: ProductWithCategory[]; count: number }> {
+): Promise<FetchProductsResponse> {
+  if (params.search) {
+    const page = params.page ?? 1;
+    const offset = (page - 1) * PRODUCTS_PER_PAGE;
+    const searchParams = new URLSearchParams({
+      q: params.search,
+      locale: params.locale,
+      limit: String(PRODUCTS_PER_PAGE),
+      offset: String(offset),
+    });
+
+    if (params.categoryIds.length > 0) {
+      searchParams.set("categoryIds", params.categoryIds.join(","));
+    }
+    if (params.materials.length > 0) {
+      searchParams.set("materials", params.materials.join(","));
+    }
+    if (params.tags.length > 0) {
+      searchParams.set("tags", params.tags.join(","));
+    }
+    if (params.type) {
+      searchParams.set("type", params.type);
+    }
+    if (params.minPrice > 0) {
+      searchParams.set("minPrice", String(params.minPrice));
+    }
+    if (params.maxPrice > 0) {
+      searchParams.set("maxPrice", String(params.maxPrice));
+    }
+
+    const response = await fetch(`/api/search/products?${searchParams.toString()}`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error("Semantic product search failed");
+    }
+
+    const data = (await response.json()) as CatalogSearchResponse;
+    return {
+      products: data.items,
+      count: data.total,
+      hasMore: data.hasMore,
+      nextOffset: data.nextOffset,
+    };
+  }
+
   const supabase = createClient();
   const { sort, page = 1, locale } = params;
 

@@ -7,6 +7,7 @@ import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { ProductGridSkeleton } from "@/components/shared/loading-skeleton";
 import { APP_NAME, PRODUCTS_PER_PAGE } from "@/lib/constants";
 import { calculateDiscount } from "@/lib/formatters";
+import { searchProducts } from "@/lib/retrieval/catalog";
 import type { ProductWithCategory, SortOption } from "@/types/product";
 import { MobileFilterSheet } from "@/components/products/mobile-filter-sheet";
 import { MobileProductSearch } from "@/components/products/mobile-product-search";
@@ -27,6 +28,7 @@ interface ProductsPageProps {
     page?: string;
     type?: string;
     tag?: string;
+    q?: string;
     search?: string;
   }>;
 }
@@ -296,7 +298,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const sort = (params.sort as SortOption) || "newest";
   const type = params.type || "";
   const tags = params.tag ? params.tag.split(",").filter(Boolean) : [];
-  const search = params.search || "";
+  const search = params.q || params.search || "";
 
   const locale = await getLocale();
   const t = await getTranslations("products.listing");
@@ -322,11 +324,36 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     }
   }
 
-  // Fetch products and count in parallel (both independently cached)
-  const [products, count] = await Promise.all([
-    getFilteredProducts(categoryIds, materials, tags, type, minPrice, maxPrice, sort, 1, locale, search),
-    getProductCount(categoryIds, materials, tags, type, minPrice, maxPrice, search),
-  ]);
+  let products: ProductWithCategory[] = [];
+  let count = 0;
+
+  if (search) {
+    const response = await searchProducts({
+      query: search,
+      locale,
+      limit: PRODUCTS_PER_PAGE,
+      offset: 0,
+      filters: {
+        categoryIds,
+        materials,
+        tags,
+        type: (type as "sale" | "rental" | "all" | "") || "all",
+        minPrice,
+        maxPrice,
+      },
+    });
+
+    products = response.items;
+    count = response.total;
+  } else {
+    const [initialProducts, initialCount] = await Promise.all([
+      getFilteredProducts(categoryIds, materials, tags, type, minPrice, maxPrice, sort, 1, locale, search),
+      getProductCount(categoryIds, materials, tags, type, minPrice, maxPrice, search),
+    ]);
+
+    products = initialProducts as unknown as ProductWithCategory[];
+    count = initialCount || 0;
+  }
 
   const headingTitle = `${t("allProducts")}${type === "rental" ? ` — ${t("forRent")}` : ""}${type === "sale" ? ` — ${t("forSale")}` : ""}`;
 
@@ -374,8 +401,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <div>
             <Suspense fallback={<ProductGridSkeleton />}>
               <ProductsContent
-                initialProducts={products as unknown as ProductWithCategory[]}
-                initialCount={count || 0}
+                initialProducts={products}
+                initialCount={count}
                 filterParams={{ categoryIds, materials, tags, type, minPrice, maxPrice, sort, locale, search }}
               />
             </Suspense>

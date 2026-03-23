@@ -206,6 +206,56 @@ export type Database = {
           updated_at?: string;
         };
       };
+      catalog_retrieval_documents: {
+        Row: {
+          id: string;
+          source_type: "product" | "store_info" | "faq" | "legal";
+          source_key: string;
+          product_id: string | null;
+          locale: string;
+          title: string;
+          content: string;
+          embedding: string | null;
+          metadata: Json;
+          content_hash: string;
+          index_status: "pending" | "ready" | "failed";
+          last_indexed_at: string | null;
+          last_index_error: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          source_type: "product" | "store_info" | "faq" | "legal";
+          source_key: string;
+          product_id?: string | null;
+          locale?: string;
+          title: string;
+          content: string;
+          embedding?: string | null;
+          metadata?: Json;
+          content_hash: string;
+          index_status?: "pending" | "ready" | "failed";
+          last_indexed_at?: string | null;
+          last_index_error?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          source_type?: "product" | "store_info" | "faq" | "legal";
+          source_key?: string;
+          product_id?: string | null;
+          locale?: string;
+          title?: string;
+          content?: string;
+          embedding?: string | null;
+          metadata?: Json;
+          content_hash?: string;
+          index_status?: "pending" | "ready" | "failed";
+          last_indexed_at?: string | null;
+          last_index_error?: string | null;
+          updated_at?: string;
+        };
+      };
       cart_items: {
         Row: {
           id: string;
@@ -445,7 +495,57 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      hybrid_search_products: {
+        Args: {
+          query_text: string;
+          query_embedding_text?: string | null;
+          match_limit?: number;
+          match_offset?: number;
+          category_ids?: string[];
+          materials?: string[];
+          product_tags?: string[];
+          product_type?: string;
+          min_price?: number;
+          max_price?: number;
+        };
+        Returns: {
+          id: string;
+          name: string;
+          name_telugu: string | null;
+          slug: string;
+          description: string | null;
+          description_telugu: string | null;
+          price: number;
+          discount_price: number | null;
+          category_id: string | null;
+          stock: number;
+          material: string | null;
+          tags: string[];
+          images: string[];
+          is_active: boolean;
+          featured: boolean;
+          is_sale: boolean;
+          is_rental: boolean;
+          rental_price: number | null;
+          rental_discount_price: number | null;
+          rental_deposit: number | null;
+          max_rental_days: number | null;
+          set_number: number | null;
+          created_at: string;
+          updated_at: string;
+          category_name: string | null;
+          category_name_telugu: string | null;
+          category_slug: string | null;
+          source_key: string;
+          index_status: "pending" | "ready" | "failed";
+          score: number;
+          keyword_rank: number | null;
+          semantic_rank: number | null;
+          estimated_total: number;
+        }[];
+      };
+    };
     Enums: Record<string, never>;
   };
 };

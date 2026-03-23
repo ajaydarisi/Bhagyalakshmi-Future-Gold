@@ -8,5 +8,19 @@
   "browseAll": "Browse All Products",
   "metaTitle": "Search: {query}",
   "emptyTitle": "Search for products",
-  "emptyDesc": "Use the search bar to find jewellery you'll love"
+  "emptyDesc": "Use the search bar to find jewellery you'll love",
+  "loadMore": "Load More Results",
+  "loadingMore": "Loading more results...",
+  "allShown": "You've seen the best matching results",
+  "ai": {
+    "title": "AI Search Assistant",
+    "description": "Ask AI to summarize the best matching products from these results.",
+    "button": "Ask AI About These Results",
+    "loading": "Asking AI...",
+    "citations": "Related Products",
+    "followUp": "Try asking:",
+    "noAnswer": "AI couldn't find a confident grounded answer for this search yet.",
+    "unavailable": "AI couldn't generate a grounded answer right now.",
+    "disclaimer": "AI answers are grounded only in the matching catalog results shown here."
+  }
 }

@@ -1,56 +1,61 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { Search, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useRouter } from "@/i18n/routing";
+import { useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { useDebounce } from "@/hooks/use-debounce";
+import { ROUTES } from "@/lib/constants";
 import { useFilterLoading } from "./filter-loading-context";
+import { ProductSearchInput } from "./product-search-input";
 
 export function MobileProductSearch() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
   const t = useTranslations("products.filters");
   const { setLoading } = useFilterLoading();
 
-  const urlSearch = searchParams.get("search") || "";
+  const urlSearch = searchParams.get("q") || searchParams.get("search") || "";
   const [query, setQuery] = useState(urlSearch);
   const debouncedQuery = useDebounce(query, 400);
   const prevDebouncedQuery = useRef(debouncedQuery);
 
-  useEffect(() => {
-    if (debouncedQuery === prevDebouncedQuery.current) return;
-    prevDebouncedQuery.current = debouncedQuery;
+  function pushSearchQuery(nextQuery: string) {
     const params = new URLSearchParams(searchParams.toString());
-    if (debouncedQuery) {
-      params.set("search", debouncedQuery);
+    const normalizedQuery = nextQuery.trim();
+
+    if (normalizedQuery) {
+      params.set("q", normalizedQuery);
+      params.delete("search");
     } else {
+      params.delete("q");
       params.delete("search");
     }
+
     params.delete("page");
     setLoading(true);
     router.push(`?${params.toString()}`);
+  }
+
+  useEffect(() => {
+    if (debouncedQuery === prevDebouncedQuery.current) return;
+    prevDebouncedQuery.current = debouncedQuery;
+    pushSearchQuery(debouncedQuery);
   }, [debouncedQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="relative mt-4 lg:hidden">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        placeholder={t("searchPlaceholder")}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="pl-9 pr-9 h-10 rounded-lg bg-background"
-      />
-      {query && (
-        <button
-          type="button"
-          onClick={() => setQuery("")}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      )}
-    </div>
+    <ProductSearchInput
+      className="mt-4 lg:hidden"
+      inputClassName="h-10 rounded-lg bg-background"
+      query={query}
+      locale={locale}
+      placeholder={t("searchPlaceholder")}
+      onQueryChange={setQuery}
+      onSubmitSearch={pushSearchQuery}
+      onSelectProduct={(product) => {
+        router.push(ROUTES.product(product.slug));
+      }}
+    />
   );
 }

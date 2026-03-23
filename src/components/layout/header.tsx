@@ -311,7 +311,7 @@ export function Header({ categories }: { categories: NavCategory[] }) {
         isAdmin={isAdmin}
         isLoading={isLoading}
         wishlistCount={wishlistItems.length}
-        onSearchOpen={() => {}}
+        onSearchOpen={() => setSearchOpen(true)}
         onSignOut={handleSignOut}
         onLangDialogOpen={() => setLangDialogOpen(true)}
         theme={resolvedTheme}

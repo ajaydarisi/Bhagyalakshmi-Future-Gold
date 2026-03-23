@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "search:reindex": "node scripts/reindex-catalog-retrieval.js",
     "generate:firebase": "node scripts/generate-google-services.js",
     "cap:sync": "npm run generate:firebase && cap sync",
     "cap:android": "cap sync android && cap open android",

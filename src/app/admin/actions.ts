@@ -5,6 +5,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { productSchema, couponSchema } from "@/lib/validators";
 import { generateSlug } from "@/lib/formatters";
 import { sendOrderStatusNotification } from "@/lib/notifications";
+import {
+  removeProductRetrievalDocument,
+  syncProductRetrievalDocument,
+  syncProductRetrievalDocuments,
+} from "@/lib/retrieval/catalog";
 import type { OrderStatus } from "@/types/order";
 import * as deepl from "deepl-node";
 
@@ -33,6 +38,51 @@ export async function translateToTelugu(
   } catch (e) {
     return { error: `Translation failed: ${e instanceof Error ? e.message : String(e)}` };
   }
+}
+
+async function getActiveProductIdsForCategories(
+  categoryIds: string[]
+): Promise<string[]> {
+  if (categoryIds.length === 0) return [];
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("id")
+    .in("category_id", categoryIds)
+    .eq("is_active", true);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((product) => product.id);
+}
+
+async function getCategoryDescendantIds(categoryId: string): Promise<string[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id, parent_id");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const descendants = new Set<string>([categoryId]);
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    for (const category of data ?? []) {
+      if (category.parent_id && descendants.has(category.parent_id) && !descendants.has(category.id)) {
+        descendants.add(category.id);
+        changed = true;
+      }
+    }
+  }
+
+  return [...descendants];
 }
 
 // ---------------------------------------------------------------------------
@@ -93,10 +143,33 @@ export async function createProduct(formData: FormData) {
     return { error: error.message };
   }
 
+  let retrievalStatus: "ready" | "failed" = "ready";
+  let warning: string | undefined;
+
+  try {
+    retrievalStatus = await syncProductRetrievalDocument(inserted.id);
+  } catch (retrievalError) {
+    retrievalStatus = "failed";
+    warning =
+      retrievalError instanceof Error
+        ? retrievalError.message
+        : "Product saved, but semantic indexing is pending.";
+  }
+
+  if (retrievalStatus === "failed" && !warning) {
+    warning = "Product saved, but semantic indexing is pending.";
+  }
+
   revalidatePath("/admin/products");
   revalidatePath("/products");
+  revalidatePath("/search");
   revalidatePath(`/products/${slug}`);
-  return { success: true, productId: inserted.id };
+  return {
+    success: true,
+    productId: inserted.id,
+    retrievalStatus,
+    ...(warning ? { warning } : {}),
+  };
 }
 
 export async function updateProduct(id: string, formData: FormData) {
@@ -137,11 +210,33 @@ export async function updateProduct(id: string, formData: FormData) {
     return { error: error.message };
   }
 
+  let retrievalStatus: "ready" | "failed" = "ready";
+  let warning: string | undefined;
+
+  try {
+    retrievalStatus = await syncProductRetrievalDocument(id);
+  } catch (retrievalError) {
+    retrievalStatus = "failed";
+    warning =
+      retrievalError instanceof Error
+        ? retrievalError.message
+        : "Product updated, but semantic indexing is pending.";
+  }
+
+  if (retrievalStatus === "failed" && !warning) {
+    warning = "Product updated, but semantic indexing is pending.";
+  }
+
   revalidatePath("/admin/products");
   revalidatePath("/products");
+  revalidatePath("/search");
   revalidatePath(`/products/${data.slug}`);
   revalidatePath(`/admin/products/${id}/edit`);
-  return { success: true };
+  return {
+    success: true,
+    retrievalStatus,
+    ...(warning ? { warning } : {}),
+  };
 }
 
 export async function deleteProduct(id: string) {
@@ -175,7 +270,13 @@ export async function deleteProduct(id: string) {
     return { error: error.message };
   }
 
+  await removeProductRetrievalDocument(id).catch((retrievalError) => {
+    console.error("Failed to remove retrieval document:", retrievalError);
+  });
+
   revalidatePath("/", "layout");
+  revalidatePath("/products");
+  revalidatePath("/search");
   return { success: true };
 }
 
@@ -260,13 +361,38 @@ export async function updateCategory(id: string, formData: FormData) {
     return { error: error.message };
   }
 
+  const productIds = await getActiveProductIdsForCategories([id]).catch(
+    (reindexError) => {
+      console.error("Failed to collect products for category reindex:", reindexError);
+      return [];
+    }
+  );
+
+  if (productIds.length > 0) {
+    await syncProductRetrievalDocuments(productIds).catch((reindexError) => {
+      console.error("Failed to reindex products after category update:", reindexError);
+    });
+  }
+
   revalidatePath("/admin/categories");
   revalidatePath("/products");
+  revalidatePath("/search");
   return { success: true };
 }
 
 export async function deleteCategory(id: string) {
   const supabase = createAdminClient();
+
+  const categoryIds = await getCategoryDescendantIds(id).catch((descendantError) => {
+    console.error("Failed to collect descendant categories:", descendantError);
+    return [id];
+  });
+  const affectedProductIds = await getActiveProductIdsForCategories(categoryIds).catch(
+    (reindexError) => {
+      console.error("Failed to collect products for category delete reindex:", reindexError);
+      return [];
+    }
+  );
 
   const { error } = await supabase.from("categories").delete().eq("id", id);
 
@@ -274,8 +400,15 @@ export async function deleteCategory(id: string) {
     return { error: error.message };
   }
 
+  if (affectedProductIds.length > 0) {
+    await syncProductRetrievalDocuments(affectedProductIds).catch((reindexError) => {
+      console.error("Failed to reindex products after category delete:", reindexError);
+    });
+  }
+
   revalidatePath("/admin/categories");
   revalidatePath("/products");
+  revalidatePath("/search");
   return { success: true };
 }
 

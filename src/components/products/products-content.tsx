@@ -5,6 +5,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
 import {
   fetchProducts,
+  type FetchProductsResponse,
   type FetchProductsParams,
 } from "@/lib/queries/products";
 import { ProductGrid } from "./product-grid";
@@ -29,7 +30,7 @@ export function ProductsContent({
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   // Exclude page from the query key so all pages share one cache entry
-  const { page: _, ...queryKeyParams } = filterParams;
+  const queryKeyParams = { ...filterParams };
 
   const {
     data,
@@ -43,7 +44,11 @@ export function ProductsContent({
     queryFn: ({ pageParam }) =>
       fetchProducts({ ...filterParams, page: pageParam }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
+    getNextPageParam: (lastPage: FetchProductsResponse, allPages) => {
+      if (typeof lastPage.hasMore === "boolean") {
+        return lastPage.hasMore ? allPages.length + 1 : undefined;
+      }
+
       const totalFetched = allPages.reduce(
         (sum, p) => sum + (p.products?.length || 0),
         0

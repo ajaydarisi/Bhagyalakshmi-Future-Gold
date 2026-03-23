@@ -369,7 +369,12 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
         if (result.error) {
           toast.error(result.error);
         } else {
-          toast.success(product ? "Product updated" : "Product created");
+          const successMessage = product ? "Product updated" : "Product created";
+          if ("warning" in result && result.warning) {
+            toast.warning(`${successMessage}. ${result.warning}`);
+          } else {
+            toast.success(successMessage);
+          }
 
           // Fire selected notifications after successful save
           const productId = product?.id || ("productId" in result ? result.productId : undefined);
