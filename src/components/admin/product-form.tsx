@@ -1138,6 +1138,8 @@ export function ProductForm({ product, copyFrom, categories }: ProductFormProps)
           onOpenChange={(open) => !open && setCompareDialog(null)}
           originalSrc={compareDialog.originalSrc}
           file={compareDialog.file}
+          description={form.watch("description")}
+          descriptionTelugu={form.watch("description_telugu")}
           onApprove={handleApproveAI}
           onApproveBoth={handleApproveBoth}
           onReject={() => setCompareDialog(null)}
