@@ -54,7 +54,7 @@ function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-4">
         {navItems.map((item) => {
           const isActive =
             item.href === "/admin"
@@ -117,7 +117,7 @@ export function AdminHeader({ userName, userEmail }: AdminHeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 pt-[env(safe-area-inset-top)]">
+    <header className="fixed inset-x-0 top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 pt-[env(safe-area-inset-top)]">
       <div className="flex h-14 items-center justify-between px-4">
         <Link href="/admin" className="flex items-center gap-2 font-brand tracking-wide text-primary">
           <Image
@@ -166,7 +166,7 @@ export function AdminHeader({ userName, userEmail }: AdminHeaderProps) {
 
 export function AdminSidebar() {
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r bg-card lg:flex">
+    <aside className="fixed bottom-0 left-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-40 hidden w-64 shrink-0 flex-col border-r bg-card lg:flex">
       <AdminNav />
     </aside>
   );

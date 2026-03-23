@@ -39,26 +39,28 @@ export default async function AdminLayout({
 
   return (
     <>
-    <SetHtmlLang locale="en" />
-    <NavProgress />
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
-      <AdminHeader userName={profile?.full_name || "Admin"} userEmail={user.email || ""} />
-      <div className="flex min-h-screen overflow-x-hidden">
-        <AdminSidebar />
-        <div className="flex flex-1 flex-col">
-          <AdminMobileNav />
-          <main className="flex-1 overflow-y-auto">
-            <div className="container max-w-7xl p-4 sm:p-6">{children}</div>
-          </main>
+      <SetHtmlLang locale="en" />
+      <NavProgress />
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <div className="min-h-[100dvh] w-full">
+          <AdminHeader userName={profile?.full_name || "Admin"} userEmail={user.email || ""} />
+          <AdminSidebar />
+          <div className="min-h-[100dvh] lg:pl-64">
+            <div className="pt-[calc(3.5rem+env(safe-area-inset-top))]">
+              <AdminMobileNav />
+              <main>
+                <div className="container max-w-7xl p-4 sm:p-6">{children}</div>
+              </main>
+            </div>
+          </div>
         </div>
-      </div>
-      <Toaster />
-    </ThemeProvider>
+        <Toaster />
+      </ThemeProvider>
     </>
   );
 }
