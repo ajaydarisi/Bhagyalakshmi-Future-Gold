@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
-import { IndianRupee, ShoppingBag, Package, Users } from "lucide-react";
+import {
+  FileText,
+  IndianRupee,
+  Package,
+  Search,
+  ShoppingBag,
+  TriangleAlert,
+  Users,
+} from "lucide-react";
 
 export const metadata: Metadata = { title: "Dashboard" };
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatPrice, formatDate } from "@/lib/formatters";
+import { getCatalogRetrievalHealth } from "@/lib/retrieval/catalog";
 import { StatsCard } from "@/components/admin/stats-card";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +50,7 @@ export default async function AdminDashboardPage() {
         .from("profiles")
         .select("id", { count: "exact", head: true }),
     ]);
+  const retrievalHealth = await getCatalogRetrievalHealth();
 
   const totalRevenue =
     revenueResult.data?.reduce((sum, o) => sum + o.total, 0) ?? 0;
@@ -131,6 +141,39 @@ export default async function AdminDashboardPage() {
           icon={Users}
         />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Assistant Retrieval Health</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatsCard
+              label="Active Products"
+              value={retrievalHealth.activeProductCount.toLocaleString()}
+              icon={Package}
+            />
+            <StatsCard
+              label="Indexed Product Docs"
+              value={retrievalHealth.indexedProductDocumentCount.toLocaleString()}
+              icon={Search}
+              description={`Expected ${retrievalHealth.activeProductCount.toLocaleString()} ready docs`}
+            />
+            <StatsCard
+              label="Indexed Public Docs"
+              value={retrievalHealth.indexedPublicDocumentCount.toLocaleString()}
+              icon={FileText}
+              description={`Expected ${retrievalHealth.expectedPublicDocumentCount.toLocaleString()} ready docs`}
+            />
+            <StatsCard
+              label="Failed Docs"
+              value={retrievalHealth.failedDocumentCount.toLocaleString()}
+              icon={TriangleAlert}
+              description="Use search:reindex if this is non-zero in production"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Revenue chart */}
       <Card>

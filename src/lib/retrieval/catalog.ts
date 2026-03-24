@@ -62,6 +62,24 @@ type StorefrontFilterQuery<TQuery> = {
 const PRODUCT_RETRIEVAL_SELECT =
   "*, category:categories(name, name_telugu, slug)";
 const PUBLIC_SOURCE_TYPES: CatalogSourceType[] = ["store_info", "faq", "legal"];
+const GENERIC_ASSISTANT_PRODUCT_FALLBACK_QUERIES = new Set([
+  "catalog",
+  "catalogue",
+  "jewellery",
+  "jewelry",
+  "product",
+  "products",
+  "rental jewellery",
+  "rental jewelry",
+]);
+
+export interface CatalogRetrievalHealth {
+  activeProductCount: number;
+  indexedProductDocumentCount: number;
+  indexedPublicDocumentCount: number;
+  failedDocumentCount: number;
+  expectedPublicDocumentCount: number;
+}
 
 function normalizeText(value: string | null | undefined) {
   return value?.trim() ?? "";
@@ -204,6 +222,15 @@ function toFilters(filters?: ProductSearchFilters) {
 
 function escapeFallbackQueryValue(value: string) {
   return value.replace(/[,%()"]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+export function isGenericAssistantProductFallbackQuery(query: string) {
+  const normalized = normalizeText(query)
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+    .replace(/\s+/g, " ");
+
+  return GENERIC_ASSISTANT_PRODUCT_FALLBACK_QUERIES.has(normalized);
 }
 
 function getMetadataValue(
@@ -391,7 +418,7 @@ function applyStorefrontFilters<TQuery extends StorefrontFilterQuery<TQuery>>(
     }
   }
 
-  if (search) {
+  if (search && !isGenericAssistantProductFallbackQuery(search)) {
     const safeSearch = escapeFallbackQueryValue(search);
     if (safeSearch) {
       query = query.or(
@@ -716,7 +743,7 @@ async function syncRetrievalDocument(
   }
 }
 
-function getPublicLocaleCandidates(locale: string) {
+export function resolvePublicRetrievalLocales(locale: string) {
   return locale === "te" ? ["te", "en"] : ["en"];
 }
 
@@ -732,7 +759,7 @@ function getLocalePriority(candidateLocale: string, preferredLocale: string) {
   return 0;
 }
 
-async function searchPublicDocuments(args: {
+export async function searchPublicDocuments(args: {
   query: string;
   locale: string;
   sourceTypes: CatalogSourceType[];
@@ -753,7 +780,7 @@ async function searchPublicDocuments(args: {
   }
 
   const admin = createAdminClient();
-  const localeCandidates = getPublicLocaleCandidates(args.locale);
+  const localeCandidates = resolvePublicRetrievalLocales(args.locale);
 
   try {
     const keywordPromise = admin
@@ -770,44 +797,52 @@ async function searchPublicDocuments(args: {
         return [] as Array<{ row: CatalogRetrievalDocumentRow; similarity: number }>;
       }
 
-      const queryEmbedding = args.queryEmbedding ?? await embedText(query, {
-        taskType: "RETRIEVAL_QUERY",
-      });
+      try {
+        const queryEmbedding = args.queryEmbedding ?? await embedText(query, {
+          taskType: "RETRIEVAL_QUERY",
+        });
 
-      const { data, error } = await admin
-        .from("catalog_retrieval_documents")
-        .select("*")
-        .in("source_type", args.sourceTypes)
-        .in("locale", localeCandidates)
-        .eq("index_status", "ready")
-        .not("embedding", "is", null);
+        const { data, error } = await admin
+          .from("catalog_retrieval_documents")
+          .select("*")
+          .in("source_type", args.sourceTypes)
+          .in("locale", localeCandidates)
+          .eq("index_status", "ready")
+          .not("embedding", "is", null);
 
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
+
+        return ((data ?? []) as CatalogRetrievalDocumentRow[])
+          .map((row) => {
+            const embedding = parseVector(row.embedding);
+            return embedding
+              ? {
+                  row,
+                  similarity: cosineSimilarity(queryEmbedding, embedding),
+                }
+              : null;
+          })
+          .filter((entry): entry is { row: CatalogRetrievalDocumentRow; similarity: number } => Boolean(entry))
+          .sort((left, right) => {
+            if (right.similarity !== left.similarity) {
+              return right.similarity - left.similarity;
+            }
+
+            return (
+              getLocalePriority(right.row.locale, args.locale) -
+              getLocalePriority(left.row.locale, args.locale)
+            );
+          })
+          .slice(0, 20);
+      } catch (error) {
+        console.error(
+          "[searchPublicDocuments] Semantic retrieval failed; using keyword-only public results:",
+          error
+        );
+        return [] as Array<{ row: CatalogRetrievalDocumentRow; similarity: number }>;
       }
-
-      return ((data ?? []) as CatalogRetrievalDocumentRow[])
-        .map((row) => {
-          const embedding = parseVector(row.embedding);
-          return embedding
-            ? {
-                row,
-                similarity: cosineSimilarity(queryEmbedding, embedding),
-              }
-            : null;
-        })
-        .filter((entry): entry is { row: CatalogRetrievalDocumentRow; similarity: number } => Boolean(entry))
-        .sort((left, right) => {
-          if (right.similarity !== left.similarity) {
-            return right.similarity - left.similarity;
-          }
-
-          return (
-            getLocalePriority(right.row.locale, args.locale) -
-            getLocalePriority(left.row.locale, args.locale)
-          );
-        })
-        .slice(0, 20);
     })();
 
     const [{ data: keywordData, error: keywordError }, semanticRows] =
@@ -1011,6 +1046,68 @@ export async function ensurePublicRetrievalDocuments(locales?: string[]) {
   if ((count ?? 0) < expectedDocumentCount) {
     await syncPublicRetrievalDocuments(targetLocales);
   }
+}
+
+export async function getCatalogRetrievalHealth(
+  locales?: string[]
+): Promise<CatalogRetrievalHealth> {
+  const resolvedLocales = (locales ?? [...PUBLIC_RETRIEVAL_LOCALES]).filter(
+    (locale): locale is (typeof PUBLIC_RETRIEVAL_LOCALES)[number] =>
+      PUBLIC_RETRIEVAL_LOCALES.includes(
+        locale as (typeof PUBLIC_RETRIEVAL_LOCALES)[number]
+      )
+  );
+  const targetLocales =
+    resolvedLocales.length > 0 ? resolvedLocales : [...PUBLIC_RETRIEVAL_LOCALES];
+  const [products, admin] = await Promise.all([
+    getActiveProductsForPublicDocuments(),
+    Promise.resolve(createAdminClient()),
+  ]);
+  const expectedPublicDocumentCount = buildPublicRetrievalDocuments(
+    products,
+    targetLocales
+  ).length;
+  const [
+    { count: indexedProductDocumentCount, error: productError },
+    { count: indexedPublicDocumentCount, error: publicError },
+    { count: failedDocumentCount, error: failedError },
+  ] = await Promise.all([
+    admin
+      .from("catalog_retrieval_documents")
+      .select("id", { count: "exact", head: true })
+      .eq("source_type", "product")
+      .eq("index_status", "ready"),
+    admin
+      .from("catalog_retrieval_documents")
+      .select("id", { count: "exact", head: true })
+      .in("source_type", PUBLIC_SOURCE_TYPES)
+      .in("locale", targetLocales)
+      .eq("index_status", "ready"),
+    admin
+      .from("catalog_retrieval_documents")
+      .select("id", { count: "exact", head: true })
+      .eq("index_status", "failed"),
+  ]);
+
+  if (productError) {
+    throw new Error(productError.message);
+  }
+
+  if (publicError) {
+    throw new Error(publicError.message);
+  }
+
+  if (failedError) {
+    throw new Error(failedError.message);
+  }
+
+  return {
+    activeProductCount: products.length,
+    indexedProductDocumentCount: indexedProductDocumentCount ?? 0,
+    indexedPublicDocumentCount: indexedPublicDocumentCount ?? 0,
+    failedDocumentCount: failedDocumentCount ?? 0,
+    expectedPublicDocumentCount,
+  };
 }
 
 export async function retrieveCatalogContext(args: {

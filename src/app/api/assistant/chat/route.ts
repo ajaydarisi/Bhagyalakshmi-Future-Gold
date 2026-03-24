@@ -27,7 +27,11 @@ import {
   isProductSeekingAssistantRequest,
 } from "@/lib/assistant-product-recommendations";
 import { generateAssistantGroundedReply } from "@/lib/retrieval/answer";
-import { retrieveCatalogContext } from "@/lib/retrieval/catalog";
+import {
+  ensurePublicRetrievalDocuments,
+  resolvePublicRetrievalLocales,
+  retrieveCatalogContext,
+} from "@/lib/retrieval/catalog";
 import type {
   AssistantPageContext,
   AssistantReply,
@@ -45,6 +49,7 @@ const MAX_PAGE_CONTEXT_QUERY_CHARS = 180;
 const MAX_PAGE_CONTEXT_ITEM_CHARS = 140;
 const MAX_PAGE_CONTEXT_CATEGORY_COUNT = 6;
 const MAX_PAGE_CONTEXT_CART_ITEMS = 5;
+const ASSISTANT_PUBLIC_DOC_ENSURE_TTL_MS = 5 * 60 * 1000;
 
 type AssistantRateLimitEntry = {
   count: number;
@@ -54,6 +59,9 @@ type AssistantRateLimitEntry = {
 declare global {
   var __assistantChatRateLimitStore:
     | Map<string, AssistantRateLimitEntry>
+    | undefined;
+  var __assistantPublicDocEnsureStore:
+    | Map<string, number>
     | undefined;
 }
 
@@ -227,6 +235,36 @@ function getRateLimitStore() {
   }
 
   return globalThis.__assistantChatRateLimitStore;
+}
+
+function getPublicDocEnsureStore() {
+  if (!globalThis.__assistantPublicDocEnsureStore) {
+    globalThis.__assistantPublicDocEnsureStore = new Map();
+  }
+
+  return globalThis.__assistantPublicDocEnsureStore;
+}
+
+async function ensureAssistantPublicDocuments(locale: string) {
+  const targetLocales = resolvePublicRetrievalLocales(locale);
+  const cacheKey = targetLocales.join(",");
+  const now = Date.now();
+  const store = getPublicDocEnsureStore();
+  const lastEnsuredAt = store.get(cacheKey) ?? 0;
+
+  if (now - lastEnsuredAt < ASSISTANT_PUBLIC_DOC_ENSURE_TTL_MS) {
+    return;
+  }
+
+  try {
+    await ensurePublicRetrievalDocuments(targetLocales);
+    store.set(cacheKey, now);
+  } catch (error) {
+    console.error(
+      "[assistant.chat] Failed to ensure public retrieval documents:",
+      error
+    );
+  }
 }
 
 function getClientIdentifier(request: Request) {
@@ -609,6 +647,10 @@ export async function POST(request: Request) {
         }),
         handoff,
       });
+    }
+
+    if (!isProductQuery) {
+      await ensureAssistantPublicDocuments(locale);
     }
 
     const resolvedQuery = isProductQuery
