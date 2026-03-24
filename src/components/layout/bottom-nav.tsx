@@ -2,14 +2,14 @@
 
 import { Link, usePathname } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
-import { Home, LayoutGrid, Heart, User } from "lucide-react";
+import { Home, LayoutGrid, Info, Heart, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useAuth } from "@/hooks/use-auth";
 // import { ProductSearch } from "@/components/products/product-search";
 import { ROUTES } from "@/lib/constants";
 import { hapticImpact } from "@/lib/haptics";
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/queries/keys";
 import { fetchWishlistProducts } from "@/lib/queries/products";
@@ -42,6 +42,7 @@ export function BottomNav() {
   const tabs = [
     { key: "home", href: ROUTES.home, icon: Home, label: t("home") },
     { key: "shop", href: ROUTES.products, icon: LayoutGrid, label: t("shop") },
+    { key: "about", href: ROUTES.about, icon: Info, label: t("about") },
     // { key: "search", href: null, icon: Search, label: t("search") },
     {
       key: "wishlist",
@@ -67,7 +68,7 @@ export function BottomNav() {
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/80 backdrop-blur-lg lg:hidden pb-[env(safe-area-inset-bottom)]">
-        <div className="flex h-16 items-center justify-around px-2">
+        <div className="flex h-16 items-center px-1">
           {tabs.map((tab) => {
             const active = isActive(tab.key, tab.href);
             const Icon = tab.icon;
@@ -78,24 +79,33 @@ export function BottomNav() {
                 href={tab.href!}
                 onClick={() => hapticImpact("light")}
                 onTouchStart={() => handlePrefetch(tab.key)}
-                className={`relative flex flex-col items-center justify-center gap-0.5 px-3 py-1 transition-colors ${
+                aria-current={active ? "page" : undefined}
+                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 transition-colors ${
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
               >
-                <Icon
-                  className="h-5 w-5"
-                  strokeWidth={active ? 2 : 1.5}
-                  fill={active && tab.key !== "home" ? "currentColor" : "none"}
-                />
-                {"badge" in tab && tab.badge > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full p-0 text-[9px] flex items-center justify-center"
-                  >
-                    {tab.badge}
-                  </Badge>
-                )}
-                <span className={`text-[10px] ${active ? "font-semibold" : ""}`}>{tab.label}</span>
+                <span className="relative">
+                  <Icon
+                    className="h-5 w-5"
+                    strokeWidth={active ? 2 : 1.5}
+                    fill={active && tab.key !== "home" ? "currentColor" : "none"}
+                  />
+                  {"badge" in tab && tab.badge > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -right-2 -top-1 h-4 w-4 rounded-full p-0 text-[9px] flex items-center justify-center"
+                    >
+                      {tab.badge}
+                    </Badge>
+                  )}
+                </span>
+                <span
+                  className={`max-w-full truncate text-[10px] leading-none ${
+                    active ? "font-semibold" : ""
+                  }`}
+                >
+                  {tab.label}
+                </span>
               </Link>
             );
           })}

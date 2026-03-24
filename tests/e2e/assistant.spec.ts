@@ -240,7 +240,7 @@ async function installAssistantStub(
 async function openAssistant(page: Page) {
   const launcher = page
     .locator(
-      '[data-testid="assistant-launcher"], button[aria-label="Ask AI"], button:has(svg.lucide-sparkles)'
+      '[data-testid="assistant-launcher"], button[aria-label="Ask AI"]'
     )
     .last();
   await expect(launcher).toBeVisible({ timeout: 15000 });

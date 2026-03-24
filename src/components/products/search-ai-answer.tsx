@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Sparkles } from "lucide-react";
+import { Bot, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { GroundedReply } from "@/types/search";
 
@@ -54,7 +54,7 @@ export function SearchAiAnswer({ query, locale }: SearchAiAnswerProps) {
     <Card className="mb-6">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Sparkles className="h-4 w-4" />
+          <Bot className="h-6 w-6" />
           {t("title")}
         </CardTitle>
         <p className="text-sm text-muted-foreground">{t("description")}</p>
@@ -65,11 +65,12 @@ export function SearchAiAnswer({ query, locale }: SearchAiAnswerProps) {
             type="button"
             onClick={handleAskAi}
             disabled={isLoading}
+            className="cursor-pointer"
           >
             {isLoading ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              <Sparkles className="size-4" />
+              <Bot className="size-6" />
             )}
             {isLoading ? t("loading") : t("button")}
           </Button>

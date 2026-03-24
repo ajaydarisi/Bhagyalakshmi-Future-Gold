@@ -32,7 +32,7 @@ import type {
   CatalogMessage,
   Citation,
 } from "@/types/search";
-import { Bot, Loader2, MessageCircle, Send, Sparkles, User } from "lucide-react";
+import { Bot, Loader2, MessageCircle, Send, User } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import {
@@ -736,10 +736,10 @@ export function StorefrontAssistant() {
         type="button"
         aria-label={t("launcherLabel")}
         data-testid="assistant-launcher"
-        className="fixed bottom-24 right-4 z-40 rounded-full px-4 shadow-lg lg:bottom-6 lg:right-6"
+        className="fixed bottom-24 right-4 z-40 rounded-full shadow-lg lg:bottom-6 lg:right-6 cursor-pointer"
         onClick={() => handleOpenChange(true)}
       >
-        <Sparkles className="size-4" />
+        <Bot className="size-5" />
         <span className="hidden sm:inline">{t("launcherLabel")}</span>
       </Button>
 

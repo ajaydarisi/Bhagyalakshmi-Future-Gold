@@ -11,7 +11,6 @@ import {
   MapPin,
   LayoutDashboard,
   Languages,
-  Search,
   Sun,
   Moon,
 } from "lucide-react";
@@ -39,7 +38,6 @@ interface MobileNavProps {
   isAdmin: boolean;
   isLoading: boolean;
   wishlistCount: number;
-  onSearchOpen: () => void;
   onSignOut: () => void;
   onLangDialogOpen: () => void;
   theme: string | undefined;
@@ -57,7 +55,6 @@ export function MobileNav({
   isAdmin,
   isLoading,
   wishlistCount,
-  onSearchOpen,
   onSignOut,
   onLangDialogOpen,
   theme,
@@ -142,18 +139,8 @@ export function MobileNav({
 
           <Separator />
 
-          {/* Actions: Search, Wishlist, Cart */}
+          {/* Actions: Wishlist, Cart */}
           <div className="flex flex-col gap-1">
-            <button
-              onClick={() => {
-                close();
-                onSearchOpen();
-              }}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted text-left"
-            >
-              <Search className="h-4 w-4" strokeWidth={1.5} />
-              {t("search")}
-            </button>
             <Link
               href={ROUTES.wishlist}
               onClick={close}

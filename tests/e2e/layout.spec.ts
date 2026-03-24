@@ -54,11 +54,25 @@ test.describe('8. Layout & Navigation', () => {
       await expect(
         bottomNav.locator('a[href="/products"], a[href="/en/products"]')
       ).toBeVisible();
+      await expect(bottomNav.locator('a[href="/about"], a[href="/en/about"]')).toBeVisible();
       await expect(bottomNav.locator('a[href="/wishlist"], a[href="/en/wishlist"]')).toBeVisible();
     }
   });
 
-  test('7. Mobile hamburger menu omits offline-disabled links', async ({ page, isMobile }) => {
+  test('7. Mobile bottom-nav highlights About when navigating to the About page', async ({ page, isMobile }) => {
+    if (isMobile) {
+      const bottomNav = page.locator('nav.fixed.bottom-0');
+      const aboutLink = bottomNav.locator('a[href="/about"], a[href="/en/about"]');
+
+      await expect(aboutLink).toBeVisible();
+      await aboutLink.first().click();
+
+      await expect(page).toHaveURL(/\/(en\/)?about$/);
+      await expect(aboutLink.first()).toHaveAttribute('aria-current', 'page');
+    }
+  });
+
+  test('8. Mobile hamburger menu omits offline-disabled links', async ({ page, isMobile }) => {
     if (isMobile) {
       const menuBtn = page.getByRole('button', { name: /open menu/i }).first();
       await expect(menuBtn).toBeVisible();

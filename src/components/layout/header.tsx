@@ -152,7 +152,16 @@ export function Header({ categories }: { categories: NavCategory[] }) {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2">
-            {/* Mobile-only cart button */}
+            {/* Mobile search and cart shortcuts */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-8 w-8"
+              onClick={() => setSearchOpen(true)}
+              aria-label={t("search")}
+            >
+              <Search className="h-4 w-4" strokeWidth={1.5} />
+            </Button>
             {IS_ONLINE && (
               <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8" asChild aria-label={t("shoppingBag")}>
                 <Link href={ROUTES.cart} className="relative">
@@ -311,7 +320,6 @@ export function Header({ categories }: { categories: NavCategory[] }) {
         isAdmin={isAdmin}
         isLoading={isLoading}
         wishlistCount={wishlistItems.length}
-        onSearchOpen={() => setSearchOpen(true)}
         onSignOut={handleSignOut}
         onLangDialogOpen={() => setLangDialogOpen(true)}
         theme={resolvedTheme}
