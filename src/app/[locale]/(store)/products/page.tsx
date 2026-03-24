@@ -14,6 +14,13 @@ import { MobileProductSearch } from "@/components/products/mobile-product-search
 import { FilterLoadingProvider } from "@/components/products/filter-loading-context";
 import { ProductsHeading } from "@/components/products/products-heading";
 import { ProductsContent } from "@/components/products/products-content";
+import {
+  getOfflineFilteredProducts,
+  getOfflinePagedProducts,
+  getOfflineProductCount,
+  isOfflineE2EFixtureMode,
+  offlineFixtureCategories,
+} from "@/lib/offline-store-fixtures";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { unstable_cache } from "next/cache";
@@ -38,6 +45,10 @@ const PRODUCT_LIST_FIELDS =
 
 const getAllCategories = unstable_cache(
   async () => {
+    if (isOfflineE2EFixtureMode()) {
+      return offlineFixtureCategories;
+    }
+
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("categories")
@@ -60,6 +71,19 @@ async function getProductCount(
 ) {
   return unstable_cache(
     async () => {
+      if (isOfflineE2EFixtureMode()) {
+        return getOfflineProductCount({
+          categoryIds,
+          materials,
+          tags,
+          type,
+          minPrice,
+          maxPrice,
+          sort: "newest",
+          search,
+        });
+      }
+
       const supabase = createAdminClient();
 
       let query = supabase
@@ -144,6 +168,21 @@ async function getFilteredProducts(
 ) {
   return unstable_cache(
     async () => {
+      if (isOfflineE2EFixtureMode()) {
+        return getOfflinePagedProducts({
+          categoryIds,
+          materials,
+          tags,
+          type,
+          minPrice,
+          maxPrice,
+          sort,
+          page,
+          locale,
+          search,
+        });
+      }
+
       const supabase = createAdminClient();
 
       let query = supabase
@@ -328,23 +367,40 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   let count = 0;
 
   if (search) {
-    const response = await searchProducts({
-      query: search,
-      locale,
-      limit: PRODUCTS_PER_PAGE,
-      offset: 0,
-      filters: {
+    if (isOfflineE2EFixtureMode()) {
+      const filteredProducts = getOfflineFilteredProducts({
         categoryIds,
         materials,
         tags,
-        type: (type as "sale" | "rental" | "all" | "") || "all",
+        type,
         minPrice,
         maxPrice,
-      },
-    });
+        sort,
+        page: 1,
+        locale,
+        search,
+      });
+      products = filteredProducts.slice(0, PRODUCTS_PER_PAGE);
+      count = filteredProducts.length;
+    } else {
+      const response = await searchProducts({
+        query: search,
+        locale,
+        limit: PRODUCTS_PER_PAGE,
+        offset: 0,
+        filters: {
+          categoryIds,
+          materials,
+          tags,
+          type: (type as "sale" | "rental" | "all" | "") || "all",
+          minPrice,
+          maxPrice,
+        },
+      });
 
-    products = response.items;
-    count = response.total;
+      products = response.items;
+      count = response.total;
+    }
   } else {
     const [initialProducts, initialCount] = await Promise.all([
       getFilteredProducts(categoryIds, materials, tags, type, minPrice, maxPrice, sort, 1, locale, search),

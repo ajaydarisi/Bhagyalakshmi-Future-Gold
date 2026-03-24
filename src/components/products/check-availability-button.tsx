@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -20,6 +20,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { BUSINESS_INFO } from "@/lib/constants";
+import {
+  buildAvailabilityMessage,
+  buildRentalAvailabilityMessage,
+  getRentalDateConstraints,
+} from "@/lib/offline-store-ui";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -33,8 +38,10 @@ interface CheckAvailabilityButtonProps {
   maxRentalDays?: number | null;
 }
 
-function formatDateForMessage(date: Date) {
-  return format(date, "dd MMM yyyy");
+function normalizeStartOfDay(date: Date) {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
 }
 
 export function CheckAvailabilityButton({
@@ -52,8 +59,7 @@ export function CheckAvailabilityButton({
   const [startPopoverOpen, setStartPopoverOpen] = useState(false);
   const [endPopoverOpen, setEndPopoverOpen] = useState(false);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = normalizeStartOfDay(new Date());
 
   function openWhatsApp(message: string) {
     trackEvent("contact_whatsapp", { item_name: productName });
@@ -73,26 +79,38 @@ export function CheckAvailabilityButton({
       return;
     }
 
-    const previewUrl = `${window.location.origin}/preview/${productSlug}`;
-    const message = `${t("whatsappMessage")}\n\n*${productName}*\n${previewUrl}`;
+    const message = buildAvailabilityMessage({
+      productName,
+      productSlug,
+      origin: window.location.origin,
+      intro: t("whatsappMessage"),
+    });
     openWhatsApp(message);
   }
 
   function handleRentalSubmit() {
     if (!startDate || !endDate) return;
-    const previewUrl = `${window.location.origin}/preview/${productSlug}`;
-    const message = `${t("whatsappRentalMessage")}\n\n*${productName}*\n${t("fromDate")}: ${formatDateForMessage(startDate)}\n${t("toDate")}: ${formatDateForMessage(endDate)}\n\n${previewUrl}`;
+    const message = buildRentalAvailabilityMessage({
+      productName,
+      productSlug,
+      origin: window.location.origin,
+      intro: t("whatsappRentalMessage"),
+      fromLabel: t("fromDate"),
+      toLabel: t("toDate"),
+      startDate,
+      endDate,
+    });
     openWhatsApp(message);
     setDialogOpen(false);
     setStartDate(undefined);
     setEndDate(undefined);
   }
 
-  const endDateMin = startDate ?? today;
-  const endDateMax =
-    startDate && maxRentalDays
-      ? addDays(startDate, maxRentalDays)
-      : undefined;
+  const { endDateMin, endDateMax } = getRentalDateConstraints({
+    startDate,
+    maxRentalDays,
+    today,
+  });
 
   return (
     <>

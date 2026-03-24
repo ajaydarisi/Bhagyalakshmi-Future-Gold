@@ -5,8 +5,9 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/shared/price-display";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
-import { IS_ONLINE, ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
 import { getCategoryName, getProductName } from "@/lib/i18n-helpers";
+import { shouldShowSoldOutOverlay } from "@/lib/offline-store-ui";
 import type { ProductWithCategory } from "@/types/product";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -54,7 +55,7 @@ export function ProductCard({ product }: ProductCardProps) {
             ))}
           </div>
         )}
-        {IS_ONLINE && product.stock === 0 && (
+        {shouldShowSoldOutOverlay(product.stock) && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
             <span className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
               {t("soldOut")}

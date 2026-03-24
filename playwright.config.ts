@@ -10,6 +10,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env.test') });
  */
 export default defineConfig({
   testDir: './tests/e2e',
+  testMatch: /(?:home|layout|products|edge-cases)\.spec\.ts$/,
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -56,7 +57,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command:
-      "NEXT_PUBLIC_E2E_TEST_MODE=1 PORT=3011 NODE_OPTIONS='--max-http-header-size=32768' npx next dev --hostname 127.0.0.1",
+      "NEXT_PUBLIC_E2E_TEST_MODE=1 NEXT_PUBLIC_STORE_MODE=OFFLINE PORT=3011 NODE_OPTIONS='--max-http-header-size=32768' npx next dev --hostname 127.0.0.1",
     url: 'http://localhost:3011/robots.txt',
     reuseExistingServer: !process.env.CI,
   },

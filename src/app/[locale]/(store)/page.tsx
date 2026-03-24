@@ -19,6 +19,11 @@ import { getTranslations } from "next-intl/server";
 import { getLocale } from "next-intl/server";
 import { getCategoryName } from "@/lib/i18n-helpers";
 import { getTopCategories } from "@/lib/queries";
+import {
+  getOfflineFeaturedProducts,
+  getOfflineNewProducts,
+  isOfflineE2EFixtureMode,
+} from "@/lib/offline-store-fixtures";
 import dynamic from "next/dynamic";
 
 const Confetti = dynamic(() =>
@@ -31,6 +36,10 @@ const InstallAppBanner = dynamic(() =>
 
 const getFeaturedProducts = unstable_cache(
   async () => {
+    if (isOfflineE2EFixtureMode()) {
+      return getOfflineFeaturedProducts();
+    }
+
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("products")
@@ -46,6 +55,10 @@ const getFeaturedProducts = unstable_cache(
 
 const getNewProducts = unstable_cache(
   async () => {
+    if (isOfflineE2EFixtureMode()) {
+      return getOfflineNewProducts();
+    }
+
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("products")

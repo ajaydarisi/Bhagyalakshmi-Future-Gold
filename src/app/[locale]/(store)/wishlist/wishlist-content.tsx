@@ -10,8 +10,9 @@ import { useWishlist } from "@/hooks/use-wishlist";
 import { useCart } from "@/hooks/use-cart";
 import { toast } from "sonner";
 import { Heart, ShoppingBag, Trash2 } from "lucide-react";
-import { IS_ONLINE, ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
 import { getProductName } from "@/lib/i18n-helpers";
+import { getWishlistPrimaryActionMode } from "@/lib/offline-store-ui";
 import { useLocale, useTranslations } from "next-intl";
 import type { ProductWithCategory } from "@/types/product";
 import { hapticNotification } from "@/lib/haptics";
@@ -40,6 +41,7 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
   const wishlistedProducts = isLoading
     ? products
     : products.filter((p) => items.includes(p.id));
+  const primaryActionMode = getWishlistPrimaryActionMode();
 
   if (wishlistedProducts.length === 0) {
     return (
@@ -99,7 +101,7 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
                 />
               </div>
               <div className="mt-3 flex gap-2">
-                {IS_ONLINE ? (
+                {primaryActionMode === "move-to-cart" ? (
                   <Button
                     size="sm"
                     className="flex-1"

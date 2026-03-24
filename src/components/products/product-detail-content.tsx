@@ -12,9 +12,9 @@ import { PriceDisplay } from "@/components/shared/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
-import { IS_ONLINE } from "@/lib/constants";
 import { formatPrice } from "@/lib/formatters";
 import { getCategoryName, getProductDescription, getProductName } from "@/lib/i18n-helpers";
+import { getProductDetailDisplayState } from "@/lib/offline-store-ui";
 import type { ProductWithCategory } from "@/types/product";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -38,6 +38,7 @@ export function ProductDetailContent({ initialProduct }: ProductDetailContentPro
   const p = product ?? initialProduct;
   const displayName = getProductName(p, locale);
   const displayDescription = getProductDescription(p, locale);
+  const displayState = getProductDetailDisplayState();
 
   return (
     <div className="mt-8 grid gap-8 md:grid-cols-2">
@@ -132,7 +133,7 @@ export function ProductDetailContent({ initialProduct }: ProductDetailContentPro
         )}
 
         <div>
-          {IS_ONLINE ? (
+          {displayState.showCartAction ? (
             <AddToCartButton product={p} />
           ) : (
             <CheckAvailabilityButton
@@ -164,7 +165,7 @@ export function ProductDetailContent({ initialProduct }: ProductDetailContentPro
           </div>
         )}
 
-        {IS_ONLINE && (
+        {displayState.showStockAvailability && (
           <div>
             <h3 className="font-semibold">{t("availability")}</h3>
             <p className="mt-1">

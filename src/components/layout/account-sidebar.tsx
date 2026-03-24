@@ -3,7 +3,8 @@
 import { Link, usePathname } from "@/i18n/routing";
 import { User, Package, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { IS_ONLINE, ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
+import { getVisibleStoreLinks } from "@/lib/offline-store-ui";
 import { useTranslations } from "next-intl";
 
 const allAccountLinks = [
@@ -12,9 +13,7 @@ const allAccountLinks = [
   { href: ROUTES.accountAddresses, labelKey: "addresses" as const, icon: MapPin, onlineOnly: true },
 ];
 
-const accountLinks = allAccountLinks.filter(
-  (link) => !link.onlineOnly || IS_ONLINE
-);
+const accountLinks = getVisibleStoreLinks(allAccountLinks);
 
 export function AccountSidebar() {
   const pathname = usePathname();

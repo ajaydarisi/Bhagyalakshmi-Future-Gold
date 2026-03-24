@@ -5,6 +5,12 @@ import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { ProductGridSkeleton } from "@/components/shared/loading-skeleton";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { getCategoryName, getProductDescription, getProductName } from "@/lib/i18n-helpers";
+import {
+  getOfflineProductBySlug,
+  getOfflineRelatedProducts,
+  getOfflineStaticProductSlugs,
+  isOfflineE2EFixtureMode,
+} from "@/lib/offline-store-fixtures";
 import { PRODUCT_LIST_FIELDS } from "@/lib/queries/products";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProductWithCategory } from "@/types/product";
@@ -16,6 +22,10 @@ import { Suspense } from "react";
 
 const getProduct = unstable_cache(
   async (slug: string) => {
+    if (isOfflineE2EFixtureMode()) {
+      return getOfflineProductBySlug(slug);
+    }
+
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("products")
@@ -31,6 +41,10 @@ const getProduct = unstable_cache(
 
 const getRelatedProducts = unstable_cache(
   async (categoryId: string, excludeId: string) => {
+    if (isOfflineE2EFixtureMode()) {
+      return getOfflineRelatedProducts(categoryId, excludeId);
+    }
+
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("products")
@@ -46,6 +60,10 @@ const getRelatedProducts = unstable_cache(
 );
 
 export async function generateStaticParams() {
+  if (isOfflineE2EFixtureMode()) {
+    return getOfflineStaticProductSlugs();
+  }
+
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("products")

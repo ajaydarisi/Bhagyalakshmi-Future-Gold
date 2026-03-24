@@ -1,6 +1,15 @@
 import { createClient } from "@/lib/supabase/client";
 import { PRODUCTS_PER_PAGE } from "@/lib/constants";
 import { calculateDiscount } from "@/lib/formatters";
+import {
+  getOfflineFeaturedProducts,
+  getOfflineNewProducts,
+  getOfflinePagedProducts,
+  getOfflineProductBySlug,
+  getOfflineProductCount,
+  getOfflineRelatedProducts,
+  isOfflineE2EFixtureMode,
+} from "@/lib/offline-store-fixtures";
 import type { ProductWithCategory } from "@/types/product";
 import type { CatalogSearchResponse } from "@/types/search";
 
@@ -83,6 +92,20 @@ function applyFilters(query: any, params: FetchProductsParams) {
 export async function fetchProducts(
   params: FetchProductsParams
 ): Promise<FetchProductsResponse> {
+  if (isOfflineE2EFixtureMode()) {
+    const products = getOfflinePagedProducts(params);
+    const count = getOfflineProductCount(params);
+    const page = params.page ?? 1;
+
+    return {
+      products,
+      count,
+      hasMore: page * PRODUCTS_PER_PAGE < count,
+      nextOffset:
+        page * PRODUCTS_PER_PAGE < count ? page * PRODUCTS_PER_PAGE : null,
+    };
+  }
+
   if (params.search) {
     const page = params.page ?? 1;
     const offset = (page - 1) * PRODUCTS_PER_PAGE;
@@ -216,6 +239,10 @@ export async function fetchProducts(
 export async function fetchProduct(
   slug: string
 ): Promise<ProductWithCategory | null> {
+  if (isOfflineE2EFixtureMode()) {
+    return getOfflineProductBySlug(slug);
+  }
+
   const supabase = createClient();
   const { data } = await supabase
     .from("products")
@@ -230,6 +257,10 @@ export async function fetchRelatedProducts(
   categoryId: string,
   excludeId: string
 ): Promise<ProductWithCategory[]> {
+  if (isOfflineE2EFixtureMode()) {
+    return getOfflineRelatedProducts(categoryId, excludeId);
+  }
+
   const supabase = createClient();
   const { data } = await supabase
     .from("products")
@@ -242,6 +273,10 @@ export async function fetchRelatedProducts(
 }
 
 export async function fetchFeaturedProducts(): Promise<ProductWithCategory[]> {
+  if (isOfflineE2EFixtureMode()) {
+    return getOfflineFeaturedProducts();
+  }
+
   const supabase = createClient();
   const { data } = await supabase
     .from("products")
@@ -253,6 +288,10 @@ export async function fetchFeaturedProducts(): Promise<ProductWithCategory[]> {
 }
 
 export async function fetchNewProducts(): Promise<ProductWithCategory[]> {
+  if (isOfflineE2EFixtureMode()) {
+    return getOfflineNewProducts();
+  }
+
   const supabase = createClient();
   const { data } = await supabase
     .from("products")
