@@ -4,7 +4,7 @@ test.describe('1. Authentication', () => {
 
   test.describe('1.1 Login', () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto('/login');
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
     });
 
     test('1. Navigate to /login, verify login form renders', async ({ page }) => {
@@ -41,18 +41,21 @@ test.describe('1. Authentication', () => {
     test('6. Click "Google Sign In" -> redirected to Google OAuth flow', async ({ page }) => {
       const googleBtn = page.getByText('Google', { exact: false });
       if (await googleBtn.isVisible()) {
-        const [popup] = await Promise.all([
-          page.waitForEvent('popup').catch(() => null),
-          googleBtn.click()
-        ]);
+        const popupPromise = page.waitForEvent('popup', { timeout: 3000 }).catch(() => null);
+        await googleBtn.click();
+        const popup = await popupPromise;
         if (popup) {
-          expect(popup.url()).toContain('google.com');
+          await expect.poll(() => popup.url()).toMatch(/google\.com|accounts\.google\.com/i);
+          return;
         }
+
+        await page.waitForURL(/google\.com|accounts\.google\.com/i, { timeout: 10000 });
+        expect(page.url()).toMatch(/google\.com|accounts\.google\.com/i);
       }
     });
 
     test('7. Unauthenticated user visiting protected route (e.g. /account) -> redirected to login', async ({ page }) => {
-      await page.goto('/account');
+      await page.goto('/account', { waitUntil: 'domcontentloaded' });
       await expect(page).toHaveURL(/\/login/);
     });
 
@@ -63,7 +66,7 @@ test.describe('1. Authentication', () => {
 
   test.describe('1.2 Signup', () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto('/signup');
+      await page.goto('/signup', { waitUntil: 'domcontentloaded' });
     });
 
     test('1. Navigate to /signup, verify form renders', async ({ page }) => {
@@ -100,7 +103,7 @@ test.describe('1. Authentication', () => {
 
   test.describe('1.3 Forgot & Reset Password', () => {
     test('1. Navigate to /forgot-password, submit valid email -> success message shown', async ({ page }) => {
-      await page.goto('/forgot-password');
+      await page.goto('/forgot-password', { waitUntil: 'domcontentloaded' });
       await expect(page.locator('input[type="email"]')).toBeVisible();
       await page.fill('input[type="email"]', 'test@example.com');
       await page.locator('button[type="submit"]').click();
@@ -108,7 +111,7 @@ test.describe('1. Authentication', () => {
     });
 
     test('2. Submit invalid/unregistered email -> appropriate error', async ({ page }) => {
-      await page.goto('/forgot-password');
+      await page.goto('/forgot-password', { waitUntil: 'domcontentloaded' });
       await page.fill('input[type="email"]', 'unregistered123@example.com');
       await page.locator('button[type="submit"]').click();
       // Implementation might intentionally not reveal if an email is registered

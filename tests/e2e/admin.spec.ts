@@ -5,7 +5,7 @@ test.describe('10. Admin Panel', () => {
   
   test.describe('10.1 Admin Access & Dashboard', () => {
     test('1. Non-admin user visiting /admin -> denied access / redirected', async ({ page }) => {
-      await page.goto('/admin');
+      await page.goto('/admin', { waitUntil: 'domcontentloaded' });
       // Should redirect to login or show 403
       await expect(page).not.toHaveURL(/\/admin$/);
     });

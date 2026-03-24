@@ -1,5 +1,11 @@
 import { createHash } from "node:crypto";
 import { embedText, serializeVector } from "@/lib/ai/gemini";
+import { ROUTES } from "@/lib/constants";
+import {
+  buildPublicRetrievalDocuments,
+  type PublicCatalogSummaryProduct,
+  PUBLIC_RETRIEVAL_LOCALES,
+} from "@/lib/retrieval/public-documents";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database, Json } from "@/types/database";
 import type {
@@ -15,6 +21,20 @@ import type {
 
 type ProductRetrievalRow =
   Database["public"]["Functions"]["hybrid_search_products"]["Returns"][number];
+
+type CatalogRetrievalDocumentRow =
+  Database["public"]["Tables"]["catalog_retrieval_documents"]["Row"];
+
+type RetrievalDocumentInput = {
+  sourceType: CatalogSourceType;
+  sourceKey: string;
+  productId: string | null;
+  locale: string;
+  title: string;
+  content: string;
+  metadata: Json;
+  contentHash: string;
+};
 
 type RetrievalProduct = Database["public"]["Tables"]["products"]["Row"] & {
   category: {
@@ -41,6 +61,7 @@ type StorefrontFilterQuery<TQuery> = {
 
 const PRODUCT_RETRIEVAL_SELECT =
   "*, category:categories(name, name_telugu, slug)";
+const PUBLIC_SOURCE_TYPES: CatalogSourceType[] = ["store_info", "faq", "legal"];
 
 function normalizeText(value: string | null | undefined) {
   return value?.trim() ?? "";
@@ -69,7 +90,7 @@ function buildProductMetadata(product: RetrievalProduct) {
   } as const satisfies Json;
 }
 
-function buildProductRetrievalDocument(product: RetrievalProduct) {
+function buildProductRetrievalDocument(product: RetrievalProduct): RetrievalDocumentInput {
   const name = normalizeText(product.name);
   const nameTelugu = normalizeText(product.name_telugu);
   const description = normalizeText(product.description);
@@ -129,7 +150,9 @@ function buildProductRetrievalDocument(product: RetrievalProduct) {
     .digest("hex");
 
   return {
+    sourceType: "product",
     sourceKey: `product:${product.id}`,
+    productId: product.id,
     locale: "multi",
     title,
     content,
@@ -153,6 +176,21 @@ async function getProductForRetrieval(productId: string) {
   return data as RetrievalProduct | null;
 }
 
+async function getActiveProductsForPublicDocuments() {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("products")
+    .select(PRODUCT_RETRIEVAL_SELECT)
+    .eq("is_active", true)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as PublicCatalogSummaryProduct[];
+}
+
 function toFilters(filters?: ProductSearchFilters) {
   return {
     categoryIds: filters?.categoryIds ?? [],
@@ -166,6 +204,127 @@ function toFilters(filters?: ProductSearchFilters) {
 
 function escapeFallbackQueryValue(value: string) {
   return value.replace(/[,%()"]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function getMetadataValue(
+  metadata: Json,
+  key: string
+): string | null {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+
+  const value = metadata[key];
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function parseVector(value: string | null) {
+  if (!value?.startsWith("[") || !value.endsWith("]")) {
+    return null;
+  }
+
+  const values = value
+    .slice(1, -1)
+    .split(",")
+    .map((entry) => Number(entry.trim()))
+    .filter((entry) => Number.isFinite(entry));
+
+  return values.length > 0 ? values : null;
+}
+
+function cosineSimilarity(left: number[], right: number[]) {
+  if (left.length !== right.length || left.length === 0) {
+    return 0;
+  }
+
+  let dot = 0;
+  let leftMagnitude = 0;
+  let rightMagnitude = 0;
+
+  for (let index = 0; index < left.length; index += 1) {
+    dot += left[index] * right[index];
+    leftMagnitude += left[index] * left[index];
+    rightMagnitude += right[index] * right[index];
+  }
+
+  if (leftMagnitude === 0 || rightMagnitude === 0) {
+    return 0;
+  }
+
+  return dot / (Math.sqrt(leftMagnitude) * Math.sqrt(rightMagnitude));
+}
+
+function resolveCatalogHref(args: {
+  sourceType: CatalogSourceType;
+  metadata: Json;
+  slug?: string | null;
+}) {
+  const metadataHref = getMetadataValue(args.metadata, "href");
+  if (metadataHref) {
+    return metadataHref;
+  }
+
+  if (args.sourceType === "product" && args.slug) {
+    return ROUTES.product(args.slug);
+  }
+
+  return null;
+}
+
+function buildProductContextItem(
+  hit: ProductSearchHit,
+  locale: string
+): RetrievedContextItem {
+  const title = locale === "te" && hit.name_telugu ? hit.name_telugu : hit.name;
+  const snippet =
+    locale === "te" && hit.description_telugu
+      ? hit.description_telugu
+      : hit.description ?? hit.description_telugu ?? "";
+
+  return {
+    sourceType: "product",
+    sourceKey: hit.sourceKey,
+    title,
+    snippet,
+    locale: "multi",
+    metadata: {
+      slug: hit.slug,
+      material: hit.material,
+      tags: hit.tags,
+      categorySlug: hit.category?.slug ?? null,
+      href: ROUTES.product(hit.slug),
+    },
+    productId: hit.id,
+    slug: hit.slug,
+    href: ROUTES.product(hit.slug),
+    score: hit.score,
+    hit,
+  };
+}
+
+function mapCatalogRowToContextItem(
+  row: CatalogRetrievalDocumentRow,
+  score: number
+): RetrievedContextItem {
+  const slug = getMetadataValue(row.metadata, "slug");
+  const href = resolveCatalogHref({
+    sourceType: row.source_type,
+    metadata: row.metadata,
+    slug,
+  });
+
+  return {
+    sourceType: row.source_type,
+    sourceKey: row.source_key,
+    title: row.title,
+    snippet: row.content,
+    locale: row.locale,
+    metadata: row.metadata,
+    productId: row.product_id,
+    slug,
+    href,
+    score,
+  };
 }
 
 function applyStorefrontFilters<TQuery extends StorefrontFilterQuery<TQuery>>(
@@ -396,12 +555,13 @@ async function searchProductRows(args: {
   limit: number;
   offset: number;
   mode?: RetrievalMode;
+  queryEmbedding?: number[] | null;
 }): Promise<ProductSearchResult> {
   const query = args.query.trim();
   if (query.length < 2) {
     return {
       items: [],
-      mode: "keyword" as const,
+      mode: "keyword",
       total: 0,
       hasMore: false,
       nextOffset: null,
@@ -416,7 +576,7 @@ async function searchProductRows(args: {
 
   if (resolvedMode === "hybrid") {
     try {
-      const embedding = await embedText(query, {
+      const embedding = args.queryEmbedding ?? await embedText(query, {
         taskType: "RETRIEVAL_QUERY",
       });
       queryEmbeddingText = serializeVector(embedding);
@@ -465,21 +625,19 @@ async function searchProductRows(args: {
   }
 }
 
-export async function syncProductRetrievalDocument(productId: string) {
-  const admin = createAdminClient();
-  const product = await getProductForRetrieval(productId);
-
-  if (!product || !product.is_active) {
-    await removeProductRetrievalDocument(productId);
-    return "ready" as const;
-  }
-
-  const document = buildProductRetrievalDocument(product);
-  const { data: existing } = await admin
+async function syncRetrievalDocument(
+  admin: ReturnType<typeof createAdminClient>,
+  document: RetrievalDocumentInput
+) {
+  const { data: existing, error: existingError } = await admin
     .from("catalog_retrieval_documents")
     .select("content_hash, index_status, embedding")
     .eq("source_key", document.sourceKey)
     .maybeSingle();
+
+  if (existingError) {
+    throw new Error(existingError.message);
+  }
 
   if (
     existing?.content_hash === document.contentHash &&
@@ -497,9 +655,9 @@ export async function syncProductRetrievalDocument(productId: string) {
     .from("catalog_retrieval_documents")
     .upsert(
       {
-        source_type: "product",
+        source_type: document.sourceType,
         source_key: document.sourceKey,
-        product_id: product.id,
+        product_id: document.productId,
         locale: document.locale,
         title: document.title,
         content: document.content,
@@ -558,6 +716,216 @@ export async function syncProductRetrievalDocument(productId: string) {
   }
 }
 
+function getPublicLocaleCandidates(locale: string) {
+  return locale === "te" ? ["te", "en"] : ["en"];
+}
+
+function getLocalePriority(candidateLocale: string, preferredLocale: string) {
+  if (candidateLocale === preferredLocale) {
+    return 2;
+  }
+
+  if (candidateLocale === "multi") {
+    return 1;
+  }
+
+  return 0;
+}
+
+async function searchPublicDocuments(args: {
+  query: string;
+  locale: string;
+  sourceTypes: CatalogSourceType[];
+  limit: number;
+  offset: number;
+  mode?: RetrievalMode;
+  queryEmbedding?: number[] | null;
+}): Promise<RetrievedCatalogContext> {
+  const query = args.query.trim();
+  if (query.length < 2 || args.sourceTypes.length === 0) {
+    return {
+      items: [],
+      total: 0,
+      hasMore: false,
+      nextOffset: null,
+      mode: "keyword",
+    };
+  }
+
+  const admin = createAdminClient();
+  const localeCandidates = getPublicLocaleCandidates(args.locale);
+
+  try {
+    const keywordPromise = admin
+      .from("catalog_retrieval_documents")
+      .select("*")
+      .in("source_type", args.sourceTypes)
+      .in("locale", localeCandidates)
+      .neq("index_status", "pending")
+      .textSearch("fts", query, { type: "websearch" })
+      .range(0, 39);
+
+    const semanticPromise = (async () => {
+      if (args.mode === "keyword" || query.length < 4) {
+        return [] as Array<{ row: CatalogRetrievalDocumentRow; similarity: number }>;
+      }
+
+      const queryEmbedding = args.queryEmbedding ?? await embedText(query, {
+        taskType: "RETRIEVAL_QUERY",
+      });
+
+      const { data, error } = await admin
+        .from("catalog_retrieval_documents")
+        .select("*")
+        .in("source_type", args.sourceTypes)
+        .in("locale", localeCandidates)
+        .eq("index_status", "ready")
+        .not("embedding", "is", null);
+
+      if (error) {
+        throw error;
+      }
+
+      return ((data ?? []) as CatalogRetrievalDocumentRow[])
+        .map((row) => {
+          const embedding = parseVector(row.embedding);
+          return embedding
+            ? {
+                row,
+                similarity: cosineSimilarity(queryEmbedding, embedding),
+              }
+            : null;
+        })
+        .filter((entry): entry is { row: CatalogRetrievalDocumentRow; similarity: number } => Boolean(entry))
+        .sort((left, right) => {
+          if (right.similarity !== left.similarity) {
+            return right.similarity - left.similarity;
+          }
+
+          return (
+            getLocalePriority(right.row.locale, args.locale) -
+            getLocalePriority(left.row.locale, args.locale)
+          );
+        })
+        .slice(0, 20);
+    })();
+
+    const [{ data: keywordData, error: keywordError }, semanticRows] =
+      await Promise.all([keywordPromise, semanticPromise]);
+
+    if (keywordError) {
+      throw keywordError;
+    }
+
+    const keywordRows = ((keywordData ?? []) as CatalogRetrievalDocumentRow[])
+      .sort((left, right) => {
+        const localeDelta =
+          getLocalePriority(right.locale, args.locale) -
+          getLocalePriority(left.locale, args.locale);
+        if (localeDelta !== 0) {
+          return localeDelta;
+        }
+
+        return left.source_key.localeCompare(right.source_key);
+      })
+      .slice(0, 20);
+
+    const fused = new Map<string, {
+      row: CatalogRetrievalDocumentRow;
+      score: number;
+      keywordRank: number | null;
+      semanticRank: number | null;
+      semanticSimilarity: number;
+    }>();
+
+    for (const [index, row] of keywordRows.entries()) {
+      const existing = fused.get(row.source_key) ?? {
+        row,
+        score: 0,
+        keywordRank: null as number | null,
+        semanticRank: null as number | null,
+        semanticSimilarity: 0,
+      };
+
+      existing.score += 1 / (60 + index + 1);
+      existing.keywordRank = index + 1;
+      fused.set(row.source_key, existing);
+    }
+
+    for (const [index, entry] of semanticRows.entries()) {
+      const existing = fused.get(entry.row.source_key) ?? {
+        row: entry.row,
+        score: 0,
+        keywordRank: null as number | null,
+        semanticRank: null as number | null,
+        semanticSimilarity: 0,
+      };
+
+      existing.score += 1 / (60 + index + 1) + entry.similarity / 100;
+      existing.semanticRank = index + 1;
+      existing.semanticSimilarity = entry.similarity;
+      fused.set(entry.row.source_key, existing);
+    }
+
+    const ranked = [...fused.values()].sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+
+      const localeDelta =
+        getLocalePriority(right.row.locale, args.locale) -
+        getLocalePriority(left.row.locale, args.locale);
+      if (localeDelta !== 0) {
+        return localeDelta;
+      }
+
+      return right.semanticSimilarity - left.semanticSimilarity;
+    });
+
+    const total = ranked.length;
+    const items = ranked
+      .slice(args.offset, args.offset + args.limit)
+      .map(({ row, score }) => mapCatalogRowToContextItem(row, score));
+    const hasMore = total > args.offset + items.length;
+    const mode =
+      args.mode === "assistant"
+        ? "assistant"
+        : semanticRows.length > 0
+          ? "hybrid"
+          : "keyword";
+
+    return {
+      items,
+      total,
+      hasMore,
+      nextOffset: hasMore ? args.offset + args.limit : null,
+      mode,
+    };
+  } catch (error) {
+    console.error("[searchPublicDocuments] Falling back to empty public context:", error);
+    return {
+      items: [],
+      total: 0,
+      hasMore: false,
+      nextOffset: null,
+      mode: "keyword",
+    };
+  }
+}
+
+export async function syncProductRetrievalDocument(productId: string) {
+  const admin = createAdminClient();
+  const product = await getProductForRetrieval(productId);
+
+  if (!product || !product.is_active) {
+    await removeProductRetrievalDocument(productId);
+    return "ready" as const;
+  }
+
+  const document = buildProductRetrievalDocument(product);
+  return syncRetrievalDocument(admin, document);
+}
+
 export async function removeProductRetrievalDocument(productId: string) {
   const admin = createAdminClient();
   await admin
@@ -573,6 +941,78 @@ export async function syncProductRetrievalDocuments(productIds: string[]) {
   }
 }
 
+export async function syncPublicRetrievalDocuments(locales?: string[]) {
+  const resolvedLocales = (locales ?? [...PUBLIC_RETRIEVAL_LOCALES]).filter(
+    (locale): locale is (typeof PUBLIC_RETRIEVAL_LOCALES)[number] =>
+      PUBLIC_RETRIEVAL_LOCALES.includes(
+        locale as (typeof PUBLIC_RETRIEVAL_LOCALES)[number]
+      )
+  );
+  const admin = createAdminClient();
+  const products = await getActiveProductsForPublicDocuments();
+  const documents = buildPublicRetrievalDocuments(
+    products,
+    resolvedLocales.length > 0 ? resolvedLocales : PUBLIC_RETRIEVAL_LOCALES
+  );
+  const activeKeys = new Set(documents.map((document) => document.sourceKey));
+
+  for (const document of documents) {
+    await syncRetrievalDocument(admin, document);
+  }
+
+  const { data: existingRows, error: existingError } = await admin
+    .from("catalog_retrieval_documents")
+    .select("source_key")
+    .in("source_type", PUBLIC_SOURCE_TYPES)
+    .in("locale", resolvedLocales.length > 0 ? resolvedLocales : [...PUBLIC_RETRIEVAL_LOCALES]);
+
+  if (existingError) {
+    throw new Error(existingError.message);
+  }
+
+  const staleKeys = (existingRows ?? [])
+    .map((row) => row.source_key)
+    .filter((sourceKey) => !activeKeys.has(sourceKey));
+
+  if (staleKeys.length > 0) {
+    await admin
+      .from("catalog_retrieval_documents")
+      .delete()
+      .in("source_key", staleKeys);
+  }
+}
+
+export async function ensurePublicRetrievalDocuments(locales?: string[]) {
+  const resolvedLocales = (locales ?? [...PUBLIC_RETRIEVAL_LOCALES]).filter(
+    (locale): locale is (typeof PUBLIC_RETRIEVAL_LOCALES)[number] =>
+      PUBLIC_RETRIEVAL_LOCALES.includes(
+        locale as (typeof PUBLIC_RETRIEVAL_LOCALES)[number]
+      )
+  );
+  const targetLocales =
+    resolvedLocales.length > 0 ? resolvedLocales : [...PUBLIC_RETRIEVAL_LOCALES];
+  const products = await getActiveProductsForPublicDocuments();
+  const expectedDocumentCount = buildPublicRetrievalDocuments(
+    products,
+    targetLocales
+  ).length;
+  const admin = createAdminClient();
+  const { count, error } = await admin
+    .from("catalog_retrieval_documents")
+    .select("id", { count: "exact", head: true })
+    .in("source_type", PUBLIC_SOURCE_TYPES)
+    .in("locale", targetLocales)
+    .neq("index_status", "pending");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if ((count ?? 0) < expectedDocumentCount) {
+    await syncPublicRetrievalDocuments(targetLocales);
+  }
+}
+
 export async function retrieveCatalogContext(args: {
   query: string;
   locale: string;
@@ -585,44 +1025,8 @@ export async function retrieveCatalogContext(args: {
   const sourceTypes = args.sourceTypes ?? ["product"];
   const limit = args.limit ?? 12;
   const offset = args.offset ?? 0;
-
-  if (sourceTypes.length === 1 && sourceTypes[0] === "product") {
-    const result = await searchProductRows({
-      query: args.query,
-      filters: args.filters,
-      limit,
-      offset,
-      mode: args.mode,
-    });
-
-    return {
-      items: result.items.map((hit) => {
-        return {
-          sourceType: "product" as const,
-          sourceKey: hit.sourceKey,
-          title: hit.name,
-          snippet: hit.description ?? hit.description_telugu ?? "",
-          locale: "multi",
-          metadata: {
-            slug: hit.slug,
-            material: hit.material,
-            tags: hit.tags,
-            categorySlug: hit.category?.slug ?? null,
-          },
-          productId: hit.id,
-          slug: hit.slug,
-          hit,
-        } satisfies RetrievedContextItem;
-      }),
-      total: result.total,
-      hasMore: result.hasMore,
-      nextOffset: result.nextOffset,
-      mode: result.mode,
-    };
-  }
-
-  const admin = createAdminClient();
   const query = args.query.trim();
+
   if (query.length < 2) {
     return {
       items: [],
@@ -633,35 +1037,106 @@ export async function retrieveCatalogContext(args: {
     };
   }
 
-  const { data, error } = await admin
-    .from("catalog_retrieval_documents")
-    .select("*")
-    .in("source_type", sourceTypes)
-    .neq("index_status", "pending")
-    .textSearch("fts", query, { type: "websearch" })
-    .range(offset, offset + limit);
+  if (sourceTypes.length === 1 && sourceTypes[0] === "product") {
+    const result = await searchProductRows({
+      query,
+      filters: args.filters,
+      limit,
+      offset,
+      mode: args.mode,
+    });
 
-  if (error) {
-    throw new Error(error.message);
+    return {
+      items: result.items.map((hit) => buildProductContextItem(hit, args.locale)),
+      total: result.total,
+      hasMore: result.hasMore,
+      nextOffset: result.nextOffset,
+      mode: result.mode,
+    };
   }
 
-  const rows = (data ?? []) as Database["public"]["Tables"]["catalog_retrieval_documents"]["Row"][];
-  const hasMore = rows.length > limit;
+  const includeProducts = sourceTypes.includes("product");
+  const publicSourceTypes = sourceTypes.filter(
+    (sourceType): sourceType is Exclude<CatalogSourceType, "product"> =>
+      sourceType !== "product"
+  );
+
+  if (!includeProducts) {
+    return searchPublicDocuments({
+      query,
+      locale: args.locale,
+      sourceTypes: publicSourceTypes,
+      limit,
+      offset,
+      mode: args.mode,
+    });
+  }
+
+  let queryEmbedding: number[] | null = null;
+  if (args.mode !== "keyword" && query.length >= 4) {
+    try {
+      queryEmbedding = await embedText(query, {
+        taskType: "RETRIEVAL_QUERY",
+      });
+    } catch (error) {
+      console.error("[retrieveCatalogContext] Query embedding failed:", error);
+    }
+  }
+
+  const expandedLimit = Math.max(limit * 2, 12);
+  const [productResult, publicResult] = await Promise.all([
+    searchProductRows({
+      query,
+      filters: args.filters,
+      limit: expandedLimit,
+      offset: 0,
+      mode: queryEmbedding ? args.mode : "keyword",
+      queryEmbedding,
+    }),
+    searchPublicDocuments({
+      query,
+      locale: args.locale,
+      sourceTypes: publicSourceTypes,
+      limit: expandedLimit,
+      offset: 0,
+      mode: queryEmbedding ? args.mode : "keyword",
+      queryEmbedding,
+    }),
+  ]);
+
+  const combined = [
+    ...productResult.items.map((hit) => buildProductContextItem(hit, args.locale)),
+    ...publicResult.items,
+  ].sort((left, right) => {
+    const scoreDelta = (right.score ?? 0) - (left.score ?? 0);
+    if (scoreDelta !== 0) {
+      return scoreDelta;
+    }
+
+    const sourceDelta = Number(right.sourceType === "product") -
+      Number(left.sourceType === "product");
+    if (sourceDelta !== 0) {
+      return sourceDelta;
+    }
+
+    return left.sourceKey.localeCompare(right.sourceKey);
+  });
+
+  const pagedItems = combined.slice(offset, offset + limit);
+  const total = combined.length;
+  const hasMore = total > offset + pagedItems.length;
 
   return {
-    items: rows.slice(0, limit).map((row) => ({
-      sourceType: row.source_type,
-      sourceKey: row.source_key,
-      title: row.title,
-      snippet: row.content,
-      locale: row.locale,
-      metadata: row.metadata,
-      productId: row.product_id,
-    })),
-    total: rows.length,
+    items: pagedItems,
+    total,
     hasMore,
     nextOffset: hasMore ? offset + limit : null,
-    mode: "keyword",
+    mode:
+      args.mode === "assistant"
+        ? "assistant"
+        : queryEmbedding
+          ? "hybrid"
+          : "keyword",
   };
 }
 

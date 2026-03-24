@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('3. Products', () => {
+  const productCardSelector =
+    'a[href^="/products/"]:not([href*="?"]), a[href^="/en/products/"]:not([href*="?"]), a[href^="/te/products/"]:not([href*="?"])';
 
   test.describe('3.1 Product Listing Page (PLP)', () => {
     test.beforeEach(async ({ page }) => {
@@ -9,12 +11,12 @@ test.describe('3. Products', () => {
 
     test('1. Navigate to /products -> product grid renders with cards', async ({ page }) => {
       await expect(page.locator('main')).toBeVisible();
-      const productCards = page.locator('a[href^="/products/"]');
+      const productCards = page.locator(productCardSelector);
       await expect(productCards.first()).toBeVisible();
     });
 
     test('2. Each product card shows image, name, price, and discount price (if any)', async ({ page }) => {
-      const firstCard = page.locator('a[href^="/products/"]').first();
+      const firstCard = page.locator(productCardSelector).first();
       if (await firstCard.isVisible()) {
         await expect(firstCard.locator('img')).toBeVisible();
         // Just checking that price text nodes exist
@@ -100,7 +102,7 @@ test.describe('3. Products', () => {
     });
 
     test('12. Product card click navigates to product detail page', async ({ page }) => {
-      const firstProduct = page.locator('a[href^="/products/"]').first();
+      const firstProduct = page.locator(productCardSelector).first();
       if (await firstProduct.isVisible()) {
         await firstProduct.click();
         await expect(page).toHaveURL(/\/products\/.+/);
@@ -111,7 +113,7 @@ test.describe('3. Products', () => {
   test.describe('3.2 Product Detail Page (PDP)', () => {
     test.beforeEach(async ({ page }) => {
       await page.goto('/products');
-      const firstProduct = page.locator('a[href^="/products/"]').first();
+      const firstProduct = page.locator(productCardSelector).first();
       if (await firstProduct.isVisible()) {
         await firstProduct.click();
         await page.waitForURL(/\/products\/.+/);

@@ -197,6 +197,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <ProductCacheWriter product={typedProduct} />
+      <div
+        hidden
+        data-assistant-product-slug={typedProduct.slug}
+        data-assistant-product-name={displayName}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

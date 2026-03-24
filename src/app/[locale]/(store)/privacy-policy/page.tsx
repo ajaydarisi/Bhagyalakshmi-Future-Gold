@@ -68,7 +68,7 @@ export default async function PrivacyPolicyPage() {
         <div className="space-y-10">
           {/* Sections with bullet lists */}
           {listSections.map((section, index) => (
-            <div key={section.key}>
+            <div key={section.key} id={section.key} className="scroll-mt-24">
               <h2 className="text-xl md:text-2xl mb-3">
                 {index + 1}. {t(`${section.key}.title`)}
               </h2>
@@ -90,7 +90,7 @@ export default async function PrivacyPolicyPage() {
 
           {/* Plain text sections */}
           {textSections.map((section, index) => (
-            <div key={section}>
+            <div key={section} id={section} className="scroll-mt-24">
               <h2 className="text-xl md:text-2xl mb-3">
                 {listSections.length + index + 1}. {t(`${section}.title`)}
               </h2>
@@ -101,7 +101,7 @@ export default async function PrivacyPolicyPage() {
           ))}
 
           {/* Third-party services */}
-          <div>
+          <div id="thirdParty" className="scroll-mt-24">
             <h2 className="text-xl md:text-2xl mb-3">
               {listSections.length + textSections.length + 1}. {t("thirdParty.title")}
             </h2>
@@ -121,7 +121,7 @@ export default async function PrivacyPolicyPage() {
           </div>
 
           {/* Data retention */}
-          <div>
+          <div id="dataRetention" className="scroll-mt-24">
             <h2 className="text-xl md:text-2xl mb-3">
               {listSections.length + textSections.length + 2}. {t("dataRetention.title")}
             </h2>
@@ -131,7 +131,7 @@ export default async function PrivacyPolicyPage() {
           </div>
 
           {/* Children's privacy */}
-          <div>
+          <div id="childrensPrivacy" className="scroll-mt-24">
             <h2 className="text-xl md:text-2xl mb-3">
               {listSections.length + textSections.length + 3}. {t("childrensPrivacy.title")}
             </h2>
@@ -141,7 +141,7 @@ export default async function PrivacyPolicyPage() {
           </div>
 
           {/* Your rights */}
-          <div>
+          <div id="yourRights" className="scroll-mt-24">
             <h2 className="text-xl md:text-2xl mb-3">
               {listSections.length + textSections.length + 4}. {t("yourRights.title")}
             </h2>
@@ -161,7 +161,7 @@ export default async function PrivacyPolicyPage() {
           </div>
 
           {/* Changes */}
-          <div>
+          <div id="changes" className="scroll-mt-24">
             <h2 className="text-xl md:text-2xl mb-3">
               {listSections.length + textSections.length + 5}. {t("changes.title")}
             </h2>
@@ -171,7 +171,7 @@ export default async function PrivacyPolicyPage() {
           </div>
 
           {/* Contact */}
-          <div>
+          <div id="contact" className="scroll-mt-24">
             <h2 className="text-xl md:text-2xl mb-3">
               {listSections.length + textSections.length + 6}. {t("contact.title")}
             </h2>

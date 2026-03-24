@@ -132,7 +132,7 @@ export default async function AboutPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       {/* Hero Banner */}
-      <section className="bg-accent/30 py-20">
+      <section id="store-info" className="bg-accent/30 py-20 scroll-mt-24">
         <div className="container mx-auto px-4 text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
             {t("label")}
@@ -147,7 +147,7 @@ export default async function AboutPage() {
       </section>
 
       {/* Our Story */}
-      <section className="container mx-auto px-4 py-20">
+      <section id="our-story" className="container mx-auto px-4 py-20 scroll-mt-24">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
@@ -176,7 +176,7 @@ export default async function AboutPage() {
       </section>
 
       {/* Quality & Warranty */}
-      <section className="bg-accent/30 py-20">
+      <section id="quality-promise" className="bg-accent/30 py-20 scroll-mt-24">
         <div className="container mx-auto px-4 max-w-3xl text-center">
           <Shield className="h-8 w-8 mx-auto mb-4 text-primary" />
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
@@ -222,7 +222,7 @@ export default async function AboutPage() {
       </section>
 
       {/* FAQ */}
-      <section className="bg-accent/30 py-20">
+      <section id="faq" className="bg-accent/30 py-20 scroll-mt-24">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="mb-12 text-center">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
@@ -232,7 +232,12 @@ export default async function AboutPage() {
           </div>
           <Accordion type="single" collapsible className="w-full">
             {faqItems.map((item, index) => (
-              <AccordionItem key={index} value={`faq-${index}`}>
+              <AccordionItem
+                key={index}
+                id={`faq-q${index + 1}`}
+                value={`faq-${index}`}
+                className="scroll-mt-24"
+              >
                 <AccordionTrigger className="text-left text-base">
                   {item.q}
                 </AccordionTrigger>
@@ -246,7 +251,7 @@ export default async function AboutPage() {
       </section>
 
       {/* Visit Us */}
-      <section className="border-t">
+      <section id="visit-us" className="border-t scroll-mt-24">
         <div className="container mx-auto px-4 py-20">
           <div className="grid md:grid-cols-2 gap-12">
             <div>

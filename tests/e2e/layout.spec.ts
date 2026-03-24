@@ -50,8 +50,10 @@ test.describe('8. Layout & Navigation', () => {
     if (isMobile) {
       const bottomNav = page.locator('nav.fixed.bottom-0');
       if (await bottomNav.isVisible()) {
-        await expect(bottomNav.locator('a[href="/"]')).toBeVisible();
-        await expect(bottomNav.locator('a[href="/products"]')).toBeVisible();
+        await expect(bottomNav.locator('a[href="/"], a[href="/en"]')).toBeVisible();
+        await expect(
+          bottomNav.locator('a[href="/products"], a[href="/en/products"]')
+        ).toBeVisible();
       }
     }
   });

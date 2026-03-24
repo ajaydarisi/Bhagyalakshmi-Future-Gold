@@ -22,6 +22,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
       search: (await import(`../../messages/${locale}/search.json`)).default,
       feedback: (await import(`../../messages/${locale}/feedback.json`)).default,
       legal: (await import(`../../messages/${locale}/legal.json`)).default,
+      assistant: (await import(`../../messages/${locale}/assistant.json`)).default,
     },
   };
 });

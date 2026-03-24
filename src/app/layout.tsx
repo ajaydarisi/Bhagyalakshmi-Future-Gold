@@ -4,6 +4,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CapacitorInit } from "@/components/shared/capacitor-init";
 import "./globals.css";
 
+const isE2ETestMode = process.env.NEXT_PUBLIC_E2E_TEST_MODE === "1";
+
 const marcellus = Marcellus({
   variable: "--font-brand",
   subsets: ["latin"],
@@ -44,28 +46,32 @@ export default function RootLayout({
       <body
         className={`${marcellus.variable} ${playfair.variable} ${dmSans.variable} ${notoSansTelugu.variable} antialiased`}
       >
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-NKL5JQS5W6"
-          strategy="lazyOnload"
-        />
-        <Script id="google-analytics" strategy="lazyOnload">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-NKL5JQS5W6');
-          `}
-        </Script>
-        <Script id="sw-register" strategy="lazyOnload">
-          {`
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.register('/sw.js');
-            }
-          `}
-        </Script>
+        {!isE2ETestMode && (
+          <>
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-NKL5JQS5W6"
+              strategy="lazyOnload"
+            />
+            <Script id="google-analytics" strategy="lazyOnload">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-NKL5JQS5W6');
+              `}
+            </Script>
+            <Script id="sw-register" strategy="lazyOnload">
+              {`
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.register('/sw.js');
+                }
+              `}
+            </Script>
+          </>
+        )}
         <CapacitorInit />
         {children}
-        <SpeedInsights />
+        {!isE2ETestMode && <SpeedInsights />}
       </body>
     </html>
   );

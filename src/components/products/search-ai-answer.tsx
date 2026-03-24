@@ -86,10 +86,10 @@ export function SearchAiAnswer({ query, locale }: SearchAiAnswerProps) {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {reply.citations.map((citation) =>
-                    citation.slug ? (
+                    citation.href ? (
                       <Link
                         key={citation.sourceKey}
-                        href={`/products/${citation.slug}`}
+                        href={citation.href}
                         className="rounded-full border px-3 py-1 text-sm hover:border-primary hover:text-primary"
                       >
                         {citation.title}

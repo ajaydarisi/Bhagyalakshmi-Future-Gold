@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { StorefrontAssistant } from "@/components/assistant/storefront-assistant";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
 import { PushTokenLinker } from "@/components/shared/push-token-linker";
@@ -40,6 +41,7 @@ export default async function StoreLayout({
               <Header categories={categories} />
               <main className="flex-1 pb-20 lg:pb-0">{children}</main>
               <Footer categories={categories} />
+              <StorefrontAssistant />
               <BottomNav />
             </div>
           </WishlistProvider>

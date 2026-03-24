@@ -57,7 +57,7 @@ export default async function TermsAndConditionsPage() {
 
         <div className="space-y-10">
           {sections.map((section, index) => (
-            <div key={section}>
+            <div key={section} id={section} className="scroll-mt-24">
               <h2 className="text-xl md:text-2xl mb-3">
                 {index + 1}. {t(`${section}.title`)}
               </h2>
@@ -68,7 +68,7 @@ export default async function TermsAndConditionsPage() {
           ))}
 
           {/* Contact */}
-          <div>
+          <div id="contact" className="scroll-mt-24">
             <h2 className="text-xl md:text-2xl mb-3">
               {sections.length + 1}. {t("contact.title")}
             </h2>
