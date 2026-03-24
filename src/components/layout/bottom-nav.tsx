@@ -40,9 +40,27 @@ export function BottomNav() {
   if (HIDDEN_ROUTES.some((r) => pathname.startsWith(r))) return null;
 
   const tabs = [
-    { key: "home", href: ROUTES.home, icon: Home, label: t("home") },
-    { key: "shop", href: ROUTES.products, icon: LayoutGrid, label: t("shop") },
-    { key: "about", href: ROUTES.about, icon: Info, label: t("about") },
+    {
+      key: "home",
+      href: ROUTES.home,
+      icon: Home,
+      label: t("home"),
+      fillActive: false,
+    },
+    {
+      key: "shop",
+      href: ROUTES.products,
+      icon: LayoutGrid,
+      label: t("shop"),
+      fillActive: true,
+    },
+    {
+      key: "about",
+      href: ROUTES.about,
+      icon: Info,
+      label: t("about"),
+      fillActive: false,
+    },
     // { key: "search", href: null, icon: Search, label: t("search") },
     {
       key: "wishlist",
@@ -50,12 +68,14 @@ export function BottomNav() {
       icon: Heart,
       label: t("wishlist"),
       badge: wishlistItems.length,
+      fillActive: true,
     },
     {
       key: "account",
       href: authLoading || user ? ROUTES.account : ROUTES.login,
       icon: User,
       label: t("account"),
+      fillActive: true,
     },
   ] as const;
 
@@ -88,7 +108,7 @@ export function BottomNav() {
                   <Icon
                     className="h-5 w-5"
                     strokeWidth={active ? 2 : 1.5}
-                    fill={active && tab.key !== "home" ? "currentColor" : "none"}
+                    fill={active && tab.fillActive ? "currentColor" : "none"}
                   />
                   {"badge" in tab && tab.badge > 0 && (
                     <Badge
