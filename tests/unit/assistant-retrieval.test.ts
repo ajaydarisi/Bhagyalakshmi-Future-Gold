@@ -7,7 +7,7 @@ vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient,
 }));
 
-vi.mock('@/lib/ai/gemini', () => ({
+vi.mock('@/lib/ai/ollama', () => ({
   embedText,
   serializeVector: (values: number[]) => `[${values.join(',')}]`,
 }));

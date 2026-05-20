@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { embedText, serializeVector } from "@/lib/ai/gemini";
+import { embedText, serializeVector } from "@/lib/ai/ollama";
 import { ROUTES } from "@/lib/constants";
 import {
   buildPublicRetrievalDocuments,

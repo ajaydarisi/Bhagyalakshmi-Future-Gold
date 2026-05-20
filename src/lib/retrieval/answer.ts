@@ -1,4 +1,4 @@
-import { generateJson } from "@/lib/ai/gemini";
+import { generateJson } from "@/lib/ai/ollama";
 import {
   ASSISTANT_CONTEXT_LIMIT,
   ASSISTANT_MAX_ASSISTANT_MESSAGE_CHARS,
