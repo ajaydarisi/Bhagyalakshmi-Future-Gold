@@ -132,6 +132,7 @@ export async function generateJson<T>(prompt: string): Promise<T> {
       model,
       messages,
       stream: false,
+      format: "json",
     }),
   });
 
@@ -149,11 +150,5 @@ export async function generateJson<T>(prompt: string): Promise<T> {
     throw new Error("Ollama did not return text");
   }
 
-  // Some models wrap JSON in markdown fences; strip them.
-  const cleaned = text
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```\s*$/i, "");
-
-  return JSON.parse(cleaned) as T;
+  return JSON.parse(text) as T;
 }
