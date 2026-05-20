@@ -1,5 +1,6 @@
 const DEFAULT_EMBEDDING_MODEL = "nomic-embed-text";
-const DEFAULT_GENERATION_MODEL = "qwen3.5:9b";
+const DEFAULT_GENERATION_MODEL = "qwen2.5:7b";
+const EXPECTED_DIMENSIONS = 768;
 const DEFAULT_OLLAMA_HOST = "https://api.ollama.com";
 
 function getHost() {
@@ -74,11 +75,31 @@ export async function embedText(
     );
   }
 
-  const data = (await response.json()) as OllamaEmbedResponse;
-  const embedding = data.embeddings?.[0];
+  const data = (await response.json()) as unknown;
+
+  // Defensive API-shape contract: must have nested array of numbers
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    !("embeddings" in data) ||
+    !Array.isArray((data as Record<string, unknown>).embeddings) ||
+    !Array.isArray((data as Record<string, unknown[]>).embeddings[0])
+  ) {
+    throw new Error(
+      `Unexpected Ollama embed response shape: expected { embeddings: number[][] }`
+    );
+  }
+
+  const embedding = (data as { embeddings: number[][] }).embeddings[0];
 
   if (!embedding || embedding.length === 0) {
     throw new Error("Ollama did not return an embedding");
+  }
+
+  if (embedding.length !== EXPECTED_DIMENSIONS) {
+    throw new Error(
+      `Embedding dimension mismatch: expected ${EXPECTED_DIMENSIONS}, got ${embedding.length}`
+    );
   }
 
   return embedding;
