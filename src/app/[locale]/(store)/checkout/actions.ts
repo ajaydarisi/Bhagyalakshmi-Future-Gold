@@ -191,7 +191,41 @@ export async function verifyPayment(
   razorpaySignature: string
 ) {
   if (STORE_MODE === "OFFLINE") throw new Error("Store is currently offline");
+  const supabase = await createClient();
   const admin = createAdminClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Bind the request to a real transaction we created. The Razorpay signature
+  // only proves (razorpayOrderId, razorpayPaymentId) is a genuine payment — it
+  // is NOT tied to our internal orderId. Without these checks, a valid signature
+  // from a different (e.g. cheaper) order could be replayed to mark this order
+  // as paid. Confirm the order belongs to the caller and that the Razorpay order
+  // id the client sent matches the one stored for this order.
+  const [{ data: transaction }, { data: order }] = await Promise.all([
+    admin
+      .from("payment_transactions")
+      .select("razorpay_order_id")
+      .eq("order_id", orderId)
+      .single(),
+    admin
+      .from("orders")
+      .select("user_id, status")
+      .eq("id", orderId)
+      .single(),
+  ]);
+
+  if (
+    !transaction ||
+    !order ||
+    order.user_id !== user.id ||
+    transaction.razorpay_order_id !== razorpayOrderId
+  ) {
+    throw new Error("Payment verification failed");
+  }
 
   const isValid = verifyRazorpaySignature(
     razorpayOrderId,
@@ -217,36 +251,39 @@ export async function verifyPayment(
     })
     .eq("order_id", orderId);
 
-  // Update order status
-  await admin
+  // Mark the order paid only if it is still pending. The returned rows tell us
+  // whether we actually transitioned the order, so a duplicate/replayed call
+  // cannot decrement stock or clear the cart twice.
+  const { data: paidOrders } = await admin
     .from("orders")
     .update({ status: "paid" })
-    .eq("id", orderId);
+    .eq("id", orderId)
+    .eq("status", "pending")
+    .select("id");
 
-  // Record paid status in history
-  await admin
-    .from("order_status_history")
-    .insert({ order_id: orderId, status: "paid" });
+  const didTransition = !!paidOrders && paidOrders.length > 0;
 
-  // Decrement stock and get order user_id in parallel
-  const [{ data: orderItems }, { data: order }] = await Promise.all([
-    admin.from("order_items").select("product_id, quantity").eq("order_id", orderId),
-    admin.from("orders").select("user_id").eq("id", orderId).single(),
-  ]);
-
-  if (orderItems && orderItems.length > 0) {
-    const items = orderItems
-      .filter((i) => i.product_id)
-      .map((i) => ({ product_id: i.product_id, quantity: i.quantity }));
-    await admin.rpc("decrement_product_stock" as never, { items } as never);
-  }
-
-  // Clear user's cart
-  if (order?.user_id) {
+  if (didTransition) {
+    // Record paid status in history
     await admin
-      .from("cart_items")
-      .delete()
-      .eq("user_id", order.user_id);
+      .from("order_status_history")
+      .insert({ order_id: orderId, status: "paid" });
+
+    // Decrement stock
+    const { data: orderItems } = await admin
+      .from("order_items")
+      .select("product_id, quantity")
+      .eq("order_id", orderId);
+
+    if (orderItems && orderItems.length > 0) {
+      const items = orderItems
+        .filter((i) => i.product_id)
+        .map((i) => ({ product_id: i.product_id, quantity: i.quantity }));
+      await admin.rpc("decrement_product_stock" as never, { items } as never);
+    }
+
+    // Clear user's cart
+    await admin.from("cart_items").delete().eq("user_id", order.user_id);
   }
 
   return { success: true };

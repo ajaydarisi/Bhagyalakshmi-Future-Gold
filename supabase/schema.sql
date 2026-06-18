@@ -235,7 +235,16 @@ alter table public.payment_transactions enable row level security;
 
 -- Profiles
 create policy "Users can view own profile" on public.profiles for select using (auth.uid() = id);
-create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
+-- WITH CHECK pins role to its current value so users cannot escalate their own
+-- privileges to 'admin'. service_role / postgres bypass RLS, so admin-driven
+-- role changes are unaffected. See migration 008.
+create policy "Users can update own profile" on public.profiles
+  for update
+  using (auth.uid() = id)
+  with check (
+    auth.uid() = id
+    and role = (select p.role from public.profiles p where p.id = auth.uid())
+  );
 
 -- Addresses
 create policy "Users manage own addresses" on public.addresses for all using (auth.uid() = user_id);
