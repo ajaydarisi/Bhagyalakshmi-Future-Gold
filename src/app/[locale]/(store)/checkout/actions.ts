@@ -63,7 +63,7 @@ export async function createOrder(
   let couponId: string | null = null;
 
   if (couponCode) {
-    const { data: coupon } = await supabase
+    const { data: coupon } = await admin
       .from("coupons")
       .select("*")
       .eq("code", couponCode.toUpperCase())
@@ -191,7 +191,38 @@ export async function verifyPayment(
   razorpaySignature: string
 ) {
   if (STORE_MODE === "OFFLINE") throw new Error("Store is currently offline");
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
   const admin = createAdminClient();
+
+  // Resolve the order via the Razorpay order id recorded at creation time —
+  // never trust the caller-supplied internal orderId on its own. This binds
+  // the signed (razorpayOrderId, razorpayPaymentId) pair to exactly one
+  // internal order, so a valid signature from a cheap order cannot be
+  // replayed to mark a different (expensive) order as paid.
+  const { data: transaction } = await admin
+    .from("payment_transactions")
+    .select("order_id")
+    .eq("razorpay_order_id", razorpayOrderId)
+    .single();
+
+  if (!transaction) throw new Error("Payment verification failed");
+
+  const { data: order } = await admin
+    .from("orders")
+    .select("id, user_id")
+    .eq("id", transaction.order_id)
+    .single();
+
+  // The resolved order must match the claimed order and belong to the caller.
+  if (!order || order.id !== orderId || order.user_id !== user.id) {
+    throw new Error("Payment verification failed");
+  }
 
   const isValid = verifyRazorpaySignature(
     razorpayOrderId,
@@ -203,7 +234,7 @@ export async function verifyPayment(
     await admin
       .from("payment_transactions")
       .update({ status: "failed", error_description: "Invalid signature" })
-      .eq("order_id", orderId);
+      .eq("razorpay_order_id", razorpayOrderId);
     throw new Error("Payment verification failed");
   }
 
@@ -215,24 +246,25 @@ export async function verifyPayment(
       razorpay_signature: razorpaySignature,
       status: "captured",
     })
-    .eq("order_id", orderId);
+    .eq("razorpay_order_id", razorpayOrderId);
 
-  // Update order status
+  // Update order status (only pending -> paid, idempotent)
   await admin
     .from("orders")
     .update({ status: "paid" })
-    .eq("id", orderId);
+    .eq("id", order.id)
+    .eq("status", "pending");
 
   // Record paid status in history
   await admin
     .from("order_status_history")
-    .insert({ order_id: orderId, status: "paid" });
+    .insert({ order_id: order.id, status: "paid" });
 
-  // Decrement stock and get order user_id in parallel
-  const [{ data: orderItems }, { data: order }] = await Promise.all([
-    admin.from("order_items").select("product_id, quantity").eq("order_id", orderId),
-    admin.from("orders").select("user_id").eq("id", orderId).single(),
-  ]);
+  // Decrement stock
+  const { data: orderItems } = await admin
+    .from("order_items")
+    .select("product_id, quantity")
+    .eq("order_id", order.id);
 
   if (orderItems && orderItems.length > 0) {
     const items = orderItems
@@ -242,21 +274,18 @@ export async function verifyPayment(
   }
 
   // Clear user's cart
-  if (order?.user_id) {
-    await admin
-      .from("cart_items")
-      .delete()
-      .eq("user_id", order.user_id);
-  }
+  await admin.from("cart_items").delete().eq("user_id", order.user_id);
 
   return { success: true };
 }
 
 export async function applyCoupon(code: string, subtotal: number) {
   if (STORE_MODE === "OFFLINE") throw new Error("Store is currently offline");
-  const supabase = await createClient();
+  // Coupons are no longer publicly readable via RLS; validate server-side
+  // with the service-role client (requires knowing the exact code).
+  const admin = createAdminClient();
 
-  const { data: coupon } = await supabase
+  const { data: coupon } = await admin
     .from("coupons")
     .select("*")
     .eq("code", code.toUpperCase())

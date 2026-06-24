@@ -4,22 +4,25 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
-    const { token, userId, platform } = await request.json();
+    const { token, platform } = await request.json();
 
     if (!token) {
       return NextResponse.json({ error: "Token required" }, { status: 400 });
     }
 
-    // Try to get authenticated user from session if userId not provided
-    let resolvedUserId = userId || null;
-    if (!resolvedUserId) {
-      try {
-        const supabaseAuth = await createClient();
-        const { data: { user } } = await supabaseAuth.auth.getUser();
-        if (user) resolvedUserId = user.id;
-      } catch {
-        // No session available, continue without user
-      }
+    // Always derive the user from the verified session — never trust a
+    // client-supplied userId, which would let a caller bind a device token
+    // to another user's account. Anonymous (pre-login) tokens are allowed
+    // and stored with a null user_id.
+    let resolvedUserId: string | null = null;
+    try {
+      const supabaseAuth = await createClient();
+      const {
+        data: { user },
+      } = await supabaseAuth.auth.getUser();
+      if (user) resolvedUserId = user.id;
+    } catch {
+      // No session available, continue without user
     }
 
     const supabase = createAdminClient();

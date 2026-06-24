@@ -389,7 +389,7 @@
   [data-sonner-toaster] {
     width: auto !important;
     left: auto !important;
-    right: 5 !important;
+    right: 1rem !important;
   }
   [data-sonner-toaster] [data-sonner-toast] {
     width: auto !important;

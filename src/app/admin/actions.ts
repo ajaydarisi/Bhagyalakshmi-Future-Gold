@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { productSchema, couponSchema } from "@/lib/validators";
 import { generateSlug } from "@/lib/formatters";
 import { sendOrderStatusNotification } from "@/lib/notifications";
@@ -20,6 +21,8 @@ import * as deepl from "deepl-node";
 export async function translateToTelugu(
   text: string
 ): Promise<{ translation: string } | { error: string }> {
+  await requireAdmin();
+
   const authKey = process.env.DEEPL_AUTH_KEY;
   if (!authKey) {
     return { error: "DeepL API key is not configured" };
@@ -90,6 +93,8 @@ async function getCategoryDescendantIds(categoryId: string): Promise<string[]> {
 // ---------------------------------------------------------------------------
 
 export async function createProduct(formData: FormData) {
+  await requireAdmin();
+
   const raw = Object.fromEntries(formData.entries());
 
   const data = productSchema.parse({
@@ -173,6 +178,8 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(id: string, formData: FormData) {
+  await requireAdmin();
+
   const raw = Object.fromEntries(formData.entries());
 
   const data = productSchema.parse({
@@ -240,6 +247,8 @@ export async function updateProduct(id: string, formData: FormData) {
 }
 
 export async function deleteProduct(id: string) {
+  await requireAdmin();
+
   const supabase = createAdminClient();
 
   // Fetch product images so we can clean up storage
@@ -285,6 +294,8 @@ export async function deleteProduct(id: string) {
 // ---------------------------------------------------------------------------
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus) {
+  await requireAdmin();
+
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -318,6 +329,8 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
 // ---------------------------------------------------------------------------
 
 export async function createCategory(formData: FormData) {
+  await requireAdmin();
+
   const name = formData.get("name") as string;
   const name_telugu = (formData.get("name_telugu") as string) || null;
   const slug = (formData.get("slug") as string) || generateSlug(name);
@@ -342,6 +355,8 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function updateCategory(id: string, formData: FormData) {
+  await requireAdmin();
+
   const name = formData.get("name") as string;
   const name_telugu = (formData.get("name_telugu") as string) || null;
   const slug = (formData.get("slug") as string) || generateSlug(name);
@@ -381,6 +396,8 @@ export async function updateCategory(id: string, formData: FormData) {
 }
 
 export async function deleteCategory(id: string) {
+  await requireAdmin();
+
   const supabase = createAdminClient();
 
   const categoryIds = await getCategoryDescendantIds(id).catch((descendantError) => {
@@ -420,6 +437,8 @@ export async function updateUserRole(
   userId: string,
   role: "customer" | "admin"
 ) {
+  await requireAdmin();
+
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -436,6 +455,8 @@ export async function updateUserRole(
 }
 
 export async function deleteUser(userId: string) {
+  await requireAdmin();
+
   const supabase = createAdminClient();
 
   const { error } = await supabase.auth.admin.deleteUser(userId);
@@ -449,6 +470,8 @@ export async function deleteUser(userId: string) {
 }
 
 export async function toggleUserDisabled(userId: string, disable: boolean) {
+  await requireAdmin();
+
   const supabase = createAdminClient();
 
   const { error } = await supabase.auth.admin.updateUserById(userId, {
@@ -468,6 +491,8 @@ export async function toggleUserDisabled(userId: string, disable: boolean) {
 // ---------------------------------------------------------------------------
 
 export async function createCoupon(formData: FormData) {
+  await requireAdmin();
+
   const raw = Object.fromEntries(formData.entries());
 
   const data = couponSchema.parse({
@@ -494,6 +519,8 @@ export async function createCoupon(formData: FormData) {
 }
 
 export async function updateCoupon(id: string, formData: FormData) {
+  await requireAdmin();
+
   const raw = Object.fromEntries(formData.entries());
 
   const data = couponSchema.parse({
@@ -520,6 +547,8 @@ export async function updateCoupon(id: string, formData: FormData) {
 }
 
 export async function deleteCoupon(id: string) {
+  await requireAdmin();
+
   const supabase = createAdminClient();
 
   const { error } = await supabase.from("coupons").delete().eq("id", id);

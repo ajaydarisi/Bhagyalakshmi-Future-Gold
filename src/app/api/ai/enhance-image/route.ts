@@ -1,9 +1,22 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
+// ~15 MB of base64 (roughly an 11 MB source image). Generous for product
+// photos while preventing oversized payloads from burning the Gemini quota.
+const MAX_IMAGE_BASE64_CHARS = 15 * 1024 * 1024;
+
 export async function POST(request: Request) {
+  // Admin-only: this endpoint calls a paid AI model, so it must not be
+  // reachable by anonymous callers (cost abuse / quota exhaustion).
+  try {
+    await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json(
       { error: "GEMINI_API_KEY is not configured" },
@@ -17,6 +30,23 @@ export async function POST(request: Request) {
     if (!imageBase64 || !mimeType) {
       return NextResponse.json(
         { error: "Missing imageBase64 or mimeType" },
+        { status: 400 }
+      );
+    }
+
+    if (
+      typeof imageBase64 !== "string" ||
+      imageBase64.length > MAX_IMAGE_BASE64_CHARS
+    ) {
+      return NextResponse.json(
+        { error: "Image is too large" },
+        { status: 413 }
+      );
+    }
+
+    if (typeof prompt !== "undefined" && typeof prompt !== "string") {
+      return NextResponse.json(
+        { error: "Invalid prompt" },
         { status: 400 }
       );
     }
