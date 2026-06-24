@@ -5,10 +5,10 @@
 insert into storage.buckets (id, name, public)
 values ('product-images', 'product-images', true);
 
--- 2. Allow anyone to view product images (public bucket)
-create policy "Public read access for product images"
-on storage.objects for select
-using (bucket_id = 'product-images');
+-- 2. Public read access is served by the bucket's public flag via the
+--    /storage/v1/object/public/ endpoint (no RLS SELECT policy required).
+--    A broad SELECT policy is intentionally omitted so anonymous clients
+--    cannot enumerate/list every file in the bucket. See migration 010.
 
 -- 3. Allow authenticated users to upload product images
 create policy "Authenticated users can upload product images"
