@@ -237,6 +237,14 @@ alter table public.payment_transactions enable row level security;
 create policy "Users can view own profile" on public.profiles for select using (auth.uid() = id);
 create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
 
+-- RLS cannot restrict which columns an UPDATE touches, so the policy above
+-- would otherwise let a user set their own role to 'admin'. Restrict client
+-- writes to non-sensitive columns via column-level privileges. The
+-- service_role key (admin server actions) retains full access.
+revoke update on public.profiles from anon, authenticated;
+grant update (full_name, phone, avatar_url, updated_at)
+  on public.profiles to authenticated;
+
 -- Addresses
 create policy "Users manage own addresses" on public.addresses for all using (auth.uid() = user_id);
 
@@ -260,8 +268,8 @@ create policy "Users can insert own orders" on public.orders for insert with che
 create policy "Users can view own order items" on public.order_items for select
   using (exists (select 1 from public.orders where orders.id = order_items.order_id and orders.user_id = auth.uid()));
 
--- Coupons: everyone can read active coupons
-create policy "Active coupons are publicly readable" on public.coupons for select using (is_active = true);
+-- Coupons: validated server-side via the service-role client only.
+-- (No public SELECT policy — codes must not be enumerable by anonymous users.)
 
 -- Payment transactions
 create policy "Users can view own transactions" on public.payment_transactions for select
