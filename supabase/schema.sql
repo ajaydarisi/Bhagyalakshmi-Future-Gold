@@ -287,7 +287,7 @@ begin
   values (new.id, new.email, new.raw_user_meta_data ->> 'full_name');
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 create trigger on_auth_user_created
   after insert on auth.users
@@ -300,7 +300,7 @@ begin
   new.updated_at = now();
   return new;
 end;
-$$ language plpgsql;
+$$ language plpgsql set search_path = public;
 
 create trigger update_profiles_updated_at before update on public.profiles
   for each row execute procedure public.update_updated_at();
