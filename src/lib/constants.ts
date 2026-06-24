@@ -33,26 +33,38 @@ export const ORDER_STATUSES = [
   {
     value: "pending",
     label: "Pending",
-    color: "bg-yellow-100 text-yellow-800",
+    color: "bg-status-pending-bg text-status-pending-text",
   },
-  { value: "paid", label: "Paid", color: "bg-blue-100 text-blue-800" },
+  {
+    value: "paid",
+    label: "Paid",
+    color: "bg-status-paid-bg text-status-paid-text",
+  },
   {
     value: "processing",
     label: "Processing",
-    color: "bg-indigo-100 text-indigo-800",
+    color: "bg-status-processing-bg text-status-processing-text",
   },
   {
     value: "shipped",
     label: "Shipped",
-    color: "bg-purple-100 text-purple-800",
+    color: "bg-status-shipped-bg text-status-shipped-text",
   },
   {
     value: "delivered",
     label: "Delivered",
-    color: "bg-green-100 text-green-800",
+    color: "bg-status-delivered-bg text-status-delivered-text",
   },
-  { value: "cancelled", label: "Cancelled", color: "bg-red-100 text-red-800" },
-  { value: "refunded", label: "Refunded", color: "bg-gray-100 text-gray-800" },
+  {
+    value: "cancelled",
+    label: "Cancelled",
+    color: "bg-status-cancelled-bg text-status-cancelled-text",
+  },
+  {
+    value: "refunded",
+    label: "Refunded",
+    color: "bg-status-refunded-bg text-status-refunded-text",
+  },
 ] as const;
 
 export const SORT_OPTIONS = [

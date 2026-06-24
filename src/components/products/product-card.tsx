@@ -72,7 +72,7 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
           <WishlistButton productId={product.id} variant="icon" />
         </div>
-        <h3 className="font-sans text-sm font-medium leading-snug group-hover:text-primary transition-colors">
+        <h3 className="font-heading text-sm font-medium leading-snug group-hover:text-primary transition-colors">
           {displayName}
         </h3>
         {product.set_number && (

@@ -35,6 +35,21 @@
   --color-background: var(--background);
   --color-body-background: var(--body-background);
   --color-foreground: var(--foreground);
+  /* Order status semantic colors */
+  --color-status-pending-bg: var(--status-pending-bg);
+  --color-status-pending-text: var(--status-pending-text);
+  --color-status-paid-bg: var(--status-paid-bg);
+  --color-status-paid-text: var(--status-paid-text);
+  --color-status-processing-bg: var(--status-processing-bg);
+  --color-status-processing-text: var(--status-processing-text);
+  --color-status-shipped-bg: var(--status-shipped-bg);
+  --color-status-shipped-text: var(--status-shipped-text);
+  --color-status-delivered-bg: var(--status-delivered-bg);
+  --color-status-delivered-text: var(--status-delivered-text);
+  --color-status-cancelled-bg: var(--status-cancelled-bg);
+  --color-status-cancelled-text: var(--status-cancelled-text);
+  --color-status-refunded-bg: var(--status-refunded-bg);
+  --color-status-refunded-text: var(--status-refunded-text);
   --font-sans: var(--font-sans);
   --font-heading: var(--font-heading);
   --font-brand: var(--font-brand);
@@ -106,8 +121,8 @@
   --muted: oklch(0.94 0.012 75);
   --muted-foreground: oklch(0.50 0.02 60);
 
-  /* Accent: soft blush/rose */
-  --accent: oklch(0.93 0.025 30);
+  /* Accent: soft blush/rose — strengthened for visible section breaks */
+  --accent: oklch(0.90 0.04 30);
   --accent-foreground: oklch(0.25 0.015 60);
 
   /* Destructive stays functional */
@@ -155,6 +170,27 @@
   --yarl__color_button_active: oklch(0.75 0.08 45);
   --yarl__color_button_disabled: oklch(0.98 0.005 80 / 0.3);
   --yarl__button_filter: drop-shadow(1px 1px 3px oklch(0.12 0.02 45 / 0.6));
+
+  /* Order status colors */
+  --status-pending-bg: oklch(0.95 0.06 85);
+  --status-pending-text: oklch(0.35 0.08 70);
+  --status-paid-bg: oklch(0.95 0.04 145);
+  --status-paid-text: oklch(0.30 0.06 145);
+  --status-processing-bg: oklch(0.94 0.04 45);
+  --status-processing-text: oklch(0.35 0.08 45);
+  --status-shipped-bg: oklch(0.95 0.03 220);
+  --status-shipped-text: oklch(0.30 0.06 220);
+  --status-delivered-bg: oklch(0.95 0.05 155);
+  --status-delivered-text: oklch(0.28 0.08 155);
+  --status-cancelled-bg: oklch(0.95 0.03 30);
+  --status-cancelled-text: oklch(0.35 0.12 25);
+  --status-refunded-bg: oklch(0.94 0.01 75);
+  --status-refunded-text: oklch(0.40 0.02 60);
+
+  /* Hero gradient palette */
+  --hero-warm-lightest: #faf5ef;
+  --hero-warm-mid: #f5e6d3;
+  --hero-warm-rich: #f0dcc6;
 }
 
 .dark {
@@ -221,6 +257,28 @@
   --yarl__color_button_active: oklch(0.75 0.08 45);
   --yarl__color_button_disabled: oklch(0.95 0.008 75 / 0.3);
   --yarl__button_filter: drop-shadow(1px 1px 3px oklch(0.05 0.01 60 / 0.6));
+
+  /* Order status colors (dark) */
+  --status-pending-bg: oklch(0.25 0.04 85);
+  --status-pending-text: oklch(0.85 0.06 80);
+  --status-paid-bg: oklch(0.25 0.04 145);
+  --status-paid-text: oklch(0.85 0.06 145);
+  --status-processing-bg: oklch(0.25 0.03 45);
+  --status-processing-text: oklch(0.85 0.05 45);
+  --status-shipped-bg: oklch(0.25 0.03 220);
+  --status-shipped-text: oklch(0.85 0.05 220);
+  --status-delivered-bg: oklch(0.25 0.04 155);
+  --status-delivered-text: oklch(0.85 0.07 155);
+  --status-cancelled-bg: oklch(0.25 0.04 25);
+  --status-cancelled-text: oklch(0.85 0.08 25);
+  --status-refunded-bg: oklch(0.25 0.01 60);
+  --status-refunded-text: oklch(0.75 0.02 65);
+
+  /* Hero gradient palette (dark) */
+  --hero-dark-deep: #3d2b1f;
+  --hero-dark-mid: #5c3a1e;
+  --hero-dark-rich: #6b4423;
+  --hero-dark-accent: #4a2e15;
 }
 
 @layer base {
@@ -278,7 +336,7 @@
     radial-gradient(ellipse 80% 60% at 50% 0%, rgba(212, 160, 23, 0.10) 0%, transparent 60%),
     radial-gradient(ellipse 60% 50% at 80% 100%, rgba(212, 160, 23, 0.06) 0%, transparent 50%),
     radial-gradient(ellipse 60% 50% at 20% 100%, rgba(212, 160, 23, 0.06) 0%, transparent 50%),
-    linear-gradient(175deg, #faf5ef 0%, #f5e6d3 30%, #f0dcc6 60%, #faf5ef 100%);
+    linear-gradient(175deg, var(--hero-warm-lightest) 0%, var(--hero-warm-mid) 30%, var(--hero-warm-rich) 60%, var(--hero-warm-lightest) 100%);
 }
 
 /* Wedding Hero Section — Dark mode */
@@ -287,7 +345,7 @@
     radial-gradient(ellipse 80% 60% at 50% 0%, rgba(212, 160, 23, 0.15) 0%, transparent 60%),
     radial-gradient(ellipse 60% 50% at 80% 100%, rgba(212, 160, 23, 0.10) 0%, transparent 50%),
     radial-gradient(ellipse 60% 50% at 20% 100%, rgba(212, 160, 23, 0.10) 0%, transparent 50%),
-    linear-gradient(175deg, #3d2b1f 0%, #5c3a1e 30%, #6b4423 60%, #4a2e15 100%);
+    linear-gradient(175deg, var(--hero-dark-deep) 0%, var(--hero-dark-mid) 30%, var(--hero-dark-rich) 60%, var(--hero-dark-accent) 100%);
 }
 
 /* Light mode: slightly stronger dot pattern for visibility */

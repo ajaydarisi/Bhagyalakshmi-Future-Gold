@@ -44,7 +44,7 @@ export function PriceDisplay({
           >
             {formatPrice(price)}
           </span>
-          <Badge variant="destructive" className="text-xs">
+          <Badge variant="promo" className="text-xs">
             {t("discountOff", { discount })}
           </Badge>
         </>
