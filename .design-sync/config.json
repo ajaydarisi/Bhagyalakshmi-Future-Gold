@@ -1,0 +1,9 @@
+{
+  "pkg": "bhagyalakshmi-future-gold",
+  "globalName": "BFG",
+  "shape": "package",
+  "srcDir": "src/components/ui",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": ".design-sync/ds-styles.css",
+  "runtimeFontPrefixes": ["Marcellus", "Playfair", "DM Sans", "Noto Sans Telugu"]
+}
