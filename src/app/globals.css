@@ -78,58 +78,58 @@
 }
 
 :root {
+  /* BFG modern-luxe: editorial, mostly tight radii */
   --radius: 0.5rem;
 
   /* Signature brand gold (RGB triplets so callers control alpha).
-     Used by the wedding-hero gradients/patterns; identical in light & dark. */
-  --gold-rgb: 212 160 23;
-  --gold-deep-rgb: 180 130 20;
+     BFG gold #B98A38 / deep #7A5620. Used by hero gradients/patterns. */
+  --gold-rgb: 185 138 56;
+  --gold-deep-rgb: 122 86 32;
 
-  /* Light rose-gold tinted background */
-  --background: oklch(0.95 0.02 45);
-  /* Body background: 30% tint of rose-gold */
-  --body-background: oklch(0.985 0.006 45);
-  /* Warm charcoal foreground */
-  --foreground: oklch(0.18 0.01 60);
+  /* BFG page background: warm ivory (#F8F2E8) */
+  --background: oklch(0.957 0.012 85);
+  /* Body background: lightest ivory (#FCFAF6) */
+  --body-background: oklch(0.984 0.005 85);
+  /* Near-black ink heading/foreground (#1C1812) */
+  --foreground: oklch(0.215 0.012 75);
 
-  /* Cards: subtle warm cream */
-  --card: oklch(0.99 0.004 80);
-  --card-foreground: oklch(0.18 0.01 60);
+  /* Cards: crisp warm white (#FFFFFF, faint warmth) */
+  --card: oklch(0.995 0.002 85);
+  --card-foreground: oklch(0.215 0.012 75);
 
-  --popover: oklch(0.99 0.004 80);
-  --popover-foreground: oklch(0.18 0.01 60);
+  --popover: oklch(0.995 0.002 85);
+  --popover-foreground: oklch(0.215 0.012 75);
 
-  /* Primary: deep rose-gold */
-  --primary: oklch(0.45 0.08 45);
-  --primary-foreground: oklch(0.98 0.005 80);
+  /* Primary: BFG deep gold (#9A6F2A) — the hero interactive color */
+  --primary: oklch(0.555 0.092 78);
+  --primary-foreground: oklch(0.984 0.005 85);
 
-  /* Secondary: warm sand */
-  --secondary: oklch(0.95 0.01 80);
-  --secondary-foreground: oklch(0.25 0.015 60);
+  /* Secondary: subtle sand fill (#F1E9DA) */
+  --secondary: oklch(0.93 0.016 84);
+  --secondary-foreground: oklch(0.30 0.015 72);
 
-  /* Muted: warm beige */
-  --muted: oklch(0.94 0.012 75);
-  /* Darkened from 0.50 -> 0.44 so small secondary text clears WCAG AA (4.5:1) */
-  --muted-foreground: oklch(0.44 0.02 60);
+  /* Muted: warm beige fill (#F1E9DA) with readable muted text (stone #7C6F5B) */
+  --muted: oklch(0.93 0.016 82);
+  --muted-foreground: oklch(0.52 0.022 75);
 
-  /* Accent: soft blush/rose */
-  --accent: oklch(0.93 0.025 30);
-  --accent-foreground: oklch(0.25 0.015 60);
+  /* Accent: champagne wash (#F7EAD0) */
+  --accent: oklch(0.945 0.035 85);
+  --accent-foreground: oklch(0.30 0.015 72);
 
-  /* Destructive stays functional */
-  --destructive: oklch(0.577 0.245 27.325);
+  /* Destructive: BFG error (#B03A2E) */
+  --destructive: oklch(0.52 0.16 28);
 
-  /* Warm borders */
-  --border: oklch(0.90 0.01 75);
-  --input: oklch(0.90 0.01 75);
-  --ring: oklch(0.55 0.06 45);
+  /* Warm borders: sand hairline (#E6DAC6) / strong taupe (#CDBDA3) */
+  --border: oklch(0.89 0.018 82);
+  --input: oklch(0.89 0.018 82);
+  --ring: oklch(0.64 0.10 80);
 
-  /* Charts: warm palette */
-  --chart-1: oklch(0.55 0.12 45);
-  --chart-2: oklch(0.65 0.08 80);
-  --chart-3: oklch(0.50 0.06 30);
-  --chart-4: oklch(0.75 0.10 85);
-  --chart-5: oklch(0.60 0.05 60);
+  /* Charts: warm gold palette */
+  --chart-1: oklch(0.64 0.10 80);
+  --chart-2: oklch(0.74 0.07 85);
+  --chart-3: oklch(0.46 0.08 75);
+  --chart-4: oklch(0.55 0.092 78);
+  --chart-5: oklch(0.40 0.10 15);
 
   /* Toast: themed variants */
   --toast-success-bg: oklch(0.95 0.04 145);
@@ -146,14 +146,14 @@
   --toast-info-border: oklch(0.88 0.03 45);
 
   /* Sidebar */
-  --sidebar: oklch(0.97 0.006 80);
-  --sidebar-foreground: oklch(0.18 0.01 60);
-  --sidebar-primary: oklch(0.45 0.08 45);
-  --sidebar-primary-foreground: oklch(0.98 0.005 80);
-  --sidebar-accent: oklch(0.94 0.012 75);
-  --sidebar-accent-foreground: oklch(0.25 0.015 60);
-  --sidebar-border: oklch(0.90 0.01 75);
-  --sidebar-ring: oklch(0.55 0.06 45);
+  --sidebar: oklch(0.975 0.008 84);
+  --sidebar-foreground: oklch(0.215 0.012 75);
+  --sidebar-primary: oklch(0.555 0.092 78);
+  --sidebar-primary-foreground: oklch(0.984 0.005 85);
+  --sidebar-accent: oklch(0.93 0.016 82);
+  --sidebar-accent-foreground: oklch(0.30 0.015 72);
+  --sidebar-border: oklch(0.89 0.018 82);
+  --sidebar-ring: oklch(0.64 0.10 80);
 
   /* Lightbox gallery */
   --yarl__color_backdrop: oklch(0.12 0.01 45 / 0.95);
@@ -164,39 +164,41 @@
 }
 
 .dark {
-  --background: oklch(0.16 0.01 60);
-  --body-background: oklch(0.16 0.003 60);
-  --foreground: oklch(0.95 0.008 75);
+  /* BFG modern-luxe — dark: warm espresso ink, champagne-gold, ivory text */
+  --background: oklch(0.17 0.012 70);
+  --body-background: oklch(0.155 0.01 70);
+  --foreground: oklch(0.95 0.01 85);
 
-  --card: oklch(0.20 0.012 60);
-  --card-foreground: oklch(0.95 0.008 75);
+  --card: oklch(0.215 0.014 72);
+  --card-foreground: oklch(0.95 0.01 85);
 
-  --popover: oklch(0.20 0.012 60);
-  --popover-foreground: oklch(0.95 0.008 75);
+  --popover: oklch(0.215 0.014 72);
+  --popover-foreground: oklch(0.95 0.01 85);
 
-  --primary: oklch(0.75 0.08 45);
-  --primary-foreground: oklch(0.16 0.01 60);
+  /* Primary: luminous champagne gold on ink */
+  --primary: oklch(0.74 0.11 82);
+  --primary-foreground: oklch(0.18 0.012 72);
 
-  --secondary: oklch(0.25 0.012 60);
-  --secondary-foreground: oklch(0.95 0.008 75);
+  --secondary: oklch(0.26 0.014 72);
+  --secondary-foreground: oklch(0.95 0.01 85);
 
-  --muted: oklch(0.25 0.012 60);
-  --muted-foreground: oklch(0.65 0.02 65);
+  --muted: oklch(0.26 0.014 72);
+  --muted-foreground: oklch(0.72 0.02 80);
 
-  --accent: oklch(0.28 0.02 35);
-  --accent-foreground: oklch(0.95 0.008 75);
+  --accent: oklch(0.3 0.03 78);
+  --accent-foreground: oklch(0.95 0.01 85);
 
-  --destructive: oklch(0.704 0.191 22.216);
+  --destructive: oklch(0.62 0.18 28);
 
-  --border: oklch(0.95 0.005 60 / 12%);
-  --input: oklch(0.95 0.005 60 / 15%);
-  --ring: oklch(0.55 0.06 45);
+  --border: oklch(0.92 0.02 85 / 12%);
+  --input: oklch(0.92 0.02 85 / 15%);
+  --ring: oklch(0.74 0.11 82);
 
-  --chart-1: oklch(0.60 0.10 45);
-  --chart-2: oklch(0.55 0.08 80);
-  --chart-3: oklch(0.65 0.10 30);
-  --chart-4: oklch(0.58 0.12 85);
-  --chart-5: oklch(0.52 0.08 60);
+  --chart-1: oklch(0.74 0.11 82);
+  --chart-2: oklch(0.8 0.07 88);
+  --chart-3: oklch(0.6 0.09 76);
+  --chart-4: oklch(0.68 0.1 84);
+  --chart-5: oklch(0.55 0.12 20);
 
   /* Toast: themed variants (dark) */
   --toast-success-bg: oklch(0.25 0.04 145);
@@ -212,19 +214,19 @@
   --toast-info-text: oklch(0.85 0.05 45);
   --toast-info-border: oklch(0.35 0.03 45);
 
-  --sidebar: oklch(0.20 0.012 60);
-  --sidebar-foreground: oklch(0.95 0.008 75);
-  --sidebar-primary: oklch(0.75 0.08 45);
-  --sidebar-primary-foreground: oklch(0.95 0.008 75);
-  --sidebar-accent: oklch(0.25 0.012 60);
-  --sidebar-accent-foreground: oklch(0.95 0.008 75);
-  --sidebar-border: oklch(0.95 0.005 60 / 12%);
-  --sidebar-ring: oklch(0.55 0.06 45);
+  --sidebar: oklch(0.215 0.014 72);
+  --sidebar-foreground: oklch(0.95 0.01 85);
+  --sidebar-primary: oklch(0.74 0.11 82);
+  --sidebar-primary-foreground: oklch(0.18 0.012 72);
+  --sidebar-accent: oklch(0.26 0.014 72);
+  --sidebar-accent-foreground: oklch(0.95 0.01 85);
+  --sidebar-border: oklch(0.92 0.02 85 / 12%);
+  --sidebar-ring: oklch(0.74 0.11 82);
 
   /* Lightbox gallery */
-  --yarl__color_backdrop: oklch(0.10 0.01 60 / 0.95);
-  --yarl__color_button: oklch(0.95 0.008 75);
-  --yarl__color_button_active: oklch(0.75 0.08 45);
+  --yarl__color_backdrop: oklch(0.1 0.012 72 / 0.95);
+  --yarl__color_button: oklch(0.95 0.01 85);
+  --yarl__color_button_active: oklch(0.74 0.11 82);
   --yarl__color_button_disabled: oklch(0.95 0.008 75 / 0.3);
   --yarl__button_filter: drop-shadow(1px 1px 3px oklch(0.05 0.01 60 / 0.6));
 }
@@ -284,7 +286,7 @@
     radial-gradient(ellipse 80% 60% at 50% 0%, rgb(var(--gold-rgb) / 0.10) 0%, transparent 60%),
     radial-gradient(ellipse 60% 50% at 80% 100%, rgb(var(--gold-rgb) / 0.06) 0%, transparent 50%),
     radial-gradient(ellipse 60% 50% at 20% 100%, rgb(var(--gold-rgb) / 0.06) 0%, transparent 50%),
-    linear-gradient(175deg, #faf5ef 0%, #f5e6d3 30%, #f0dcc6 60%, #faf5ef 100%);
+    linear-gradient(175deg, #FCFAF6 0%, #F8F2E8 30%, #F1E9DA 60%, #FCFAF6 100%);
 }
 
 /* Wedding Hero Section — Dark mode */
@@ -420,4 +422,88 @@
 @keyframes toast-slide-out-right {
   from { transform: translateX(0); opacity: 1; }
   to { transform: translateX(calc(100% + 16px)); opacity: 0; }
+}
+
+/* ============================================================
+   BFG modern-luxe motion + effects layer
+   Ported from the BFG design system (tokens/effects.css).
+   Restrained, slow, confident motion + the signature gold foil.
+   ============================================================ */
+:root {
+  /* Motion tokens */
+  --bfg-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --bfg-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --bfg-ease-soft: cubic-bezier(0.33, 0.1, 0.25, 1);
+  --bfg-dur-fast: 140ms;
+  --bfg-dur-base: 240ms;
+  --bfg-dur-slow: 420ms;
+  --bfg-dur-slower: 700ms;
+  --bfg-press-scale: 0.97;
+
+  /* Warm-tinted soft shadows */
+  --bfg-shadow-sm: 0 1px 3px rgb(var(--gold-deep-rgb) / 0.07), 0 1px 2px rgb(28 24 18 / 0.04);
+  --bfg-shadow-md: 0 4px 16px rgb(var(--gold-deep-rgb) / 0.08), 0 2px 6px rgb(28 24 18 / 0.05);
+  --bfg-shadow-lg: 0 14px 40px rgb(var(--gold-deep-rgb) / 0.12), 0 4px 12px rgb(28 24 18 / 0.06);
+  --bfg-shadow-gold: 0 8px 24px rgb(var(--gold-rgb) / 0.32);
+
+  /* Signature foil gradient for display type */
+  --bfg-grad-foil: linear-gradient(92deg, #7A5620 0%, #D4AC5A 40%, #E6C77E 52%, #9A6F2A 100%);
+  --bfg-grad-gold: linear-gradient(105deg, #9A6F2A 0%, #D4AC5A 45%, #E6C77E 55%, #B98A38 100%);
+}
+
+@keyframes bfg-fade-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes bfg-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bfg-rise { from { opacity: 0; transform: translateY(30px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes bfg-shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+@keyframes bfg-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes bfg-skeleton { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes bfg-twinkle { 0%, 100% { opacity: 0.25; transform: scale(0.7); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes bfg-spin { to { transform: rotate(360deg); } }
+
+/* Gilt foil text — the signature display treatment */
+.bfg-foil {
+  background: var(--bfg-grad-foil);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: bfg-shimmer 6s linear infinite;
+}
+
+/* Shimmering gold button surface */
+.bfg-gold-shimmer {
+  background: linear-gradient(110deg, #9A6F2A 0%, #B98A38 25%, #E6C77E 50%, #B98A38 75%, #9A6F2A 100%);
+  background-size: 220% 100%;
+  animation: bfg-shimmer 5s linear infinite;
+}
+
+/* Gold hairlines flanking an element (section eyebrows) */
+.bfg-ornament { display: inline-flex; align-items: center; gap: 0.75rem; }
+.bfg-ornament::before, .bfg-ornament::after {
+  content: ""; height: 1px; width: clamp(2rem, 6vw, 3.5rem);
+  background: linear-gradient(to right, transparent, rgb(var(--gold-rgb) / 0.7), transparent);
+}
+
+/* Entrance utilities — resting state is VISIBLE. The hidden→reveal animation
+   plays only while the JS-added `.bfg-play` gate is present (add on mount/scroll,
+   strip on a wall-clock timer). `backwards` keeps the element hidden during its
+   stagger delay without leaving it hidden if the clock never advances. */
+@media (prefers-reduced-motion: no-preference) {
+  .bfg-animate.bfg-play      { animation: bfg-fade-up var(--bfg-dur-slow) var(--bfg-ease-out) backwards; }
+  .bfg-animate-rise.bfg-play { animation: bfg-rise var(--bfg-dur-slower) var(--bfg-ease-out) backwards; }
+  .bfg-animate-in.bfg-play   { animation: bfg-fade-in var(--bfg-dur-slow) var(--bfg-ease-out) backwards; }
+  .bfg-stagger.bfg-play > *  { animation: bfg-rise var(--bfg-dur-slow) var(--bfg-ease-out) backwards;
+                               animation-delay: calc(var(--i, 0) * 90ms); }
+}
+
+/* Warm shimmer surface for loading skeletons */
+.bfg-skel {
+  background: linear-gradient(90deg, var(--muted) 25%, var(--card) 38%, var(--muted) 54%);
+  background-size: 300% 100%;
+  animation: bfg-skeleton 1.4s ease infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bfg-foil, .bfg-gold-shimmer { animation: none; }
+  .bfg-skel { animation: none; }
 }

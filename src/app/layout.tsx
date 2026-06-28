@@ -1,4 +1,4 @@
-import { DM_Sans, Marcellus, Noto_Sans_Telugu, Playfair_Display } from "next/font/google";
+import { Cormorant_Garamond, Hanken_Grotesk, Marcellus, Noto_Sans_Telugu } from "next/font/google";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CapacitorInit } from "@/components/shared/capacitor-init";
@@ -14,15 +14,15 @@ const marcellus = Marcellus({
   preload: false,
 });
 
-const playfair = Playfair_Display({
+const cormorant = Cormorant_Garamond({
   variable: "--font-heading",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
   preload: false,
 });
 
-const dmSans = DM_Sans({
+const hankenGrotesk = Hanken_Grotesk({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
@@ -44,7 +44,7 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning>
       <body
-        className={`${marcellus.variable} ${playfair.variable} ${dmSans.variable} ${notoSansTelugu.variable} antialiased`}
+        className={`${marcellus.variable} ${cormorant.variable} ${hankenGrotesk.variable} ${notoSansTelugu.variable} antialiased`}
       >
         {!isE2ETestMode && (
           <>

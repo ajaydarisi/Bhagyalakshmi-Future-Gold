@@ -91,5 +91,7 @@
     "shippingAddress": "షిప్పింగ్ చిరునామా",
     "viewOrders": "ఆర్డర్‌లు చూడండి",
     "continueShopping": "షాపింగ్ కొనసాగించండి"
-  }
+  },
+  "sheetTitle": "బ్యాగ్ ({count})",
+  "viewCart": "బ్యాగ్ చూడండి"
 }

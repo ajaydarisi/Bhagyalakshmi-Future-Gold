@@ -734,6 +734,7 @@ export function StorefrontAssistant() {
     <>
       <Button
         type="button"
+        variant="gold"
         aria-label={t("launcherLabel")}
         data-testid="assistant-launcher"
         className="fixed bottom-24 right-4 z-40 rounded-full shadow-lg lg:bottom-6 lg:right-6 cursor-pointer"

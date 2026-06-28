@@ -14,6 +14,7 @@ import { ROUTES } from "@/lib/constants";
 import { formatPrice } from "@/lib/formatters";
 import { ShoppingBag } from "lucide-react";
 import { Link } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
 import { CartItem } from "./cart-item";
 
 interface CartSheetProps {
@@ -23,23 +24,24 @@ interface CartSheetProps {
 
 export function CartSheet({ open, onOpenChange }: CartSheetProps) {
   const { items, subtotal, itemCount } = useCart();
+  const t = useTranslations("cart");
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex w-full flex-col sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>Cart ({itemCount})</SheetTitle>
+          <SheetTitle>{t("sheetTitle", { count: itemCount })}</SheetTitle>
         </SheetHeader>
 
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center text-center">
             <ShoppingBag className="mb-4 h-16 w-16 text-muted-foreground" />
-            <p className="text-lg font-medium">Your cart is empty</p>
+            <p className="text-lg font-medium">{t("empty")}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Add some sparkle to your cart!
+              {t("emptyDescription")}
             </p>
             <Button asChild className="mt-4" onClick={() => onOpenChange(false)}>
-              <Link href={ROUTES.products}>Browse Products</Link>
+              <Link href={ROUTES.products}>{t("browseProducts")}</Link>
             </Button>
           </div>
         ) : (
@@ -55,19 +57,19 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
             <div className="space-y-4 pt-4">
               <Separator />
               <div className="flex justify-between font-semibold">
-                <span>Subtotal</span>
+                <span>{t("subtotal")}</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
               <div className="grid gap-2">
-                <Button asChild onClick={() => onOpenChange(false)}>
-                  <Link href={ROUTES.checkout}>Checkout</Link>
+                <Button variant="gold" asChild onClick={() => onOpenChange(false)}>
+                  <Link href={ROUTES.checkout}>{t("proceedToCheckout")}</Link>
                 </Button>
                 <Button
                   variant="outline"
                   asChild
                   onClick={() => onOpenChange(false)}
                 >
-                  <Link href={ROUTES.cart}>View Cart</Link>
+                  <Link href={ROUTES.cart}>{t("viewCart")}</Link>
                 </Button>
               </div>
             </div>

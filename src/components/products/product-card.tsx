@@ -26,9 +26,9 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Link
       href={ROUTES.product(product.slug)}
-      className="group block space-y-3"
+      className="group block space-y-3 transition-transform duration-300 hover:-translate-y-1"
     >
-      <div className="relative aspect-3/4 overflow-hidden bg-muted">
+      <div className="relative aspect-3/4 overflow-hidden rounded-md bg-muted transition-shadow duration-300 group-hover:shadow-[var(--bfg-shadow-lg)]">
         {product.images[0] ? (
           <Image
             src={product.images[0]}

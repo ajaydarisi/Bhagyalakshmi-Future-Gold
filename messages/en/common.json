@@ -56,5 +56,9 @@
   "breadcrumbHome": "Home",
   "appName": "Bhagyalakshmi Future Gold",
   "signedOut": "Signed out successfully",
-  "discountOff": "{discount}% OFF"
+  "discountOff": "{discount}% OFF",
+  "announcement": {
+    "online": "Free shipping on orders above ₹999",
+    "offline": "Visit our Chirala store · Enquire on WhatsApp"
+  }
 }

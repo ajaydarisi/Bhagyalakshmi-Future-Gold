@@ -80,10 +80,10 @@ export function ProductDetailContent({ initialProduct }: ProductDetailContentPro
 
         <div className="flex flex-wrap gap-2">
           {p.is_sale && (
-            <Badge variant="default">{t("forSale")}</Badge>
+            <Badge variant="sale">{t("forSale")}</Badge>
           )}
           {p.is_rental && (
-            <Badge variant="outline">{t("forRent")}</Badge>
+            <Badge variant="rental">{t("forRent")}</Badge>
           )}
           {p.tags.map((tag) => (
             <Badge key={tag} variant="secondary">

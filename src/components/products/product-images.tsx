@@ -68,7 +68,7 @@ export function ProductImages({ images, name }: ProductImagesProps) {
               <button
                 type="button"
                 onClick={() => openLightbox(index)}
-                className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted cursor-zoom-in"
+                className="relative aspect-square w-full overflow-hidden rounded-lg border border-[oklch(0.64_0.1_80/0.4)] bg-muted shadow-[var(--bfg-shadow-md)] cursor-zoom-in"
                 aria-label={`View ${name} - Image ${index + 1} fullscreen`}
               >
                 <Image

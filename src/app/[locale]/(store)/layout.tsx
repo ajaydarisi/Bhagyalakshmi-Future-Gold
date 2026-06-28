@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -9,6 +10,7 @@ import { PushTokenLinker } from "@/components/shared/push-token-linker";
 import { OfflineBanner } from "@/components/shared/offline-banner";
 import { PrefetchProvider } from "@/components/shared/prefetch-provider";
 import { ScrollToTop } from "@/components/shared/scroll-to-top";
+import { ScrollReveal } from "@/components/shared/scroll-reveal";
 import { NetworkProvider } from "@/hooks/use-network";
 import { QueryProvider } from "@/components/providers/query-provider";
 
@@ -37,7 +39,9 @@ export default async function StoreLayout({
               <Suspense fallback={null}>
                 <ScrollToTop />
               </Suspense>
+              <ScrollReveal />
               <OfflineBanner />
+              <AnnouncementBar />
               <Header categories={categories} />
               <main className="flex-1 pb-20 lg:pb-0">{children}</main>
               <Footer categories={categories} />
