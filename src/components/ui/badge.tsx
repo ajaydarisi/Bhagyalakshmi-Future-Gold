@@ -18,6 +18,18 @@ const badgeVariants = cva(
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
+        // BFG product tones — uppercase, fine tracking reads best on these
+        gold: "[background:var(--bfg-grad-gold)] text-foreground",
+        maroon: "text-white [background:oklch(0.4_0.1_15)]",
+        // "New in" — soft champagne chip with antique-gold text
+        new: "border-[oklch(0.64_0.1_80/0.45)] bg-[oklch(0.945_0.035_85)] text-[oklch(0.46_0.08_75)]",
+        // Discount / sale — bridal maroon wash
+        sale: "border-[oklch(0.52_0.16_28/0.25)] bg-[oklch(0.95_0.03_28)] text-[oklch(0.45_0.16_28)]",
+        // Rental — info-blue wash
+        rental: "border-[oklch(0.5_0.08_255/0.25)] bg-[oklch(0.94_0.02_255)] text-[oklch(0.42_0.09_255)]",
+        success: "border-[oklch(0.55_0.1_150/0.25)] bg-[oklch(0.95_0.04_150)] text-[oklch(0.4_0.1_150)]",
+        info: "border-[oklch(0.5_0.08_255/0.25)] bg-[oklch(0.94_0.02_255)] text-[oklch(0.42_0.09_255)]",
+        warning: "border-[oklch(0.7_0.1_75/0.3)] bg-[oklch(0.95_0.05_85)] text-[oklch(0.45_0.09_70)]",
       },
     },
     defaultVariants: {

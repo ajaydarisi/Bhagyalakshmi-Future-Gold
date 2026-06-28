@@ -128,7 +128,7 @@ export function AdminHeader({ userName, userEmail }: AdminHeaderProps) {
             className="h-8 w-12 rounded-lg"
             priority
           />
-          <span className="text-sm font-bold">BFG Admin</span>
+          <span className="text-sm font-bold">Admin</span>
         </Link>
 
         <div className="flex items-center gap-2">
@@ -188,7 +188,7 @@ export function AdminMobileNav() {
             <SheetHeader className="px-6 pt-4">
               <SheetTitle className="flex items-center gap-2">
                 <Sparkles className="size-5 text-primary" />
-                BFG Admin
+                Admin
               </SheetTitle>
             </SheetHeader>
             <Separator className="mt-4" />

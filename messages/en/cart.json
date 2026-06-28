@@ -91,5 +91,7 @@
     "shippingAddress": "Shipping Address",
     "viewOrders": "View Orders",
     "continueShopping": "Continue Shopping"
-  }
+  },
+  "sheetTitle": "Cart ({count})",
+  "viewCart": "View Cart"
 }

@@ -286,7 +286,7 @@ export default function CheckoutPage() {
         </div>
 
         {/* Order Summary Sidebar */}
-        <Card className="h-fit">
+        <Card className="h-fit lg:sticky lg:top-24">
           <CardHeader>
             <CardTitle>{tc("orderSummary")}</CardTitle>
           </CardHeader>

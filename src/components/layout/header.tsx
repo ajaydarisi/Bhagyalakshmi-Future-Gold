@@ -168,7 +168,7 @@ export function Header({ categories }: { categories: NavCategory[] }) {
                   <ShoppingBag className="h-4 w-4" strokeWidth={1.5} />
                   {itemCount > 0 && (
                     <Badge
-                      variant="destructive"
+                      variant="maroon"
                       className="absolute -right-1 -top-1 h-4 w-4 rounded-full p-0 text-[9px] flex items-center justify-center"
                     >
                       {itemCount}
@@ -195,7 +195,7 @@ export function Header({ categories }: { categories: NavCategory[] }) {
                   <Heart className="h-5 w-5" strokeWidth={1.5} />
                   {wishlistItems.length > 0 && (
                     <Badge
-                      variant="destructive"
+                      variant="maroon"
                       className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
                     >
                       {wishlistItems.length}
@@ -210,7 +210,7 @@ export function Header({ categories }: { categories: NavCategory[] }) {
                     <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
                     {itemCount > 0 && (
                       <Badge
-                        variant="destructive"
+                        variant="maroon"
                         className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
                       >
                         {itemCount}

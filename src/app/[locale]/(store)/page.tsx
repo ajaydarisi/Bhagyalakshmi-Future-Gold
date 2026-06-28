@@ -198,7 +198,7 @@ export default async function HomePage() {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight text-foreground dark:text-white">
               {t("hero.titleLine1")}
               <br />
-              <span className="text-primary">{t("hero.titleLine2")}</span>
+              <span className="bfg-foil">{t("hero.titleLine2")}</span>
             </h1>
 
             {/* Subheading */}
@@ -249,18 +249,19 @@ export default async function HomePage() {
 
       {/* Categories */}
       <section className="container mx-auto px-4 py-10 lg:py-20">
-        <div className="mb-8 lg:mb-12 text-center">
+        <div className="bfg-animate mb-8 lg:mb-12 text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
             <span className="underline decoration-primary underline-offset-4 decoration-2">{t("categories.label")}</span>
           </p>
           <h2 className="text-3xl md:text-4xl">{t("categories.title")}</h2>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {(topCategories ?? []).map((cat) => (
+        <div className="bfg-stagger grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {(topCategories ?? []).map((cat, i) => (
             <Link
               key={cat.slug}
               href={`${ROUTES.products}?category=${cat.slug}`}
-              className="group relative flex items-center justify-center py-10 px-4 text-center border border-border bg-card transition-all duration-300 hover:border-primary hover:shadow-md"
+              style={{ "--i": i } as React.CSSProperties}
+              className="group relative flex items-center justify-center py-10 px-4 text-center border border-border bg-card transition-all duration-300 hover:border-primary hover:shadow-md hover:-translate-y-1"
             >
               <h3 className="text-sm md:text-lg uppercase tracking-[0.15em] font-medium group-hover:text-primary transition-colors">
                 {getCategoryName(cat, locale)}
@@ -273,7 +274,7 @@ export default async function HomePage() {
       {/* Brand Story */}
       <section className="py-10 lg:py-20 bg-accent">
         <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
-          <div>
+          <div className="bfg-animate">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
               <span className="underline decoration-primary underline-offset-4 decoration-2">{t("brandStory.label")}</span>
             </p>

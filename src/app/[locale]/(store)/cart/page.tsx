@@ -49,13 +49,13 @@ export default function CartPage() {
             ))}
           </div>
 
-          <div>
+          <div className="lg:sticky lg:top-24 h-fit">
             <Card>
               <CardContent className="p-6">
                 <h2 className="mb-4 font-semibold">{t("orderSummary")}</h2>
                 <CartSummary />
                 <div className="mt-6 space-y-2">
-                  <Button className="w-full" size="lg" asChild>
+                  <Button variant="gold" block size="lg" asChild>
                     <Link href={ROUTES.checkout}>{t("proceedToCheckout")}</Link>
                   </Button>
                   <Button

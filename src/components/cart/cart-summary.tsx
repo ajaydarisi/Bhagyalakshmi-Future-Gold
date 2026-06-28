@@ -48,9 +48,20 @@ export function CartSummary({ discount = 0, showShipping = true }: CartSummaryPr
         </div>
       )}
       {showShipping && subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD && (
-        <p className="text-xs text-muted-foreground">
-          {t("freeShippingMessage", { amount: formatPrice(FREE_SHIPPING_THRESHOLD - subtotal) })}
-        </p>
+        <div className="space-y-1.5">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100)}%`,
+                background: "var(--bfg-grad-gold)",
+              }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t("freeShippingMessage", { amount: formatPrice(FREE_SHIPPING_THRESHOLD - subtotal) })}
+          </p>
+        </div>
       )}
       <Separator />
       <div className="flex justify-between font-semibold">

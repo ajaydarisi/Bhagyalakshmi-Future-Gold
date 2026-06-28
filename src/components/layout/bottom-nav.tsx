@@ -112,7 +112,7 @@ export function BottomNav() {
                   />
                   {"badge" in tab && tab.badge > 0 && (
                     <Badge
-                      variant="destructive"
+                      variant="maroon"
                       className="absolute -right-2 -top-1 h-4 w-4 rounded-full p-0 text-[9px] flex items-center justify-center"
                     >
                       {tab.badge}

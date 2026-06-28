@@ -17,9 +17,9 @@ export function CheckoutSteps({ currentStep }: CheckoutStepsProps) {
         <div key={step} className="flex items-center gap-2">
           <div
             className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium",
+              "flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium transition-colors",
               index < currentStep
-                ? "border-primary bg-primary text-primary-foreground"
+                ? "border-[oklch(0.64_0.1_80/0.5)] text-foreground [background:var(--bfg-grad-gold)]"
                 : index === currentStep
                   ? "border-primary text-primary"
                   : "border-muted-foreground/30 text-muted-foreground"
