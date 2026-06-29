@@ -18,10 +18,32 @@ const badgeVariants = cva(
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
+
+        // ---- BFG design-system tones (uppercase, warm-luxe) ----
+        gold:
+          "uppercase tracking-[0.08em] font-semibold bg-gold-100 text-gold-700 border-[rgb(var(--gold-rgb)/0.3)]",
+        solid:
+          "uppercase tracking-[0.08em] font-semibold bg-gold-500 text-[var(--ivory-50)]",
+        maroon:
+          "uppercase tracking-[0.08em] font-semibold bg-maroon-500 text-[var(--ivory-50)]",
+        sale:
+          "uppercase tracking-[0.08em] font-semibold bg-maroon-500 text-[var(--ivory-50)]",
+        new:
+          "uppercase tracking-[0.08em] font-semibold bg-[#E4EFE6] text-[#2E5B3E] border-[#CBE0D0]",
+        rental:
+          "uppercase tracking-[0.08em] font-semibold bg-[var(--bfg-info-bg)] text-[var(--bfg-info)] border-[var(--bfg-info-border)]",
+        neutral:
+          "uppercase tracking-[0.08em] font-semibold bg-sand-200 text-stone-700",
+      },
+      size: {
+        default: "",
+        sm: "text-2xs px-2 py-px tracking-[0.06em]",
+        md: "text-xs px-2.5 py-0.5",
       },
     },
     defaultVariants: {
       variant: "default",
+      size: "default",
     },
   }
 )
@@ -29,19 +51,34 @@ const badgeVariants = cva(
 function Badge({
   className,
   variant = "default",
+  size = "default",
+  dot = false,
   asChild = false,
+  children,
   ...props
 }: React.ComponentProps<"span"> &
-  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
+  VariantProps<typeof badgeVariants> & {
+    asChild?: boolean
+    dot?: boolean
+  }) {
   const Comp = asChild ? Slot.Root : "span"
 
   return (
     <Comp
       data-slot="badge"
       data-variant={variant}
-      className={cn(badgeVariants({ variant }), className)}
+      className={cn(badgeVariants({ variant, size }), className)}
       {...props}
-    />
+    >
+      {dot && !asChild && (
+        <span
+          aria-hidden
+          className="size-[5px] rounded-full bg-current"
+          style={{ marginRight: "0.125rem" }}
+        />
+      )}
+      {children}
+    </Comp>
   )
 }
 

@@ -61,7 +61,7 @@ export function ResetPasswordForm() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">{t("title")}</CardTitle>
+        <CardTitle className="font-display text-3xl text-text-primary">{t("title")}</CardTitle>
         <CardDescription>{t("subtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -93,7 +93,7 @@ export function ResetPasswordForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" variant="gold" size="bfg-md" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("submit")}
             </Button>

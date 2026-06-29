@@ -14,19 +14,19 @@ interface BreadcrumbsProps {
 
 export function Breadcrumbs({ items, homeLabel = "Home" }: BreadcrumbsProps) {
   return (
-    <nav className="flex items-center gap-1 text-sm text-muted-foreground">
-      <Link href="/" className="hover:text-primary">
+    <nav className="flex items-center gap-1 text-sm text-text-secondary">
+      <Link href="/" className="transition-colors hover:text-text-gold">
         {homeLabel}
       </Link>
       {items.map((item, index) => (
         <Fragment key={index}>
-          <ChevronRight className="h-3 w-3" />
+          <ChevronRight className="h-3 w-3 text-text-muted" />
           {item.href ? (
-            <Link href={item.href} className="hover:text-primary">
+            <Link href={item.href} className="transition-colors hover:text-text-gold">
               {item.label}
             </Link>
           ) : (
-            <span className="text-foreground">{item.label}</span>
+            <span className="text-text-primary">{item.label}</span>
           )}
         </Fragment>
       ))}

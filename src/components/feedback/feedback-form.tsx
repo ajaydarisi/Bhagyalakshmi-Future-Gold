@@ -142,7 +142,7 @@ export function FeedbackDialog({ children }: { children: React.ReactNode }) {
                             <Star
                               className={`h-7 w-7 ${
                                 star <= (ratingValue || 0)
-                                  ? "fill-amber-400 text-amber-400"
+                                  ? "fill-gold-400 text-gold-500"
                                   : "text-muted-foreground/40"
                               }`}
                             />
@@ -173,7 +173,7 @@ export function FeedbackDialog({ children }: { children: React.ReactNode }) {
                 )}
               />
 
-              <Button type="submit" disabled={isLoading} className="w-full">
+              <Button type="submit" variant="gold" size="bfg-md" disabled={isLoading} className="w-full">
                 {isLoading && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}

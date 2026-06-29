@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored design-system reference export (own runtime/bundle — not app code).
+    "bfg-design-system/**",
   ]),
 ]);
 

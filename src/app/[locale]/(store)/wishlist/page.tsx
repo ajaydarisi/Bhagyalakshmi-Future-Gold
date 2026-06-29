@@ -37,7 +37,10 @@ export default async function WishlistPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <Breadcrumbs items={[{ label: t("breadcrumb") }]} homeLabel={tRoot("breadcrumbHome")} />
-      <h1 className="mt-6 text-2xl font-bold md:text-3xl">{t("title")}</h1>
+      <div className="mt-6">
+        <span className="bfg-eyebrow">{t("breadcrumb")}</span>
+        <h1 className="mt-1 font-display text-3xl text-text-primary md:text-4xl">{t("title")}</h1>
+      </div>
       <WishlistContent initialProducts={products} userId={user.id} />
     </div>
   );

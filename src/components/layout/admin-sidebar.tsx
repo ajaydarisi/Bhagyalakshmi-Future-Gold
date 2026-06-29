@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { Logo } from "@/components/brand/logo";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
@@ -69,8 +69,8 @@ function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-[rgb(var(--gold-rgb)/0.12)] text-text-gold"
+                  : "text-text-secondary hover:bg-[rgb(var(--gold-deep-rgb)/0.06)] hover:text-text-primary"
               )}
             >
               <item.icon className="size-4" />
@@ -86,7 +86,7 @@ function AdminNav({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           href="/"
           onClick={onNavigate}
-          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-[rgb(var(--gold-deep-rgb)/0.06)] hover:text-text-primary"
         >
           Back to Store
         </Link>
@@ -119,16 +119,9 @@ export function AdminHeader({ userName, userEmail }: AdminHeaderProps) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 pt-[env(safe-area-inset-top)]">
       <div className="flex h-14 items-center justify-between px-4">
-        <Link href="/admin" className="flex items-center gap-2 font-brand tracking-wide text-primary">
-          <Image
-            src="/images/logo.png"
-            alt="BFG Admin"
-            width={60}
-            height={40}
-            className="h-8 w-12 rounded-lg"
-            priority
-          />
-          <span className="text-sm font-bold">BFG Admin</span>
+        <Link href="/admin" className="flex items-center gap-2">
+          <Logo layout="horizontal" size="sm" />
+          <span className="hidden text-2xs uppercase tracking-[0.18em] text-text-gold sm:inline">Admin</span>
         </Link>
 
         <div className="flex items-center gap-2">
@@ -187,7 +180,7 @@ export function AdminMobileNav() {
           <SheetContent side="left" className="w-64 px-0 pb-0">
             <SheetHeader className="px-6 pt-4">
               <SheetTitle className="flex items-center gap-2">
-                <Sparkles className="size-5 text-primary" />
+                <Sparkles className="size-5 text-gold-500" />
                 BFG Admin
               </SheetTitle>
             </SheetHeader>

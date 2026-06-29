@@ -26,12 +26,12 @@ export function RevenueChart({ data }: RevenueChartProps) {
           <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
             <stop
               offset="5%"
-              stopColor="hsl(var(--primary))"
+              stopColor="var(--gold-500)"
               stopOpacity={0.3}
             />
             <stop
               offset="95%"
-              stopColor="hsl(var(--primary))"
+              stopColor="var(--gold-500)"
               stopOpacity={0}
             />
           </linearGradient>
@@ -72,7 +72,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
         <Area
           type="monotone"
           dataKey="revenue"
-          stroke="hsl(var(--primary))"
+          stroke="var(--gold-500)"
           fillOpacity={1}
           fill="url(#revenueGradient)"
           strokeWidth={2}

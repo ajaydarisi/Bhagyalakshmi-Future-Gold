@@ -89,7 +89,7 @@ export default async function OrderDetailPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold md:text-3xl">
+          <h1 className="font-display text-3xl text-text-primary md:text-4xl">
             Order {order.order_number}
           </h1>
           <p className="text-muted-foreground">
@@ -167,7 +167,7 @@ export default async function OrderDetailPage({
                   <span>{formatPrice(order.shipping_cost)}</span>
                 </div>
                 {order.discount_amount > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between text-[var(--bfg-success)]">
                     <span>Discount</span>
                     <span>-{formatPrice(order.discount_amount)}</span>
                   </div>

@@ -49,20 +49,23 @@ export function CouponInput({
 
   if (appliedCoupon) {
     return (
-      <div className="flex items-center justify-between rounded-md border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950">
+      <div
+        className="flex items-center justify-between rounded-md border border-dashed border-[var(--border-gold)] p-3"
+        style={{ background: "var(--bg-page-warm)" }}
+      >
         <div className="flex items-center gap-2">
-          <Tag className="h-4 w-4 text-green-600" />
-          <span className="text-sm font-medium text-green-700 dark:text-green-400">
+          <Tag className="h-4 w-4 text-gold-600" />
+          <span className="text-sm font-medium text-text-primary">
             {appliedCoupon.code}
           </span>
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="gold" size="sm">
             -{formatPrice(appliedCoupon.discount)}
           </Badge>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6"
+          className="h-6 w-6 rounded-full"
           onClick={() => { hapticSelection(); onRemove(); }}
         >
           <X className="h-3 w-3" />
@@ -80,7 +83,8 @@ export function CouponInput({
         className="flex-1"
       />
       <Button
-        variant="outline"
+        variant="gold-outline"
+        size="bfg-md"
         onClick={handleApply}
         disabled={isLoading || !code.trim()}
       >

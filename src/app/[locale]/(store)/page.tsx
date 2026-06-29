@@ -9,9 +9,22 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProductWithCategory } from "@/types/product";
 import { ExternalLink } from "@/components/shared/external-link";
+import { SectionHeading } from "@/components/brand/section-heading";
 import { FeaturedProductsSection } from "@/components/home/featured-products-section";
 import { NewArrivalsSection } from "@/components/home/new-arrivals-section";
-import { ArrowRight, Clock, Mail, MapPin, Phone } from "lucide-react";
+import {
+  ArrowRight,
+  Clock,
+  Mail,
+  MapPin,
+  Phone,
+  Truck,
+  ShieldCheck,
+  RefreshCw,
+  Gem,
+  MessageCircle,
+  Heart,
+} from "lucide-react";
 import { unstable_cache } from "next/cache";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
@@ -186,19 +199,17 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.05)_100%)] dark:bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.3)_100%)]" />
 
         <div className="container mx-auto relative px-4 py-8 pb-10 md:py-20 lg:py-24 flex items-center min-h-[inherit]">
-          <div className="max-w-xl lg:max-w-2xl text-center lg:text-left">
-            {/* Badge */}
-            <div className="wedding-ornament justify-center lg:justify-start mb-6 font-bold">
-              <span className="text-xs uppercase tracking-[0.25em] text-primary font-sans">
-                {t("hero.badge")}
-              </span>
-            </div>
+          <div className="max-w-xl lg:max-w-2xl text-center lg:text-left bfg-animate">
+            {/* Eyebrow */}
+            <span className="bfg-ornament mb-6 flex justify-center lg:justify-start">
+              <span className="bfg-eyebrow">{t("hero.badge")}</span>
+            </span>
 
             {/* Headline */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight text-foreground dark:text-white">
+            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.05] text-foreground dark:text-white">
               {t("hero.titleLine1")}
               <br />
-              <span className="text-primary">{t("hero.titleLine2")}</span>
+              <span className="bfg-foil">{t("hero.titleLine2")}</span>
             </h1>
 
             {/* Subheading */}
@@ -207,34 +218,25 @@ export default async function HomePage() {
             </p>
 
             {/* Description */}
-            <p className="mt-3 text-sm md:text-base text-muted-foreground dark:text-white/65 max-w-lg mx-auto lg:mx-0 font-sans">
+            <p className="mt-3 text-sm md:text-base text-muted-foreground dark:text-white/65 max-w-lg mx-auto lg:mx-0">
               {t("hero.description")}
             </p>
 
             {/* Ornamental divider */}
             <div className="mt-8 flex items-center gap-3 justify-center lg:justify-start">
-              <span className="h-px w-12 bg-linear-to-r from-transparent to-primary/60" />
-              <span className="text-primary/80 text-lg">✦</span>
-              <span className="h-px w-12 bg-linear-to-l from-transparent to-primary/60" />
+              <span className="h-px w-12 bg-linear-to-r from-transparent to-[var(--gold-500)]" />
+              <span className="text-gold-500 text-lg">✦</span>
+              <span className="h-px w-12 bg-linear-to-l from-transparent to-[var(--gold-500)]" />
             </div>
 
             {/* CTA Buttons */}
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button
-                size="lg"
-                className="btn-gold-shimmer text-white font-semibold hover:opacity-90 transition-opacity"
-                asChild
-              >
+              <Button variant="gold" size="bfg-lg" className="bfg-gold-shimmer" asChild>
                 <Link href={`${ROUTES.products}?category=marriage-rental-sets`}>
                   {t("hero.shopCollection")}
                 </Link>
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-primary/50 bg-transparent dark:text-white text-primary hover:text-primary hover:bg-primary/10 hover:border-primary/70"
-                asChild
-              >
+              <Button variant="gold-outline" size="bfg-lg" asChild>
                 <Link href={`${ROUTES.products}?category=marriage-rental-sets&sort=discount`}>
                   {t("hero.rentalSets")}
                 </Link>
@@ -249,20 +251,20 @@ export default async function HomePage() {
 
       {/* Categories */}
       <section className="container mx-auto px-4 py-10 lg:py-20">
-        <div className="mb-8 lg:mb-12 text-center">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-            <span className="underline decoration-primary underline-offset-4 decoration-2">{t("categories.label")}</span>
-          </p>
-          <h2 className="text-3xl md:text-4xl">{t("categories.title")}</h2>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {(topCategories ?? []).map((cat) => (
+        <SectionHeading
+          className="mx-auto mb-8 lg:mb-12 bfg-animate"
+          eyebrow={t("categories.label")}
+          title={t("categories.title")}
+        />
+        <div className="bfg-stagger grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {(topCategories ?? []).map((cat, i) => (
             <Link
               key={cat.slug}
               href={`${ROUTES.products}?category=${cat.slug}`}
-              className="group relative flex items-center justify-center py-10 px-4 text-center border border-border bg-card transition-all duration-300 hover:border-primary hover:shadow-md"
+              style={{ "--i": i } as React.CSSProperties}
+              className="group relative flex items-center justify-center rounded-[var(--radius-card)] border border-[var(--border-sand)] bg-surface-card px-4 py-10 text-center transition-all duration-300 hover:-translate-y-1 hover:border-[var(--border-gold)] hover:shadow-[var(--shadow-md)]"
             >
-              <h3 className="text-sm md:text-lg uppercase tracking-[0.15em] font-medium group-hover:text-primary transition-colors">
+              <h3 className="font-display text-lg md:text-2xl text-text-primary transition-colors group-hover:text-text-gold">
                 {getCategoryName(cat, locale)}
               </h3>
             </Link>
@@ -271,28 +273,29 @@ export default async function HomePage() {
       </section>
 
       {/* Brand Story */}
-      <section className="py-10 lg:py-20 bg-accent">
+      <section className="py-10 lg:py-20" style={{ background: "var(--bg-page-warm)" }}>
         <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-              <span className="underline decoration-primary underline-offset-4 decoration-2">{t("brandStory.label")}</span>
-            </p>
-            <h2 className="text-3xl md:text-4xl leading-snug">
-              <span className="underline decoration-primary underline-offset-4 decoration-2">{t("brandStory.title")}</span>
-              <br />
-              {t("brandStory.titleLine2")}
-            </h2>
-            <p className="mt-4 text-muted-foreground leading-relaxed max-w-md font-sans">
-              {tBrand("short")}
-            </p>
-            <Button variant="outline" className="mt-6" asChild>
+          <div className="bfg-animate">
+            <SectionHeading
+              align="left"
+              eyebrow={t("brandStory.label")}
+              title={
+                <>
+                  {t("brandStory.title")}
+                  <br />
+                  {t("brandStory.titleLine2")}
+                </>
+              }
+              subtitle={tBrand("short")}
+            />
+            <Button variant="gold-outline" size="bfg-md" className="mt-6" asChild>
               <Link href={ROUTES.about}>{t("brandStory.cta")}</Link>
             </Button>
           </div>
-          <div className="relative aspect-4/5 overflow-hidden">
+          <div className="relative aspect-4/5 overflow-hidden rounded-[var(--radius-bfg-lg)] border border-[var(--border-gold)] shadow-[var(--shadow-lg)]">
             <Image
-              src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80"
-              alt="Elegant jewellery craftsmanship"
+              src="/images/shop/interior.jpeg"
+              alt="Inside our Chirala atelier"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover"
@@ -308,23 +311,22 @@ export default async function HomePage() {
 
       {/* Wishlist CTA — offline only */}
       {!IS_ONLINE && (
-        <section className="bg-accent/30">
-          <div className="container mx-auto px-4 py-10 lg:py-16 text-center max-w-xl">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-              <span className="underline decoration-primary underline-offset-4 decoration-2">{t("wishlistCta.label")}</span>
-            </p>
-            <h2 className="text-2xl md:text-3xl leading-snug">
-              {t("wishlistCta.title")}
-            </h2>
-            <p className="mt-3 text-muted-foreground font-sans">
-              {t("wishlistCta.description")}
-            </p>
-            <Button variant="outline" className="mt-6" asChild>
-              <Link href={ROUTES.products}>
-                {t("wishlistCta.cta")}
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
+        <section style={{ background: "var(--bg-page-warm)" }}>
+          <div className="container mx-auto px-4 py-10 lg:py-16">
+            <SectionHeading
+              className="mx-auto bfg-animate"
+              eyebrow={t("wishlistCta.label")}
+              title={t("wishlistCta.title")}
+              subtitle={t("wishlistCta.description")}
+            />
+            <div className="mt-6 flex justify-center">
+              <Button variant="gold" size="bfg-md" asChild>
+                <Link href={ROUTES.products}>
+                  {t("wishlistCta.cta")}
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </section>
       )}
@@ -336,49 +338,59 @@ export default async function HomePage() {
 
       {/* Trust Bar */}
       <section className="container mx-auto px-4 py-10 lg:py-16">
-        <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
+        <div className="bfg-stagger grid grid-cols-2 gap-6 lg:grid-cols-4">
           {(IS_ONLINE
             ? [
-                { title: t("trustBar.online.shipping"), description: t("trustBar.online.shippingDesc") },
-                { title: t("trustBar.online.checkout"), description: t("trustBar.online.checkoutDesc") },
-                { title: t("trustBar.online.returns"), description: t("trustBar.online.returnsDesc") },
-                { title: t("trustBar.online.quality"), description: t("trustBar.online.qualityDesc") },
+                { icon: Truck, title: t("trustBar.online.shipping"), description: t("trustBar.online.shippingDesc") },
+                { icon: ShieldCheck, title: t("trustBar.online.checkout"), description: t("trustBar.online.checkoutDesc") },
+                { icon: RefreshCw, title: t("trustBar.online.returns"), description: t("trustBar.online.returnsDesc") },
+                { icon: Gem, title: t("trustBar.online.quality"), description: t("trustBar.online.qualityDesc") },
               ]
             : [
-                { title: t("trustBar.offline.whatsapp"), description: t("trustBar.offline.whatsappDesc") },
-                { title: t("trustBar.offline.visit"), description: t("trustBar.offline.visitDesc") },
-                { title: t("trustBar.offline.favourites"), description: t("trustBar.offline.favouritesDesc") },
-                { title: t("trustBar.offline.quality"), description: t("trustBar.offline.qualityDesc") },
+                { icon: MessageCircle, title: t("trustBar.offline.whatsapp"), description: t("trustBar.offline.whatsappDesc") },
+                { icon: MapPin, title: t("trustBar.offline.visit"), description: t("trustBar.offline.visitDesc") },
+                { icon: Heart, title: t("trustBar.offline.favourites"), description: t("trustBar.offline.favouritesDesc") },
+                { icon: Gem, title: t("trustBar.offline.quality"), description: t("trustBar.offline.qualityDesc") },
               ]
-          ).map((feature) => (
-            <div key={feature.title} className="text-center py-4">
-              <h3 className="text-xs uppercase tracking-[0.15em] font-medium">
-                {feature.title}
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1 font-sans">
-                {feature.description}
-              </p>
-            </div>
-          ))}
+          ).map((feature, i) => {
+            const Icon = feature.icon;
+            return (
+              <div
+                key={feature.title}
+                style={{ "--i": i } as React.CSSProperties}
+                className="flex flex-col items-center gap-2 py-4 text-center"
+              >
+                <span className="grid size-11 place-items-center rounded-full" style={{ background: "var(--grad-gold-soft)" }}>
+                  <Icon className="size-5 text-gold-600" strokeWidth={1.6} />
+                </span>
+                <h3 className="text-xs uppercase tracking-[0.15em] font-medium text-text-primary">
+                  {feature.title}
+                </h3>
+                <p className="text-xs text-text-secondary">{feature.description}</p>
+              </div>
+            );
+          })}
         </div>
       </section>
 
       {/* Visit Us */}
-      <section className="border-t">
+      <section className="text-[var(--text-on-dark)]" style={{ background: "var(--grad-ink)" }}>
         <div className="container mx-auto px-4 py-10 lg:py-20">
           <div className="grid md:grid-cols-2 gap-12">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                <span className="underline decoration-primary underline-offset-4 decoration-2">{t("visitUs.label")}</span>
-              </p>
-              <h2 className="text-3xl md:text-4xl mb-8">{t("visitUs.title")}</h2>
+              <span className="bfg-ornament mb-3 flex">
+                <span className="bfg-eyebrow">{t("visitUs.label")}</span>
+              </span>
+              <h2 className="font-display text-3xl md:text-4xl mb-8">
+                <span className="bfg-foil">{t("visitUs.title")}</span>
+              </h2>
 
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                  <MapPin className="h-5 w-5 mt-0.5 shrink-0 text-gold-300" />
                   <div>
                     <p className="text-sm font-medium mb-1">{tAbout("address")}</p>
-                    <p className="text-sm text-muted-foreground font-sans">
+                    <p className="text-sm text-[var(--text-on-dark)]/70">
                       {[
                         BUSINESS_INFO.address.street,
                         BUSINESS_INFO.address.city,
@@ -392,12 +404,12 @@ export default async function HomePage() {
 
                 {BUSINESS_INFO.phone && (
                   <div className="flex items-start gap-3">
-                    <Phone className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                    <Phone className="h-5 w-5 mt-0.5 shrink-0 text-gold-300" />
                     <div>
                       <p className="text-sm font-medium mb-1">{tAbout("phone")}</p>
                       <a
                         href={`tel:${BUSINESS_INFO.phone}`}
-                        className="text-sm text-muted-foreground font-sans hover:text-primary transition-colors"
+                        className="text-sm text-[var(--text-on-dark)]/70 hover:text-gold-300 transition-colors"
                       >
                         {BUSINESS_INFO.phone}
                       </a>
@@ -407,12 +419,12 @@ export default async function HomePage() {
 
                 {BUSINESS_INFO.email && (
                   <div className="flex items-start gap-3">
-                    <Mail className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                    <Mail className="h-5 w-5 mt-0.5 shrink-0 text-gold-300" />
                     <div>
                       <p className="text-sm font-medium mb-1">{tAbout("email")}</p>
                       <a
                         href={`mailto:${BUSINESS_INFO.email}`}
-                        className="text-sm text-muted-foreground font-sans hover:text-primary transition-colors"
+                        className="text-sm text-[var(--text-on-dark)]/70 hover:text-gold-300 transition-colors"
                       >
                         {BUSINESS_INFO.email}
                       </a>
@@ -421,13 +433,13 @@ export default async function HomePage() {
                 )}
 
                 <div className="flex items-start gap-3">
-                  <Clock className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                  <Clock className="h-5 w-5 mt-0.5 shrink-0 text-gold-300" />
                   <div>
                     <p className="text-sm font-medium mb-1">{tAbout("businessHours")}</p>
-                    <p className="text-sm text-muted-foreground font-sans">
+                    <p className="text-sm text-[var(--text-on-dark)]/70">
                       {tAbout("monSat")}: {BUSINESS_INFO.hours.weekdays}
                     </p>
-                    <p className="text-sm text-muted-foreground font-sans">
+                    <p className="text-sm text-[var(--text-on-dark)]/70">
                       {tAbout("sunday")}: {BUSINESS_INFO.hours.sunday}
                     </p>
                   </div>
@@ -435,7 +447,7 @@ export default async function HomePage() {
               </div>
 
               {BUSINESS_INFO.map.linkUrl && (
-                <Button variant="outline" className="mt-8" asChild>
+                <Button variant="gold" size="bfg-md" className="mt-8" asChild>
                   <ExternalLink
                     href={BUSINESS_INFO.map.linkUrl}
                     geoUri={`geo:0,0?q=${encodeURIComponent(`${BUSINESS_INFO.name}, ${BUSINESS_INFO.address.street}, ${BUSINESS_INFO.address.city}, ${BUSINESS_INFO.address.state} ${BUSINESS_INFO.address.pincode}`)}`}
@@ -449,7 +461,7 @@ export default async function HomePage() {
               )}
             </div>
 
-            <div className="relative aspect-square overflow-hidden bg-muted">
+            <div className="relative aspect-square overflow-hidden rounded-[var(--radius-bfg-lg)] border border-[var(--border-gold)] bg-muted">
               {BUSINESS_INFO.map.embedUrl ? (
                 <iframe
                   src={BUSINESS_INFO.map.embedUrl}

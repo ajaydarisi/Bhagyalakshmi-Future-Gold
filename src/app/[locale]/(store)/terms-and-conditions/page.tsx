@@ -38,10 +38,10 @@ export default async function TermsAndConditionsPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="bg-accent/30 py-20">
+      <section className="bg-[var(--bg-page-warm)] py-20">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-5xl leading-tight max-w-2xl mx-auto">
-            {t("title")}
+          <h1 className="font-display text-4xl md:text-5xl leading-tight max-w-2xl mx-auto">
+            <span className="bfg-foil">{t("title")}</span>
           </h1>
           <p className="mt-4 text-sm text-muted-foreground font-sans">
             {t("lastUpdated")}
@@ -78,11 +78,11 @@ export default async function TermsAndConditionsPage() {
             <div className="space-y-3">
               {BUSINESS_INFO.email && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground font-sans">
-                  <Mail className="h-4 w-4 shrink-0 text-primary" />
+                  <Mail className="h-4 w-4 shrink-0 text-gold-500" />
                   <span className="font-medium mr-1">{t("contact.emailLabel")}:</span>
                   <a
                     href={`mailto:${BUSINESS_INFO.email}`}
-                    className="hover:text-primary transition-colors"
+                    className="hover:text-gold-500 transition-colors"
                   >
                     {BUSINESS_INFO.email}
                   </a>
@@ -90,18 +90,18 @@ export default async function TermsAndConditionsPage() {
               )}
               {BUSINESS_INFO.phone && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground font-sans">
-                  <Phone className="h-4 w-4 shrink-0 text-primary" />
+                  <Phone className="h-4 w-4 shrink-0 text-gold-500" />
                   <span className="font-medium mr-1">{t("contact.phoneLabel")}:</span>
                   <a
                     href={`tel:${BUSINESS_INFO.phone}`}
-                    className="hover:text-primary transition-colors"
+                    className="hover:text-gold-500 transition-colors"
                   >
                     {BUSINESS_INFO.phone}
                   </a>
                 </div>
               )}
               <div className="flex items-start gap-2 text-sm text-muted-foreground font-sans">
-                <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-gold-500" />
                 <span>
                   <span className="font-medium mr-1">{t("contact.addressLabel")}:</span>
                   {formattedAddress}

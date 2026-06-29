@@ -73,7 +73,7 @@ export function LoginForm() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">{t("title")}</CardTitle>
+        <CardTitle className="font-display text-3xl text-text-primary">{t("title")}</CardTitle>
         <CardDescription>
           {t("subtitle")}
         </CardDescription>
@@ -107,7 +107,7 @@ export function LoginForm() {
                     <FormLabel>{t("password")}</FormLabel>
                     <Link
                       href="/forgot-password"
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      className="text-sm text-text-secondary hover:text-text-gold transition-colors"
                     >
                       {t("forgotPassword")}
                     </Link>
@@ -134,7 +134,7 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" variant="gold" size="bfg-md" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("submit")}
             </Button>
@@ -154,7 +154,7 @@ export function LoginForm() {
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
           {t("noAccount")}{" "}
-          <Link href="/signup" className="font-medium text-primary hover:underline">
+          <Link href="/signup" className="font-medium text-text-gold hover:underline">
             {t("signUp")}
           </Link>
         </p>

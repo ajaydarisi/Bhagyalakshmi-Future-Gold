@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { useCart } from "@/hooks/use-cart";
 import { toast } from "sonner";
-import { Loader2, Minus, Plus, ShoppingBag } from "lucide-react";
+import { Loader2, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { Product } from "@/types/product";
 import { trackEvent } from "@/lib/gtag";
@@ -45,30 +46,19 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
 
   return (
     <div className="flex flex-1 items-center gap-3">
-      <div className="flex items-center rounded-md border">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-10 w-10 rounded-none"
-          onClick={() => { hapticSelection(); setQuantity(Math.max(1, quantity - 1)); }}
-          disabled={quantity <= 1}
-        >
-          <Minus className="h-4 w-4" />
-        </Button>
-        <span className="w-10 text-center text-sm font-medium">{quantity}</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-10 w-10 rounded-none"
-          onClick={() => { hapticSelection(); setQuantity(Math.min(product.stock, quantity + 1)); }}
-          disabled={quantity >= product.stock}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
+      <QuantityStepper
+        value={quantity}
+        min={1}
+        max={Math.max(1, product.stock)}
+        onChange={(v) => {
+          hapticSelection();
+          setQuantity(v);
+        }}
+      />
       <Button
+        variant="gold"
         className="flex-1"
-        size="lg"
+        size="bfg-lg"
         onClick={handleAdd}
         disabled={isOutOfStock || isAdding}
       >

@@ -32,8 +32,8 @@ export function AccountSidebar() {
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               isActive
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? "bg-gold-500 text-[var(--text-on-gold)]"
+                : "text-text-secondary hover:bg-[rgb(var(--gold-deep-rgb)/0.06)] hover:text-text-primary"
             )}
           >
             <link.icon className="h-4 w-4" />
@@ -62,8 +62,8 @@ export function AccountMobileNav() {
             className={cn(
               "flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors",
               isActive
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? "border-gold-500 bg-gold-500 text-[var(--text-on-gold)]"
+                : "border-transparent text-text-secondary hover:bg-[rgb(var(--gold-deep-rgb)/0.06)] hover:text-text-primary"
             )}
           >
             <link.icon className="h-4 w-4" />

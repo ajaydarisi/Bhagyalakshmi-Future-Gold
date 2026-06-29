@@ -78,7 +78,7 @@ export default async function OrderDetailPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">
+          <h2 className="font-display text-2xl text-text-primary">
             {t("title", { orderNumber: order.order_number })}
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -108,7 +108,7 @@ export default async function OrderDetailPage({
                         <div
                           className={cn(
                             "h-0.5 flex-1",
-                            isCompleted ? "bg-primary" : "bg-muted"
+                            isCompleted ? "bg-gold-500" : "bg-muted"
                           )}
                         />
                       )}
@@ -116,7 +116,7 @@ export default async function OrderDetailPage({
                         className={cn(
                           "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2",
                           isCompleted
-                            ? "border-primary bg-primary text-primary-foreground"
+                            ? "border-gold-500 bg-gold-500 text-[var(--text-on-gold)]"
                             : "border-muted bg-background"
                         )}
                       >
@@ -131,7 +131,7 @@ export default async function OrderDetailPage({
                           className={cn(
                             "h-0.5 flex-1",
                             index < currentStatusIndex
-                              ? "bg-primary"
+                              ? "bg-gold-500"
                               : "bg-muted"
                           )}
                         />
@@ -141,7 +141,7 @@ export default async function OrderDetailPage({
                       className={cn(
                         "mt-2 text-xs",
                         isCurrent
-                          ? "font-medium text-primary"
+                          ? "font-medium text-text-gold"
                           : "text-muted-foreground"
                       )}
                     >
@@ -171,7 +171,7 @@ export default async function OrderDetailPage({
                         className={cn(
                           "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border-2",
                           isCompleted
-                            ? "border-primary bg-primary text-primary-foreground"
+                            ? "border-gold-500 bg-gold-500 text-[var(--text-on-gold)]"
                             : "border-muted bg-background"
                         )}
                       >
@@ -186,7 +186,7 @@ export default async function OrderDetailPage({
                           className={cn(
                             "w-0.5 flex-1 min-h-6",
                             isCompleted && index < currentStatusIndex
-                              ? "bg-primary"
+                              ? "bg-gold-500"
                               : "bg-muted"
                           )}
                         />
@@ -197,7 +197,7 @@ export default async function OrderDetailPage({
                         className={cn(
                           "text-sm",
                           isCurrent
-                            ? "font-medium text-primary"
+                            ? "font-medium text-text-gold"
                             : "text-muted-foreground"
                         )}
                       >
@@ -220,7 +220,7 @@ export default async function OrderDetailPage({
       {/* Items */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("items")}</CardTitle>
+          <CardTitle className="font-display text-xl text-text-primary">{t("items")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="divide-y">
@@ -268,7 +268,7 @@ export default async function OrderDetailPage({
               <span>{formatPrice(order.subtotal)}</span>
             </div>
             {order.discount_amount > 0 && (
-              <div className="flex justify-between text-green-600">
+              <div className="flex justify-between text-[var(--bfg-success)]">
                 <span>{t("discount")}</span>
                 <span>-{formatPrice(order.discount_amount)}</span>
               </div>
@@ -293,7 +293,7 @@ export default async function OrderDetailPage({
       {/* Shipping Address */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("shippingAddress")}</CardTitle>
+          <CardTitle className="font-display text-xl text-text-primary">{t("shippingAddress")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm">

@@ -100,7 +100,7 @@ export function ProductImages({ images, name }: ProductImagesProps) {
                 className={cn(
                   "h-2 w-2 rounded-full transition-colors",
                   index === selectedIndex
-                    ? "bg-primary"
+                    ? "bg-gold-500"
                     : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
                 )}
                 aria-label={`Go to image ${index + 1}`}
@@ -115,7 +115,7 @@ export function ProductImages({ images, name }: ProductImagesProps) {
                 className={cn(
                   "relative h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-md border-2",
                   index === selectedIndex
-                    ? "border-primary"
+                    ? "border-gold-500"
                     : "border-transparent hover:border-muted-foreground/50"
                 )}
               >

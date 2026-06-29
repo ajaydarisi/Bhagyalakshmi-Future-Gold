@@ -63,7 +63,7 @@ export function AssistantProductCard({
     <Link
       href={ROUTES.product(product.slug)}
       onClick={onClick}
-      className="group flex items-start gap-3 rounded-xl border bg-background/80 p-3 transition-colors hover:border-primary/40 hover:bg-accent/30"
+      className="group flex items-start gap-3 rounded-xl border bg-background/80 p-3 transition-colors hover:border-[var(--border-gold)] hover:bg-accent/30"
       data-assistant-product-card
       data-assistant-product-slug={product.slug}
     >
@@ -102,7 +102,7 @@ export function AssistantProductCard({
               </Badge>
             ) : null}
           </div>
-          <p className="line-clamp-2 text-sm font-medium leading-snug transition-colors group-hover:text-primary">
+          <p className="line-clamp-2 text-sm font-medium leading-snug transition-colors group-hover:text-text-gold">
             {displayName}
           </p>
           {product.setNumber ? (

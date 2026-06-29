@@ -77,7 +77,7 @@ export function SignupForm() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">{t("title")}</CardTitle>
+        <CardTitle className="font-display text-3xl text-text-primary">{t("title")}</CardTitle>
         <CardDescription>
           {t("subtitle")}
         </CardDescription>
@@ -171,7 +171,7 @@ export function SignupForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" variant="gold" size="bfg-md" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("submit")}
             </Button>
@@ -191,7 +191,7 @@ export function SignupForm() {
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
           {t("hasAccount")}{" "}
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link href="/login" className="font-medium text-text-gold hover:underline">
             {t("signIn")}
           </Link>
         </p>

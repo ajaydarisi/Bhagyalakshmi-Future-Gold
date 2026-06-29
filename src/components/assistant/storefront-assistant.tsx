@@ -734,9 +734,11 @@ export function StorefrontAssistant() {
     <>
       <Button
         type="button"
+        variant="gold"
+        size="bfg-md"
         aria-label={t("launcherLabel")}
         data-testid="assistant-launcher"
-        className="fixed bottom-24 right-4 z-40 rounded-full shadow-lg lg:bottom-6 lg:right-6 cursor-pointer"
+        className="fixed bottom-24 right-4 z-40 rounded-full shadow-[var(--shadow-gold)] lg:bottom-6 lg:right-6 cursor-pointer"
         onClick={() => handleOpenChange(true)}
       >
         <Bot className="size-5" />
@@ -773,7 +775,7 @@ export function StorefrontAssistant() {
                           <Button
                             key={prompt}
                             type="button"
-                            variant="outline"
+                            variant="gold-outline"
                             className="h-auto justify-start whitespace-normal py-3 text-left"
                             onClick={() => {
                               void sendMessage(prompt);
@@ -795,7 +797,7 @@ export function StorefrontAssistant() {
                     }`}
                   >
                     {entry.role === "assistant" && (
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-100 text-gold-700">
                         <Bot className="size-4" />
                       </div>
                     )}
@@ -803,7 +805,7 @@ export function StorefrontAssistant() {
                     <div
                       className={`max-w-[85%] space-y-3 rounded-2xl px-4 py-3 text-sm ${
                         entry.role === "user"
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-gold-500 text-ink-900"
                           : entry.status === "failed"
                             ? "border border-destructive/30 bg-destructive/5"
                             : "border bg-background"
@@ -855,7 +857,7 @@ export function StorefrontAssistant() {
                                   <Link
                                     key={citation.sourceKey}
                                     href={citation.href}
-                                    className="rounded-full border px-3 py-1 text-xs hover:border-primary hover:text-primary"
+                                    className="rounded-full border px-3 py-1 text-xs hover:border-[var(--border-gold)] hover:text-text-gold"
                                     onClick={() => handleCitationClick(citation)}
                                   >
                                     {citation.title}
@@ -885,7 +887,7 @@ export function StorefrontAssistant() {
                                 <Button
                                   key={`${entry.id}-${index}-${suggestion.prompt}`}
                                   type="button"
-                                  variant="outline"
+                                  variant="gold-outline"
                                   className="h-auto rounded-full px-3 py-1 text-left text-xs"
                                   onClick={() => {
                                     void sendMessage(suggestion.prompt);
@@ -905,7 +907,7 @@ export function StorefrontAssistant() {
                           </p>
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="gold-outline"
                             size="sm"
                             onClick={() => {
                               void retryAssistantEntry(entry.id);
@@ -965,6 +967,8 @@ export function StorefrontAssistant() {
                   <p className="text-xs text-muted-foreground">{t("disclaimer")}</p>
                   <Button
                     type="button"
+                    variant="gold"
+                    size="bfg-md"
                     onClick={() => {
                       void sendMessage();
                     }}

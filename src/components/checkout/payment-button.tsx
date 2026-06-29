@@ -93,7 +93,7 @@ export function PaymentButton({
           },
         },
         theme: {
-          color: "#18181b",
+          color: "#B98A38",
         },
       };
 
@@ -114,7 +114,8 @@ export function PaymentButton({
         onLoad={() => setScriptLoaded(true)}
       />
       <Button
-        size="lg"
+        variant="gold"
+        size="bfg-lg"
         className="w-full"
         onClick={handlePayment}
         disabled={isLoading || !scriptLoaded}

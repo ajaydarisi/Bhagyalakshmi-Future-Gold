@@ -68,11 +68,11 @@ export function OnboardingScreen() {
               className={cn(
                 "flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-colors",
                 selectedLocale === "en"
-                  ? "border-[#7a462e] bg-[#7a462e]/10"
-                  : "border-border hover:border-[#7a462e]/50"
+                  ? "border-gold-500 bg-[rgb(var(--gold-rgb)/0.1)]"
+                  : "border-border hover:border-[var(--border-gold)]"
               )}
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7a462e]/10 text-lg font-medium text-[#7a462e]">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgb(var(--gold-rgb)/0.1)] text-lg font-medium text-gold-700">
                 A
               </span>
               <div>
@@ -86,11 +86,11 @@ export function OnboardingScreen() {
               className={cn(
                 "flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-colors",
                 selectedLocale === "te"
-                  ? "border-[#7a462e] bg-[#7a462e]/10"
-                  : "border-border hover:border-[#7a462e]/50"
+                  ? "border-gold-500 bg-[rgb(var(--gold-rgb)/0.1)]"
+                  : "border-border hover:border-[var(--border-gold)]"
               )}
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7a462e]/10 text-lg font-medium text-[#7a462e]">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgb(var(--gold-rgb)/0.1)] text-lg font-medium text-gold-700">
                 తె
               </span>
               <div>
@@ -118,7 +118,7 @@ export function OnboardingScreen() {
           <div className="flex w-full flex-col gap-3">
             <button
               onClick={() => handleThemeSelect("light")}
-              className="flex items-center gap-4 rounded-xl border-2 border-border p-4 text-left transition-colors hover:border-[#7a462e]/50"
+              className="flex items-center gap-4 rounded-xl border-2 border-border p-4 text-left transition-colors hover:border-[var(--border-gold)]"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-600">
                 <Sun className="h-5 w-5" />
@@ -135,7 +135,7 @@ export function OnboardingScreen() {
 
             <button
               onClick={() => handleThemeSelect("dark")}
-              className="flex items-center gap-4 rounded-xl border-2 border-border p-4 text-left transition-colors hover:border-[#7a462e]/50"
+              className="flex items-center gap-4 rounded-xl border-2 border-border p-4 text-left transition-colors hover:border-[var(--border-gold)]"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-slate-200">
                 <Moon className="h-5 w-5" />
@@ -152,7 +152,7 @@ export function OnboardingScreen() {
 
             <button
               onClick={() => handleThemeSelect("system")}
-              className="flex items-center gap-4 rounded-xl border-2 border-border p-4 text-left transition-colors hover:border-[#7a462e]/50"
+              className="flex items-center gap-4 rounded-xl border-2 border-border p-4 text-left transition-colors hover:border-[var(--border-gold)]"
             >
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                 <Monitor className="h-5 w-5" />
@@ -177,13 +177,13 @@ export function OnboardingScreen() {
         <div
           className={cn(
             "h-2 w-2 rounded-full transition-colors",
-            step === 1 ? "bg-[#7a462e]" : "bg-border"
+            step === 1 ? "bg-gold-500" : "bg-border"
           )}
         />
         <div
           className={cn(
             "h-2 w-2 rounded-full transition-colors",
-            step === 2 ? "bg-[#7a462e]" : "bg-border"
+            step === 2 ? "bg-gold-500" : "bg-border"
           )}
         />
       </div>

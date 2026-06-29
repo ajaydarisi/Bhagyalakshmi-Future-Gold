@@ -73,7 +73,7 @@ export function NavProgress() {
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div
-        className={`h-full bg-primary ${
+        className={`h-full bg-gold-500 ${
           state === "loading"
             ? "animate-nav-progress"
             : "w-full animate-nav-complete"

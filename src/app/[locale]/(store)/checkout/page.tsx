@@ -102,7 +102,7 @@ export default function CheckoutPage() {
   if (authLoading || cartLoading) {
     return (
       <div className="container mx-auto flex items-center justify-center px-4 py-16">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--gold-500)] border-t-transparent" />
       </div>
     );
   }
@@ -121,7 +121,7 @@ export default function CheckoutPage() {
                   {t("selectAddress")}
                   <Dialog open={addAddressOpen} onOpenChange={setAddAddressOpen}>
                     <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
+                      <Button size="bfg-sm" variant="gold-outline">
                         <Plus className="mr-2 h-4 w-4" />
                         {t("addNew")}
                       </Button>
@@ -176,6 +176,8 @@ export default function CheckoutPage() {
                 )}
                 <div className="mt-6 flex justify-end">
                   <Button
+                    variant="gold"
+                    size="bfg-md"
                     onClick={() => setStep(1)}
                     disabled={!selectedAddressId}
                   >
@@ -238,11 +240,11 @@ export default function CheckoutPage() {
                 />
 
                 <div className="flex justify-between gap-2">
-                  <Button variant="outline" onClick={() => setStep(0)}>
+                  <Button variant="gold-ghost" size="bfg-md" onClick={() => setStep(0)}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     {t("back")}
                   </Button>
-                  <Button onClick={() => setStep(2)}>
+                  <Button variant="gold" size="bfg-md" onClick={() => setStep(2)}>
                     {t("proceedToPayment")}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -273,7 +275,8 @@ export default function CheckoutPage() {
                   }}
                 />
                 <Button
-                  variant="outline"
+                  variant="gold-ghost"
+                  size="bfg-md"
                   className="w-full"
                   onClick={() => setStep(1)}
                 >
@@ -286,31 +289,31 @@ export default function CheckoutPage() {
         </div>
 
         {/* Order Summary Sidebar */}
-        <Card className="h-fit">
+        <Card className="h-fit border-[var(--border-gold)] shadow-[var(--shadow-md)]">
           <CardHeader>
-            <CardTitle>{tc("orderSummary")}</CardTitle>
+            <CardTitle className="font-display text-xl text-text-primary">{tc("orderSummary")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">
+              <span className="text-text-secondary">
                 {t("subtotal", { count: items.length })}
               </span>
               <span>{formatPrice(subtotal)}</span>
             </div>
             {discount > 0 && (
-              <div className="flex justify-between text-sm text-green-600">
+              <div className="flex justify-between text-sm text-[var(--bfg-success)]">
                 <span>{t("couponDiscount")}</span>
                 <span>-{formatPrice(discount)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">{t("shipping")}</span>
+              <span className="text-text-secondary">{t("shipping")}</span>
               <span>{shipping === 0 ? t("free") : formatPrice(shipping)}</span>
             </div>
-            <Separator />
-            <div className="flex justify-between text-lg font-bold">
-              <span>{t("total")}</span>
-              <span>{formatPrice(total)}</span>
+            <Separator className="bg-[var(--divider)]" />
+            <div className="flex items-baseline justify-between">
+              <span className="font-semibold text-text-primary">{t("total")}</span>
+              <span className="font-display text-2xl text-text-primary">{formatPrice(total)}</span>
             </div>
           </CardContent>
         </Card>

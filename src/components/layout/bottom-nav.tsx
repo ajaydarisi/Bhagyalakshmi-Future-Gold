@@ -3,7 +3,6 @@
 import { Link, usePathname } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { Home, LayoutGrid, Info, Heart, User } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useAuth } from "@/hooks/use-auth";
 // import { ProductSearch } from "@/components/products/product-search";
@@ -87,7 +86,7 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/80 backdrop-blur-lg lg:hidden pb-[env(safe-area-inset-bottom)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border-sand)] bg-[var(--surface-card)]/90 backdrop-blur-lg lg:hidden pb-[env(safe-area-inset-bottom)]">
         <div className="flex h-16 items-center px-1">
           {tabs.map((tab) => {
             const active = isActive(tab.key, tab.href);
@@ -100,10 +99,12 @@ export function BottomNav() {
                 onClick={() => hapticImpact("light")}
                 onTouchStart={() => handlePrefetch(tab.key)}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 transition-colors ${
-                  active ? "text-primary" : "text-muted-foreground"
+                className={`relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1 transition-colors ${
+                  active ? "text-text-gold" : "text-text-secondary"
                 }`}
               >
+                {/* Active gold indicator (top) */}
+                {active && <span className="absolute top-0 h-0.5 w-8 rounded-full bg-gold-500" />}
                 <span className="relative">
                   <Icon
                     className="h-5 w-5"
@@ -111,12 +112,9 @@ export function BottomNav() {
                     fill={active && tab.fillActive ? "currentColor" : "none"}
                   />
                   {"badge" in tab && tab.badge > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -right-2 -top-1 h-4 w-4 rounded-full p-0 text-[9px] flex items-center justify-center"
-                    >
+                    <span className="absolute -right-2 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-maroon-500 p-0 text-[9px] text-white">
                       {tab.badge}
-                    </Badge>
+                    </span>
                   )}
                 </span>
                 <span

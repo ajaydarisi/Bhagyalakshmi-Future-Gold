@@ -9,6 +9,7 @@ import { PushTokenLinker } from "@/components/shared/push-token-linker";
 import { OfflineBanner } from "@/components/shared/offline-banner";
 import { PrefetchProvider } from "@/components/shared/prefetch-provider";
 import { ScrollToTop } from "@/components/shared/scroll-to-top";
+import { BfgAnimate } from "@/components/shared/bfg-animate";
 import { NetworkProvider } from "@/hooks/use-network";
 import { QueryProvider } from "@/components/providers/query-provider";
 
@@ -34,6 +35,7 @@ export default async function StoreLayout({
             <div className="flex min-h-screen flex-col">
               {user && <PushTokenLinker userId={user.id} />}
               <PrefetchProvider />
+              <BfgAnimate />
               <Suspense fallback={null}>
                 <ScrollToTop />
               </Suspense>

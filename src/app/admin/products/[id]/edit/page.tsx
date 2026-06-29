@@ -35,7 +35,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold md:text-3xl">Edit Product</h1>
+      <h1 className="font-display text-3xl text-text-primary md:text-4xl">Edit Product</h1>
       <ProductForm product={product} categories={categories ?? []} />
     </div>
   );

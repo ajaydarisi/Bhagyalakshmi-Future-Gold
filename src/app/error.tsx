@@ -6,12 +6,12 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 export default function Error() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
-      <AlertCircle className="mb-4 h-16 w-16 text-destructive" />
-      <h2 className="text-2xl font-semibold">Something went wrong</h2>
-      <p className="mt-2 text-muted-foreground">
+      <AlertCircle className="mb-4 h-16 w-16 text-[var(--bfg-error)]" />
+      <h2 className="font-display text-3xl text-text-primary">Something went wrong</h2>
+      <p className="mt-2 text-text-secondary">
         An unexpected error occurred. Please try again.
       </p>
-      <Button onClick={() => { window.location.href = "/"; }} className="mt-6">
+      <Button variant="gold" size="bfg-md" onClick={() => { window.location.href = "/"; }} className="mt-6">
         <RefreshCw className="mr-2 h-4 w-4" />
         Try Again
       </Button>

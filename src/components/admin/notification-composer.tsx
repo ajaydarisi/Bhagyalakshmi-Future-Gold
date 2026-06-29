@@ -232,7 +232,7 @@ export function NotificationComposer() {
         {result && (
           <p
             className={`text-sm ${
-              result.success ? "text-green-600" : "text-red-600"
+              result.success ? "text-[var(--bfg-success)]" : "text-[var(--bfg-error)]"
             }`}
           >
             {result.message}

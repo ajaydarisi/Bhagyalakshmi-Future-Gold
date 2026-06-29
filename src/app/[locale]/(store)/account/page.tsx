@@ -96,7 +96,7 @@ function ChangePasswordCard() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>{t("title")}</CardTitle>
+        <CardTitle className="font-display text-xl text-text-primary">{t("title")}</CardTitle>
         {isEditing ? (
           <div className="flex gap-1">
             <Button
@@ -293,7 +293,7 @@ export default function ProfilePage() {
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t("title")}</CardTitle>
+          <CardTitle className="font-display text-xl text-text-primary">{t("title")}</CardTitle>
           {isEditing ? (
             <div className="flex gap-1">
               <Button
@@ -403,11 +403,11 @@ function SignOutCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
+        <CardTitle className="font-display text-xl text-text-primary">{t("title")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{t("description")}</p>
-        <Button variant="outline" onClick={handleSignOut} disabled={isLoading}>
+        <Button variant="gold-outline" size="bfg-md" onClick={handleSignOut} disabled={isLoading}>
           {isLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
@@ -450,9 +450,9 @@ function DeleteAccountCard() {
   }
 
   return (
-    <Card className="border-destructive">
+    <Card className="border-[var(--bfg-error)]">
       <CardHeader>
-        <CardTitle className="text-destructive">{t("title")}</CardTitle>
+        <CardTitle className="font-display text-xl text-[var(--bfg-error)]">{t("title")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{t("description")}</p>

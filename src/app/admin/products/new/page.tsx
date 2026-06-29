@@ -27,7 +27,7 @@ export default async function NewProductPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold md:text-3xl">New Product</h1>
+      <h1 className="font-display text-3xl text-text-primary md:text-4xl">New Product</h1>
       <ProductForm
         categories={categories ?? []}
         copyFrom={sourceProduct ?? undefined}

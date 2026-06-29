@@ -62,7 +62,7 @@ export function ForgotPasswordForm() {
     return (
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">{t("emailSentTitle")}</CardTitle>
+          <CardTitle className="font-display text-3xl text-text-primary">{t("emailSentTitle")}</CardTitle>
           <CardDescription>
             {t("emailSentDesc")}
           </CardDescription>
@@ -70,7 +70,7 @@ export function ForgotPasswordForm() {
         <CardFooter className="justify-center">
           <Link
             href="/login"
-            className="inline-flex items-center text-sm font-medium text-primary hover:underline"
+            className="inline-flex items-center text-sm font-medium text-text-gold hover:underline"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t("backToLogin")}
@@ -83,7 +83,7 @@ export function ForgotPasswordForm() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">{t("title")}</CardTitle>
+        <CardTitle className="font-display text-3xl text-text-primary">{t("title")}</CardTitle>
         <CardDescription>
           {t("subtitle")}
         </CardDescription>
@@ -108,7 +108,7 @@ export function ForgotPasswordForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" variant="gold" size="bfg-md" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("submit")}
             </Button>
@@ -118,7 +118,7 @@ export function ForgotPasswordForm() {
       <CardFooter className="justify-center">
         <Link
           href="/login"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-primary"
+          className="inline-flex items-center text-sm text-text-secondary hover:text-text-gold"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t("backToLogin")}

@@ -39,6 +39,43 @@
   --font-heading: var(--font-heading);
   --font-brand: var(--font-brand);
   --font-telugu: var(--font-telugu);
+  --font-display: var(--font-heading);
+  --font-body: var(--font-sans);
+
+  /* Micro label size (11px) — registers the `text-2xs` utility. */
+  --text-2xs: 0.6875rem;
+
+  /* BFG design-system palette exposed as Tailwind utilities (bg-gold-500, text-ink-900, …).
+     These reference the parallel DS tokens defined in :root below. */
+  --color-gold-100: var(--gold-100);
+  --color-gold-200: var(--gold-200);
+  --color-gold-300: var(--gold-300);
+  --color-gold-400: var(--gold-400);
+  --color-gold-500: var(--gold-500);
+  --color-gold-600: var(--gold-600);
+  --color-gold-700: var(--gold-700);
+  --color-maroon-400: var(--maroon-400);
+  --color-maroon-500: var(--maroon-500);
+  --color-maroon-600: var(--maroon-600);
+  --color-ivory-50: var(--ivory-50);
+  --color-ivory-100: var(--ivory-100);
+  --color-sand-200: var(--sand-200);
+  --color-sand-300: var(--sand-300);
+  --color-taupe-400: var(--taupe-400);
+  --color-taupe-500: var(--taupe-500);
+  --color-stone-600: var(--stone-600);
+  --color-stone-700: var(--stone-700);
+  --color-ink-800: var(--ink-800);
+  --color-ink-900: var(--ink-900);
+  --color-bg-page: var(--bg-page);
+  --color-bg-page-warm: var(--bg-page-warm);
+  --color-surface-card: var(--surface-card);
+  --color-surface-ink: var(--surface-ink);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-gold: var(--text-gold);
+  --color-border-gold: var(--border-gold);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -157,6 +194,148 @@
   --yarl__button_filter: drop-shadow(1px 1px 3px oklch(0.12 0.02 45 / 0.6));
 }
 
+/* ============================================================
+   BFG DESIGN SYSTEM — parallel token layer (modern luxe).
+   Added alongside the shadcn oklch tokens above (which stay intact).
+   Sourced from bfg-design-system/tokens/*. Dark overrides live in .dark.
+   ============================================================ */
+:root {
+  /* ---- Gold ramp (hero metal) ---- */
+  --gold-100: #F7EAD0;
+  --gold-200: #EFD9A8;
+  --gold-300: #E6C77E;
+  --gold-400: #D4AC5A;
+  --gold-500: #B98A38;   /* PRIMARY gold */
+  --gold-600: #9A6F2A;
+  --gold-700: #7A5620;
+  --gold-rgb: 185 138 56;
+  --gold-deep-rgb: 122 86 32;
+
+  /* ---- Bridal maroon (sparing accent) ---- */
+  --maroon-400: #9A4453;
+  --maroon-500: #7A2E3A;
+  --maroon-600: #5E2230;
+
+  /* ---- Warm neutrals (cream → ink) ---- */
+  --ivory-50:  #FCFAF6;
+  --ivory-100: #F8F2E8;
+  --sand-200:  #F1E9DA;
+  --sand-300:  #E6DAC6;
+  --taupe-400: #CDBDA3;
+  --taupe-500: #A8946F;
+  --stone-600: #7C6F5B;
+  --stone-700: #574E40;
+  --ink-800:   #2E2820;
+  --ink-900:   #1C1812;
+
+  /* ---- Functional (warm-tuned) ---- */
+  --bfg-success-bg: #E8F1E9;  --bfg-success: #3B7A4F;  --bfg-success-border: #C7E0CE;
+  --bfg-error-bg:   #F7E9E6;  --bfg-error:   #B03A2E;  --bfg-error-border:   #ECC9C2;
+  --bfg-warning-bg: #FBF1DE;  --bfg-warning: #9A6B16;  --bfg-warning-border: #F0DCB4;
+  --bfg-info-bg:    #ECEFF4;  --bfg-info:    #3A5A86;  --bfg-info-border:    #CFD9E6;
+
+  /* ---- Semantic surfaces & text ---- */
+  --bg-page:        var(--ivory-100);
+  --bg-page-warm:   #F4EADA;
+  --surface-card:   #FFFFFF;
+  --surface-subtle: var(--ivory-50);
+  --surface-sand:   var(--sand-200);
+  --surface-ink:    var(--ink-900);
+
+  --text-primary:   var(--ink-900);
+  --text-body:      var(--ink-800);
+  --text-secondary: var(--stone-600);
+  --text-muted:     var(--taupe-500);
+  --text-on-gold:   var(--ivory-50);
+  --text-on-dark:   var(--ivory-100);
+  --text-gold:      var(--gold-700);
+
+  --gold:           var(--gold-500);
+  --gold-deep:      var(--gold-600);
+  --accent-maroon:  var(--maroon-500);
+
+  /* ---- Lines & borders ---- */
+  --border-sand:    var(--sand-300);
+  --border-strong:  var(--taupe-400);
+  --border-gold:    rgb(var(--gold-rgb) / 0.45);
+  --divider:        rgb(var(--gold-deep-rgb) / 0.18);
+
+  /* ---- Interactive ---- */
+  --bfg-ring:       rgb(var(--gold-rgb) / 0.55);
+  --overlay:        rgb(28 24 18 / 0.55);
+
+  /* ---- Signature gradients ---- */
+  --grad-gold:        linear-gradient(105deg, var(--gold-600) 0%, var(--gold-400) 45%, var(--gold-300) 55%, var(--gold-500) 100%);
+  --grad-gold-soft:   linear-gradient(135deg, var(--gold-200) 0%, var(--gold-100) 100%);
+  --grad-ivory-warm:  linear-gradient(180deg, var(--ivory-50) 0%, var(--bg-page-warm) 100%);
+  --grad-ink:         linear-gradient(180deg, #251F18 0%, var(--ink-900) 100%);
+  --grad-foil:        linear-gradient(92deg, var(--gold-700) 0%, var(--gold-400) 40%, var(--gold-300) 52%, var(--gold-600) 100%);
+
+  /* ---- Type families (point at the next/font vars) ---- */
+  --font-display: var(--font-heading);
+  --font-body:    var(--font-sans);
+
+  /* ---- Type scale ---- */
+  --text-2xs:  0.6875rem;
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.375rem;
+  --text-2xl:  1.75rem;
+  --text-3xl:  2.25rem;
+  --text-4xl:  3rem;
+  --text-5xl:  4rem;
+  --text-6xl:  5.5rem;
+
+  --fw-light: 300; --fw-regular: 400; --fw-medium: 500; --fw-semibold: 600; --fw-bold: 700;
+  --lh-tight: 1.04; --lh-snug: 1.18; --lh-normal: 1.5; --lh-relaxed: 1.7;
+  --ls-tight: -0.02em; --ls-normal: 0; --ls-wide: 0.08em; --ls-wider: 0.22em;
+
+  /* ---- Semantic type roles ---- */
+  --type-eyebrow: var(--fw-regular) var(--text-xs)/1.2 var(--font-brand);
+  --type-display: var(--fw-medium) var(--text-6xl)/var(--lh-tight) var(--font-display);
+  --type-h1: var(--fw-medium) var(--text-5xl)/var(--lh-tight) var(--font-display);
+  --type-h2: var(--fw-medium) var(--text-4xl)/var(--lh-snug) var(--font-display);
+  --type-h3: var(--fw-medium) var(--text-3xl)/var(--lh-snug) var(--font-display);
+  --type-h4: var(--fw-semibold) var(--text-xl)/var(--lh-snug) var(--font-body);
+  --type-body-lg: var(--fw-regular) var(--text-lg)/var(--lh-relaxed) var(--font-body);
+  --type-body: var(--fw-regular) var(--text-base)/var(--lh-normal) var(--font-body);
+  --type-body-sm: var(--fw-regular) var(--text-sm)/var(--lh-normal) var(--font-body);
+  --type-label: var(--fw-semibold) var(--text-sm)/1.2 var(--font-body);
+  --type-caption: var(--fw-medium) var(--text-xs)/1.3 var(--font-body);
+  --type-price: var(--fw-semibold) var(--text-xl)/1.1 var(--font-body);
+
+  /* ---- Spacing & layout ---- */
+  --space-0: 0; --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
+  --space-4: 1rem; --space-5: 1.5rem; --space-6: 2rem; --space-7: 2.5rem;
+  --space-8: 3rem; --space-9: 4rem; --space-10: 5rem; --space-12: 7rem; --space-16: 10rem;
+  --container: 1280px; --container-wide: 1440px; --container-prose: 680px;
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+  --section-y: clamp(4rem, 9vw, 7rem);
+  --control-sm: 2.25rem; --control-md: 2.75rem; --control-lg: 3.25rem;
+
+  /* ---- Radii ---- */
+  --radius-bfg-sm: 4px; --radius-bfg-md: 8px; --radius-bfg-lg: 14px;
+  --radius-bfg-xl: 22px; --radius-pill: 999px; --radius-card: 8px;
+
+  /* ---- Shadows (warm-tinted) ---- */
+  --shadow-xs:  0 1px 2px rgb(var(--gold-deep-rgb) / 0.06);
+  --shadow-sm:  0 1px 3px rgb(var(--gold-deep-rgb) / 0.07), 0 1px 2px rgb(28 24 18 / 0.04);
+  --shadow-md:  0 4px 16px rgb(var(--gold-deep-rgb) / 0.08), 0 2px 6px rgb(28 24 18 / 0.05);
+  --shadow-lg:  0 14px 40px rgb(var(--gold-deep-rgb) / 0.12), 0 4px 12px rgb(28 24 18 / 0.06);
+  --shadow-xl:  0 28px 70px rgb(var(--gold-deep-rgb) / 0.16), 0 8px 24px rgb(28 24 18 / 0.08);
+  --shadow-gold: 0 8px 24px rgb(var(--gold-rgb) / 0.32);
+  --ring-focus:  0 0 0 3px rgb(var(--gold-rgb) / 0.30);
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-soft: cubic-bezier(0.33, 0.1, 0.25, 1);
+  --dur-fast: 140ms; --dur-base: 240ms; --dur-slow: 420ms; --dur-slower: 700ms;
+  --press-scale: 0.97; --lift: translateY(-4px);
+}
+
 .dark {
   --background: oklch(0.16 0.01 60);
   --body-background: oklch(0.16 0.003 60);
@@ -221,6 +400,28 @@
   --yarl__color_button_active: oklch(0.75 0.08 45);
   --yarl__color_button_disabled: oklch(0.95 0.008 75 / 0.3);
   --yarl__button_filter: drop-shadow(1px 1px 3px oklch(0.05 0.01 60 / 0.6));
+
+  /* ---- BFG design-system dark overrides (surface/text/border only;
+          gold ramp + type/space stay mode-agnostic) ---- */
+  --bg-page:        var(--ink-900);
+  --bg-page-warm:   #251F18;
+  --surface-card:   #26221B;
+  --surface-subtle: #201C16;
+  --surface-sand:   #2A251D;
+
+  --text-primary:   var(--ivory-100);
+  --text-body:      #E7DECF;
+  --text-secondary: #C3B79F;
+  --text-muted:     #9A8E76;
+  --text-gold:      var(--gold-300);
+
+  --border-sand:    rgb(255 255 255 / 0.10);
+  --border-strong:  rgb(255 255 255 / 0.18);
+  --border-gold:    rgb(var(--gold-rgb) / 0.50);
+  --divider:        rgb(255 255 255 / 0.10);
+  --overlay:        rgb(8 6 4 / 0.62);
+
+  --grad-ivory-warm: linear-gradient(180deg, #221E18 0%, var(--ink-900) 100%);
 }
 
 @layer base {
@@ -414,4 +615,79 @@
 @keyframes toast-slide-out-right {
   from { transform: translateX(0); opacity: 1; }
   to { transform: translateX(calc(100% + 16px)); opacity: 0; }
+}
+
+/* ============================================================
+   BFG DESIGN SYSTEM — "alive" motion layer (from tokens/effects.css).
+   Keyframes + entrance/foil/ornament utilities. The .bfg-animate* and
+   .bfg-stagger utilities rest VISIBLE; the hidden→reveal runs only while
+   the JS-added `.bfg-play` gate is present (added on mount, stripped on a
+   timer by bfg-animate.tsx). `backwards` keeps elements hidden during their
+   stagger delay without a flash. Everything respects reduced-motion.
+   ============================================================ */
+@keyframes bfg-fade-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes bfg-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bfg-rise { from { opacity: 0; transform: translateY(30px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes bfg-shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+@keyframes bfg-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes bfg-heart-pop { 0% { transform: scale(1); } 45% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes bfg-skeleton { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes bfg-twinkle { 0%, 100% { opacity: 0.25; transform: scale(0.7); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes bfg-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .bfg-animate.bfg-play      { animation: bfg-fade-up var(--dur-slow) var(--ease-out) backwards; }
+  .bfg-animate-rise.bfg-play { animation: bfg-rise var(--dur-slower) var(--ease-out) backwards; }
+  .bfg-animate-in.bfg-play   { animation: bfg-fade-in var(--dur-slow) var(--ease-out) backwards; }
+  .bfg-stagger.bfg-play > *  { animation: bfg-rise var(--dur-slow) var(--ease-out) backwards;
+                               animation-delay: calc(var(--i, 0) * 90ms); }
+}
+
+/* Gilt foil text — the signature display treatment */
+.bfg-foil {
+  background: var(--grad-foil);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: bfg-shimmer 6s linear infinite;
+}
+
+/* Shimmering gold button surface */
+.bfg-gold-shimmer {
+  background: linear-gradient(110deg,
+    var(--gold-600) 0%, var(--gold-500) 25%,
+    var(--gold-300) 50%, var(--gold-500) 75%, var(--gold-600) 100%);
+  background-size: 220% 100%;
+  animation: bfg-shimmer 5s linear infinite;
+}
+
+/* The BFG ornament — gold hairlines flanking an element */
+.bfg-ornament { display: inline-flex; align-items: center; gap: 0.75rem; }
+.bfg-ornament::before,
+.bfg-ornament::after {
+  content: "";
+  height: 1px;
+  width: clamp(2rem, 6vw, 3.5rem);
+  background: linear-gradient(to right, transparent, rgb(var(--gold-rgb) / 0.7), transparent);
+}
+
+/* Eyebrow / kicker label */
+.bfg-eyebrow {
+  font-family: var(--font-brand);
+  font-size: var(--text-xs);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  color: var(--text-gold);
+}
+
+/* Skeleton shimmer surface — uses themed surfaces so it works light + dark */
+.bfg-skeleton {
+  background: linear-gradient(100deg, var(--surface-sand) 30%, var(--surface-subtle) 50%, var(--surface-sand) 70%);
+  background-size: 200% 100%;
+  animation: bfg-skeleton 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bfg-foil, .bfg-gold-shimmer, .bfg-skeleton { animation: none; }
 }
