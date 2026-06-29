@@ -221,7 +221,7 @@ export default async function HomePage() {
                 priority
                 fetchPriority="high"
                 sizes="(max-width: 1024px) 100vw, 45vw"
-                className="object-cover"
+                className="object-cover object-[72%_22%]"
               />
             </div>
             {/* Floating chip */}
