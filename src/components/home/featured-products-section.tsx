@@ -31,7 +31,7 @@ export function FeaturedProductsSection({ initialProducts }: FeaturedProductsSec
   return (
     <section className="container mx-auto px-4 py-10 lg:py-20">
       <div className="mb-8 lg:mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-4 bfg-animate">
-        <SectionHeading align="left" eyebrow={t("featured.label")} title={t("featured.title")} />
+        <SectionHeading align="left" eyebrow={t("featured.label")} title={t("featured.title")} subtitle={t("featured.sub")} />
         <Button variant="gold-ghost" size="bfg-sm" className="shrink-0" asChild>
           <Link href={ROUTES.products}>
             {t("featured.viewAll")}
