@@ -3,10 +3,14 @@ import { cn } from "@/lib/utils";
 type LogoLayout = "stacked" | "horizontal" | "monogram" | "wordmark";
 type LogoSize = "sm" | "md" | "lg";
 
+/** Real ornate gilt "BFG" monogram (transparent, trimmed) — works on any bg. */
+const DEFAULT_MARK = "/images/brand/logo-bfg-mark.png";
+
 interface LogoProps {
   layout?: LogoLayout;
-  /** Real ornate gilt logo image; replaces the typographic monogram. */
-  imageSrc?: string;
+  /** Ornate gilt logo image used for the monogram. Defaults to the real art;
+      pass `null` to fall back to the typographic foil "BFG". */
+  imageSrc?: string | null;
   /** Show the "Chirala" ornament (stacked layout only). */
   tagline?: boolean;
   /** Lighten colours for dark backgrounds. */
@@ -23,7 +27,7 @@ interface LogoProps {
  */
 export function Logo({
   layout = "stacked",
-  imageSrc,
+  imageSrc = DEFAULT_MARK,
   tagline = false,
   onDark = false,
   size = "md",
@@ -35,8 +39,12 @@ export function Logo({
 
   const monogram = () =>
     imageSrc ? (
-      // eslint-disable-next-line @next/next/no-img-element -- intrinsic ratio varies; height-driven sizing
-      <img src={imageSrc} alt="Bhagyalakshmi Future Gold" style={{ height: 56 * scale, width: "auto" }} />
+      // eslint-disable-next-line @next/next/no-img-element -- small fixed logo, height-driven sizing
+      <img
+        src={imageSrc}
+        alt="Bhagyalakshmi Future Gold"
+        style={{ height: `${2 * scale}rem`, width: "auto", display: "block" }}
+      />
     ) : (
       <span
         className="bfg-foil"
