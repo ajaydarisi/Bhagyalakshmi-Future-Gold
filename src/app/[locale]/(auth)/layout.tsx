@@ -1,6 +1,8 @@
 import { Link } from "@/i18n/routing";
 import { APP_NAME } from "@/lib/constants";
 import { Logo } from "@/components/brand/logo";
+import { LanguageSwitcher } from "@/components/shared/language-switcher";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
@@ -54,7 +56,11 @@ export default async function AuthLayout({
             </div>
 
             {/* Form panel */}
-            <div className="flex flex-1 flex-col items-center justify-center px-4 py-10" style={{ background: "var(--bg-page)" }}>
+            <div className="relative flex flex-1 flex-col items-center justify-center px-4 py-10" style={{ background: "var(--bg-page)" }}>
+              <div className="absolute right-3 top-3 flex items-center gap-1">
+                <LanguageSwitcher />
+                <ThemeToggle />
+              </div>
               <Link href="/" className="mb-8 lg:hidden" aria-label={APP_NAME}>
                 <Logo layout="stacked" size="md" />
               </Link>

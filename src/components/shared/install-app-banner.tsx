@@ -1,22 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+const subscribe = () => () => {};
+
+// Client-only decision (depends on Capacitor, only available in the browser).
+// Server snapshot is `false` so the banner is absent from SSR and appears after
+// hydration — never on native — matching the previous mount-effect behaviour,
+// without setting state synchronously inside an effect.
+function getShowOnClient() {
+  if (process.env.NEXT_PUBLIC_SHOW_APP_BANNER !== "true") return false;
+  if (!process.env.NEXT_PUBLIC_PLAY_STORE_URL) return false;
+  const cap = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+  return !cap?.isNativePlatform?.();
+}
+
 export function InstallAppBanner() {
   const t = useTranslations("home.installApp");
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_SHOW_APP_BANNER !== "true") return;
-    if (!process.env.NEXT_PUBLIC_PLAY_STORE_URL) return;
-
-    const cap = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
-    if (cap?.isNativePlatform?.()) return;
-
-    setShow(true);
-  }, []);
+  const show = useSyncExternalStore(subscribe, getShowOnClient, () => false);
 
   if (!show) return null;
 
