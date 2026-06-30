@@ -401,10 +401,10 @@
   * {
     @apply border-border outline-ring/50;
     scrollbar-width: thin;
-    scrollbar-color: var(--primary) var(--muted);
+    scrollbar-color: rgb(var(--gold-deep-rgb) / 0.55) var(--muted);
   }
 
-  /* Webkit scrollbar (Chrome, Edge, Safari) */
+  /* Webkit scrollbar (Chrome, Edge, Safari) — warm gold to match the theme */
   *::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -414,13 +414,13 @@
     border-radius: 9999px;
   }
   *::-webkit-scrollbar-thumb {
-    background: var(--primary);
+    background: rgb(var(--gold-deep-rgb) / 0.55);
     border-radius: 9999px;
     border: 2px solid var(--muted);
     transition: background 0.2s ease;
   }
   *::-webkit-scrollbar-thumb:hover {
-    background: var(--ring);
+    background: rgb(var(--gold-deep-rgb) / 0.8);
   }
 
   body {

@@ -11,6 +11,7 @@
   "free": "ఉచితం",
   "total": "మొత్తం",
   "freeShippingMessage": "ఉచిత షిప్పింగ్ కోసం మరో {amount} జోడించండి",
+  "freeShippingUnlocked": "మీకు ఉచిత షిప్పింగ్ లభించింది!",
   "proceedToCheckout": "చెక్‌అవుట్‌కు వెళ్ళండి",
   "continueShopping": "షాపింగ్ కొనసాగించండి",
   "checkout": {

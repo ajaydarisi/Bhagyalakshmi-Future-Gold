@@ -7,6 +7,7 @@ import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { CheckAvailabilityButton } from "@/components/products/check-availability-button";
 import { NotifyStockButton } from "@/components/products/notify-stock-button";
 import { ProductImages } from "@/components/products/product-images";
+import { MobileDetailBar } from "@/components/products/mobile-detail-bar";
 import { ShareButton } from "@/components/products/share-button";
 import { PriceDisplay } from "@/components/shared/price-display";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +42,7 @@ export function ProductDetailContent({ initialProduct }: ProductDetailContentPro
   const displayState = getProductDetailDisplayState();
 
   return (
-    <div className="mt-8 grid gap-8 md:grid-cols-2">
+    <div className="mt-8 grid gap-8 pb-24 md:grid-cols-2 md:pb-0">
       {/* Images */}
       <ProductImages images={p.images} name={displayName} />
 
@@ -132,7 +133,8 @@ export function ProductDetailContent({ initialProduct }: ProductDetailContentPro
           </div>
         )}
 
-        <div>
+        {/* Inline action — desktop/tablet. Phones use the sticky bottom bar. */}
+        <div className="hidden md:block">
           {displayState.showCartAction ? (
             <AddToCartButton product={p} />
           ) : (
@@ -183,6 +185,9 @@ export function ProductDetailContent({ initialProduct }: ProductDetailContentPro
           </div>
         )}
       </div>
+
+      {/* Sticky bottom action bar — phones only */}
+      <MobileDetailBar product={p} productName={displayName} />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { PushTokenLinker } from "@/components/shared/push-token-linker";
 import { OfflineBanner } from "@/components/shared/offline-banner";
 import { PrefetchProvider } from "@/components/shared/prefetch-provider";
 import { ScrollToTop } from "@/components/shared/scroll-to-top";
+import { PullToRefresh } from "@/components/shared/pull-to-refresh";
 import { BfgAnimate } from "@/components/shared/bfg-animate";
 import { NetworkProvider } from "@/hooks/use-network";
 import { QueryProvider } from "@/components/providers/query-provider";
@@ -41,7 +42,9 @@ export default async function StoreLayout({
               </Suspense>
               <OfflineBanner />
               <Header categories={categories} />
-              <main className="flex-1 pb-20 lg:pb-0">{children}</main>
+              <PullToRefresh>
+                <main className="flex-1 pb-20 lg:pb-0">{children}</main>
+              </PullToRefresh>
               <Footer categories={categories} />
               <StorefrontAssistant />
               <BottomNav />

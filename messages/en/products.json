@@ -30,6 +30,7 @@
   "detail": {
     "forSale": "For Sale",
     "forRent": "For Rent",
+    "buyNow": "Buy Now",
     "rentalDetails": "Rental Details",
     "rentalPrice": "Rental Price (per day):",
     "perDay": "/day",
@@ -69,7 +70,10 @@
   },
   "card": {
     "noImage": "No Image",
-    "soldOut": "Sold Out"
+    "soldOut": "Sold Out",
+    "rentNow": "Rent Now",
+    "decreaseQuantity": "Decrease quantity",
+    "increaseQuantity": "Increase quantity"
   },
   "search": {
     "placeholder": "Search for jewellery...",

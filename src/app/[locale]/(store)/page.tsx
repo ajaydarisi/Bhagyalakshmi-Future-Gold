@@ -175,9 +175,12 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {process.env.NEXT_PUBLIC_CONFETTI_ENABLED === "true" && <Confetti />}
+      {/* Install App Banner — web only; kept first so it sits above the fold at every width */}
+      <InstallAppBanner />
       {/* Hero — editorial split-grid (DS kit composition) */}
       <section className="wedding-hero-pattern relative overflow-hidden" style={{ background: "var(--grad-ivory-warm)" }}>
-        <div className="container mx-auto grid items-center gap-8 px-4 py-12 lg:min-h-[560px] lg:grid-cols-[1.05fr_0.95fr] lg:py-0">
+        {/* lg height fills the viewport below the chrome (announcement+header+app banner ≈ 11rem) so the hero is one screenful; py-10 pads the image top/bottom. */}
+        <div className="container mx-auto grid items-center gap-8 px-4 py-12 lg:grid-cols-[1.05fr_0.95fr] lg:min-h-[calc(100dvh-11rem)] lg:py-10">
           {/* Copy */}
           <div className="bfg-animate flex max-w-xl flex-col gap-5">
             <span className="bfg-ornament self-start">
@@ -213,15 +216,15 @@ export default async function HomePage() {
 
           {/* Media */}
           <div className="bfg-animate relative">
-            <div className="relative aspect-4/5 overflow-hidden rounded-[var(--radius-bfg-xl)] border border-[var(--border-gold)] shadow-[var(--shadow-xl)]">
+            <div className="relative aspect-4/5 overflow-hidden rounded-[var(--radius-bfg-xl)] border border-[var(--border-gold)] shadow-[var(--shadow-xl)] lg:aspect-square lg:max-h-[calc(100dvh-16rem)]">
               <Image
                 src="/images/brand/hero-bridal.png"
                 alt="South Indian bridal jewellery"
                 fill
                 priority
                 fetchPriority="high"
-                sizes="(max-width: 1024px) 100vw, 45vw"
-                className="object-cover object-[72%_22%]"
+                sizes="(max-width: 1024px) 80vw, 45vw"
+                className="object-cover object-[82%_22%]"
               />
             </div>
             {/* Floating chip */}
@@ -251,9 +254,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Install App Banner — Android only */}
-      <InstallAppBanner />
 
       {/* Category strip — circular icon band (DS kit) */}
       <section className="border-y border-[var(--border-sand)] bg-surface-card">

@@ -116,7 +116,7 @@ export function WishlistButton({ productId, variant = "default", size = 40 }: Wi
           borderColor: "var(--border-sand)",
         }}
       >
-        <span className="[&>svg]:size-[46%] [&>svg]:min-h-[18px] [&>svg]:min-w-[18px]">{heart}</span>
+        <span className="flex h-full w-full items-center justify-center [&>svg]:size-[46%] [&>svg]:min-h-[18px] [&>svg]:min-w-[18px]">{heart}</span>
         {isWishlisted && burst > 0 && <Sparkles key={`s${burst}`} size={size} />}
       </button>
     );

@@ -10,10 +10,11 @@ import {
     SheetTitle
 } from "@/components/ui/sheet";
 import { useCart } from "@/hooks/use-cart";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
 import { formatPrice } from "@/lib/formatters";
 import { ShoppingBag } from "lucide-react";
 import { Link } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
 import { CartItem } from "./cart-item";
 
 interface CartSheetProps {
@@ -23,10 +24,18 @@ interface CartSheetProps {
 
 export function CartSheet({ open, onOpenChange }: CartSheetProps) {
   const { items, subtotal, itemCount } = useCart();
+  const t = useTranslations("cart");
+  const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
+  const freeShippingPct = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col sm:max-w-md">
+      <SheetContent
+        side="bottom"
+        className="mx-auto flex h-[90vh] max-w-lg flex-col rounded-t-[1.5rem] pb-[env(safe-area-inset-bottom)]"
+      >
+        {/* Drag handle */}
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-[var(--border-strong)]" />
         <SheetHeader>
           <SheetTitle>Cart ({itemCount})</SheetTitle>
         </SheetHeader>
@@ -44,6 +53,21 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
           </div>
         ) : (
           <>
+            {/* Free-shipping progress */}
+            <div className="px-1 pb-1">
+              <p className="text-xs text-text-secondary">
+                {remainingForFreeShipping > 0
+                  ? t("freeShippingMessage", { amount: formatPrice(remainingForFreeShipping) })
+                  : t("freeShippingUnlocked")}
+              </p>
+              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--border-sand)]">
+                <div
+                  className="h-full rounded-full transition-all duration-500 ease-[var(--ease-out)]"
+                  style={{ width: `${freeShippingPct}%`, background: "var(--grad-gold)" }}
+                />
+              </div>
+            </div>
+
             <ScrollArea className="flex-1 -mx-6 px-6">
               <div className="divide-y">
                 {items.map((item) => (

@@ -30,6 +30,7 @@
   "detail": {
     "forSale": "అమ్మకానికి",
     "forRent": "అద్దెకు",
+    "buyNow": "ఇప్పుడే కొనండి",
     "rentalDetails": "అద్దె వివరాలు",
     "rentalPrice": "అద్దె ధర (రోజుకు):",
     "perDay": "/రోజు",
@@ -69,7 +70,10 @@
   },
   "card": {
     "noImage": "చిత్రం లేదు",
-    "soldOut": "అయిపోయింది"
+    "soldOut": "అయిపోయింది",
+    "rentNow": "ఇప్పుడే అద్దెకు",
+    "decreaseQuantity": "పరిమాణం తగ్గించు",
+    "increaseQuantity": "పరిమాణం పెంచు"
   },
   "search": {
     "placeholder": "జ్యువెలరీ కోసం వెతకండి...",

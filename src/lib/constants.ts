@@ -83,6 +83,7 @@ export const ROUTES = {
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   about: "/about",
+  visit: "/visit",
   termsAndConditions: "/terms-and-conditions",
   privacyPolicy: "/privacy-policy",
   admin: "/admin",

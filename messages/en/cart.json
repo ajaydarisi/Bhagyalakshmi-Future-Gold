@@ -11,6 +11,7 @@
   "free": "Free",
   "total": "Total",
   "freeShippingMessage": "Add {amount} more for free shipping",
+  "freeShippingUnlocked": "You've unlocked free shipping!",
   "proceedToCheckout": "Proceed to Checkout",
   "continueShopping": "Continue Shopping",
   "checkout": {

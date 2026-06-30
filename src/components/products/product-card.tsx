@@ -33,10 +33,14 @@ export function ProductCard({ product }: ProductCardProps) {
   const tCart = useTranslations("products.addToCart");
   const tWish = useTranslations("wishlist");
   const locale = useLocale();
-  const { addItem } = useCart();
+  const { items, addItem, updateQuantity } = useCart();
 
   const displayName = getProductName(product, locale);
   const soldOut = shouldShowSoldOutOverlay(product.stock);
+
+  // Inline stepper: only for online, non-rental items already in the bag.
+  const qty = items.find((i) => i.product.id === product.id)?.quantity ?? 0;
+  const showStepper = IS_ONLINE && !product.is_rental && qty > 0;
   const initials = (displayName || "BFG")
     .split(" ")
     .slice(0, 2)
@@ -80,6 +84,26 @@ export function ProductCard({ product }: ProductCardProps) {
       else window.open(url, "_blank", "noopener,noreferrer");
     }
   }
+
+  function handleStep(e: React.MouseEvent, next: number) {
+    e.preventDefault();
+    e.stopPropagation();
+    void updateQuantity(product.id, Math.min(next, 10)); // capped at 10; <=0 removes
+  }
+
+  // Reveal rule (the touch fix): the CTA is fully visible by default — touch
+  // devices keep it. Only pointers that can hover hide it at rest and rise it
+  // in on hover/focus. Never gate the visible state behind a hover the device
+  // can't produce.
+  const reveal = cn(
+    "opacity-100 translate-y-0 pointer-events-auto transition-all duration-300",
+    "[@media(hover:hover)_and_(pointer:fine)]:opacity-0",
+    "[@media(hover:hover)_and_(pointer:fine)]:translate-y-3",
+    "[@media(hover:hover)_and_(pointer:fine)]:pointer-events-none",
+    "[@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100",
+    "[@media(hover:hover)_and_(pointer:fine)]:group-hover:translate-y-0",
+    "[@media(hover:hover)_and_(pointer:fine)]:group-hover:pointer-events-auto",
+  );
 
   return (
     <Link href={ROUTES.product(product.slug)} className="group block">
@@ -151,24 +175,56 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           )}
 
-          {/* Quick action — rises on hover (desktop) / focus */}
-          {!soldOut && (
-            <button
-              type="button"
-              onClick={handleQuickAction}
-              className={cn(
-                "absolute inset-x-3 bottom-3 inline-flex h-[42px] items-center justify-center gap-2 rounded-full",
-                "bg-ink-900 text-2xs uppercase tracking-[0.12em] text-ivory-50",
-                "opacity-0 translate-y-3 pointer-events-none transition-all duration-300",
-                "group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto",
-                "focus-visible:opacity-100 focus-visible:translate-y-0 focus-visible:pointer-events-auto",
-                "hover:bg-gold-600"
-              )}
-            >
-              {IS_ONLINE ? <ShoppingBag className="size-3.5" /> : <MessageCircle className="size-3.5" />}
-              {IS_ONLINE ? tCart("addToCart") : tWish("checkAvailability")}
-            </button>
-          )}
+          {/* Quick action — always visible on touch; rises on hover (desktop)
+              / focus. Morphs into an inline qty stepper once in the bag. */}
+          {!soldOut &&
+            (showStepper ? (
+              <div
+                onClick={(e) => e.preventDefault()}
+                className={cn(
+                  "absolute inset-x-3 bottom-3 flex h-[42px] items-center justify-between rounded-full text-ink-900",
+                  reveal
+                )}
+                style={{ background: "var(--grad-gold)", boxShadow: "var(--shadow-gold)" }}
+              >
+                <button
+                  type="button"
+                  aria-label={t("decreaseQuantity")}
+                  onClick={(e) => handleStep(e, qty - 1)}
+                  className="grid size-[42px] flex-shrink-0 place-items-center text-base leading-none"
+                >
+                  &#8722;
+                </button>
+                <span className="min-w-6 text-center text-sm font-medium tabular-nums">{qty}</span>
+                <button
+                  type="button"
+                  aria-label={t("increaseQuantity")}
+                  onClick={(e) => handleStep(e, qty + 1)}
+                  className="grid size-[42px] flex-shrink-0 place-items-center text-base leading-none"
+                >
+                  &#43;
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleQuickAction}
+                className={cn(
+                  "absolute inset-x-3 bottom-3 inline-flex h-[42px] items-center justify-center gap-2 rounded-full",
+                  "bg-ink-900 text-2xs uppercase tracking-[0.12em] text-ivory-50",
+                  "focus-visible:opacity-100 focus-visible:translate-y-0 focus-visible:pointer-events-auto",
+                  "hover:bg-gold-600",
+                  reveal
+                )}
+              >
+                {IS_ONLINE ? <ShoppingBag className="size-3.5" /> : <MessageCircle className="size-3.5" />}
+                {IS_ONLINE
+                  ? !product.is_sale && product.is_rental
+                    ? t("rentNow")
+                    : tCart("addToCart")
+                  : tWish("checkAvailability")}
+              </button>
+            ))}
         </div>
 
         {/* Body */}

@@ -2,11 +2,11 @@
 
 import { Link, usePathname } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
-import { Home, LayoutGrid, Info, Heart, User } from "lucide-react";
+import { Home, LayoutGrid, Info, Heart, User, MapPin } from "lucide-react";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useAuth } from "@/hooks/use-auth";
 // import { ProductSearch } from "@/components/products/product-search";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, IS_ONLINE } from "@/lib/constants";
 import { hapticImpact } from "@/lib/haptics";
 import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -54,10 +54,11 @@ export function BottomNav() {
       fillActive: true,
     },
     {
+      // Offline store mode: "About" becomes "Visit" (store directions/contact).
       key: "about",
-      href: ROUTES.about,
-      icon: Info,
-      label: t("about"),
+      href: IS_ONLINE ? ROUTES.about : ROUTES.visit,
+      icon: IS_ONLINE ? Info : MapPin,
+      label: IS_ONLINE ? t("about") : t("visit"),
       fillActive: false,
     },
     // { key: "search", href: null, icon: Search, label: t("search") },
