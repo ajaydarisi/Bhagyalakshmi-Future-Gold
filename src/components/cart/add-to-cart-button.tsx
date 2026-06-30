@@ -16,26 +16,26 @@ interface AddToCartButtonProps {
 }
 
 export function AddToCartButton({ product }: AddToCartButtonProps) {
-  const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
-  const { addItem } = useCart();
+  const { items, addItem, updateQuantity } = useCart();
   const t = useTranslations("products.addToCart");
 
   const isOutOfStock = product.stock === 0;
+  // Live quantity of this product already in the cart.
+  const cartQty = items.find((i) => i.product.id === product.id)?.quantity ?? 0;
 
   async function handleAdd() {
     setIsAdding(true);
     try {
-      await addItem(product, quantity);
+      await addItem(product, 1);
       trackEvent("add_to_cart", {
         item_id: product.id,
         item_name: product.name,
         price: product.discount_price || product.price,
-        quantity,
+        quantity: 1,
       });
       hapticNotification("success");
       toast.success(t("addedToast", { name: product.name }));
-      setQuantity(1);
     } catch {
       hapticNotification("error");
       toast.error(t("errorToast"));
@@ -44,31 +44,40 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
     }
   }
 
+  // Once in the cart, the button becomes a live −/+ counter for this product.
+  // Stepping down to 0 removes it and reverts to the Add to Cart button.
+  if (cartQty > 0) {
+    return (
+      // Centered so the compact pill never stretches edge-to-edge in a full-width slot.
+      <div className="flex w-full justify-center">
+        <QuantityStepper
+          value={cartQty}
+          min={0}
+          max={Math.max(1, product.stock)}
+          size="md"
+          onChange={(v) => {
+            hapticSelection();
+            void updateQuantity(product.id, v);
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-1 items-center gap-3">
-      <QuantityStepper
-        value={quantity}
-        min={1}
-        max={Math.max(1, product.stock)}
-        onChange={(v) => {
-          hapticSelection();
-          setQuantity(v);
-        }}
-      />
-      <Button
-        variant="gold"
-        className="flex-1"
-        size="bfg-lg"
-        onClick={handleAdd}
-        disabled={isOutOfStock || isAdding}
-      >
-        {isAdding ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <ShoppingBag className="mr-2 h-4 w-4" />
-        )}
-        {isOutOfStock ? t("outOfStock") : t("addToCart")}
-      </Button>
-    </div>
+    <Button
+      variant="gold"
+      className="w-full"
+      size="bfg-md"
+      onClick={handleAdd}
+      disabled={isOutOfStock || isAdding}
+    >
+      {isAdding ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <ShoppingBag className="mr-2 h-4 w-4" />
+      )}
+      {isOutOfStock ? t("outOfStock") : t("addToCart")}
+    </Button>
   );
 }

@@ -29,7 +29,8 @@ export function InstallAppBanner() {
       <div className="absolute inset-0 bg-linear-to-r from-primary/10 via-transparent to-primary/5 dark:from-primary/20 dark:to-primary/10 pointer-events-none" />
       <div className="absolute top-0 right-1/4 w-32 h-32 bg-[rgb(var(--gold-rgb)/0.2)] rounded-full blur-3xl pointer-events-none" />
 
-      <div className="container mx-auto px-4 relative flex items-center justify-between gap-4 z-10">
+      {/* lg:pr-40 keeps the Play Store CTA clear of the fixed "Ask AI" launcher (bottom-right). */}
+      <div className="container mx-auto px-4 lg:pr-40 relative flex items-center justify-between gap-4 z-10">
         <div className="flex items-center gap-4 min-w-0">
           <div className="shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-card border border-border shadow-xs dark:bg-zinc-900/50">
             <Download className="w-6 h-6 text-gold-600" />

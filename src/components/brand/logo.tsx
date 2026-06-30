@@ -72,7 +72,7 @@ export function Logo({
       <span
         style={{
           fontFamily: "var(--font-brand)",
-          fontSize: `${(small ? 0.92 : 1.18) * scale}rem`,
+          fontSize: `${(small ? 1.06 : 1.32) * scale}rem`,
           letterSpacing: "0.04em",
           color: nameColor,
         }}
@@ -82,7 +82,7 @@ export function Logo({
       <span
         style={{
           fontFamily: "var(--font-brand)",
-          fontSize: `${(small ? 0.62 : 0.72) * scale}rem`,
+          fontSize: `${(small ? 0.72 : 0.82) * scale}rem`,
           letterSpacing: "var(--ls-wider)",
           textTransform: "uppercase",
           color: onDark ? "var(--gold-300)" : "var(--text-gold)",

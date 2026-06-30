@@ -65,7 +65,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
 const ICON_BTN = "rounded-full hover:bg-[rgb(var(--gold-deep-rgb)/0.07)]";
 /** Maroon count bubble for cart/wishlist. */
 const COUNT_BADGE =
-  "absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-maroon-500 p-0 text-[9px] text-white border-2 border-[var(--surface-card)]";
+  "absolute -top-1 -right-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-maroon-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-[var(--surface-card)] shadow-[0_1px_3px_rgb(0_0_0/0.25)]";
 
 export function Header({ categories }: { categories: NavCategory[] }) {
   const t = useTranslations("nav");

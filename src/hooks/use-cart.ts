@@ -226,45 +226,44 @@ export function useCartProvider(): CartContextType {
       const existing = currentItems.find((i) => i.product.id === product.id);
 
       // Optimistic update — apply immediately
-      if (existing) {
-        setItems(
-          currentItems.map((i) =>
+      const newItems = existing
+        ? currentItems.map((i) =>
             i.product.id === product.id
               ? { ...i, quantity: i.quantity + quantity }
               : i,
-          ),
-        );
-      } else {
-        setItems([...currentItems, { id: crypto.randomUUID(), product, quantity }]);
+          )
+        : [...currentItems, { id: crypto.randomUUID(), product, quantity }];
+      setItems(newItems);
+
+      if (!user) {
+        setLocalCart(newItems);
+        return;
       }
 
-      if (user) {
-        try {
-          if (existing) {
-            await supabase
-              .from("cart_items")
-              .update({ quantity: existing.quantity + quantity })
-              .eq("user_id", user.id)
-              .eq("product_id", product.id);
-          } else {
-            await supabase
-              .from("cart_items")
-              .insert({ user_id: user.id, product_id: product.id, quantity });
-          }
-          // Keep snapshot in sync after successful write
-          setLocalCart(itemsRef.current);
-        } catch {
-          // Offline — persist optimistic state locally and enqueue for replay
-          setLocalCart(itemsRef.current);
+      // Persist in the background. The optimistic update is already applied, so the
+      // UI must never block on this write — a stalled request would otherwise hang
+      // the Add to Cart button forever. Failures fall back to the offline replay queue.
+      const write = existing
+        ? supabase
+            .from("cart_items")
+            .update({ quantity: existing.quantity + quantity })
+            .eq("user_id", user.id)
+            .eq("product_id", product.id)
+        : supabase
+            .from("cart_items")
+            .insert({ user_id: user.id, product_id: product.id, quantity });
+
+      Promise.resolve(write).then(
+        () => setLocalCart(newItems),
+        () => {
+          setLocalCart(newItems);
           enqueue(existing ? "cart-update" : "cart-add", {
             userId: user.id,
             productId: product.id,
             quantity: existing ? existing.quantity + quantity : quantity,
           }).catch(() => {});
-        }
-      } else {
-        setLocalCart(itemsRef.current);
-      }
+        },
+      );
     },
     [user],
   );

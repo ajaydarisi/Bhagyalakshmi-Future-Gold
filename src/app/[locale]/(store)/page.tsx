@@ -175,8 +175,6 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {process.env.NEXT_PUBLIC_CONFETTI_ENABLED === "true" && <Confetti />}
-      {/* Install App Banner — web only; kept first so it sits above the fold at every width */}
-      <InstallAppBanner />
       {/* Hero — editorial split-grid (DS kit composition) */}
       <section className="wedding-hero-pattern relative overflow-hidden" style={{ background: "var(--grad-ivory-warm)" }}>
         {/* lg height fills the viewport below the chrome (announcement+header+app banner ≈ 11rem) so the hero is one screenful; py-10 pads the image top/bottom. */}
@@ -254,6 +252,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Install App Banner — web only; sits at the bottom of the hero */}
+      <InstallAppBanner />
 
       {/* Category strip — circular icon band (DS kit) */}
       <section className="border-y border-[var(--border-sand)] bg-surface-card">

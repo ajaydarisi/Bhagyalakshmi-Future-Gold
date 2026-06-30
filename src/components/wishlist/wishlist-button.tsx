@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { useWishlist } from "@/hooks/use-wishlist";
@@ -42,7 +42,7 @@ function Sparkles({ size }: { size: number }) {
             width: Math.max(3, size * 0.07),
             height: Math.max(3, size * 0.07),
             background: "var(--gold-400)",
-            animation: `bfg-twinkle 0.55s var(--ease-out) ${p.delay} 1`,
+            animation: `bfg-twinkle 0.7s var(--ease-out) ${p.delay} infinite`,
           }}
         />
       ))}
@@ -58,8 +58,23 @@ export function WishlistButton({ productId, variant = "default", size = 40 }: Wi
   const t = useTranslations("wishlist");
   const isWishlisted = isInWishlist(productId);
   const [burst, setBurst] = useState(0);
+  const [showSparkles, setShowSparkles] = useState(false);
+  const sparkleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const triggerBurst = useCallback(() => setBurst((b) => b + 1), []);
+  // Blink the gold dots on wishlist, then remove them after 3s.
+  const triggerBurst = useCallback(() => {
+    setBurst((b) => b + 1);
+    setShowSparkles(true);
+    if (sparkleTimer.current) clearTimeout(sparkleTimer.current);
+    sparkleTimer.current = setTimeout(() => setShowSparkles(false), 1000);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (sparkleTimer.current) clearTimeout(sparkleTimer.current);
+    },
+    []
+  );
 
   async function handleToggle() {
     if (!isLoggedIn) {
@@ -117,7 +132,7 @@ export function WishlistButton({ productId, variant = "default", size = 40 }: Wi
         }}
       >
         <span className="flex h-full w-full items-center justify-center [&>svg]:size-[46%] [&>svg]:min-h-[18px] [&>svg]:min-w-[18px]">{heart}</span>
-        {isWishlisted && burst > 0 && <Sparkles key={`s${burst}`} size={size} />}
+        {isWishlisted && showSparkles && <Sparkles key={`s${burst}`} size={size} />}
       </button>
     );
   }
@@ -131,7 +146,7 @@ export function WishlistButton({ productId, variant = "default", size = 40 }: Wi
       className="relative overflow-visible"
     >
       {isWishlisted ? t("buttoned") : t("button")}
-      {isWishlisted && burst > 0 && <Sparkles key={`s${burst}`} size={28} />}
+      {isWishlisted && showSparkles && <Sparkles key={`s${burst}`} size={28} />}
     </Button>
   );
 }

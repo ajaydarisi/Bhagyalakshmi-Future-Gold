@@ -21,17 +21,17 @@ const buttonVariants = cva(
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
 
-        // ---- BFG design-system variants (pill, uppercase, warm) ----
+        // ---- BFG design-system variants (pill, warm) ----
         gold:
-          "rounded-full uppercase tracking-[0.04em] font-semibold bg-gold-500 text-[var(--text-on-gold)] shadow-[var(--shadow-gold)] hover:bg-gold-600 hover:-translate-y-0.5 active:scale-[0.97]",
+          "rounded-full font-medium bg-gold-500 text-[var(--text-on-gold)] shadow-[var(--shadow-gold)] hover:bg-gold-600 hover:-translate-y-0.5 active:scale-[0.97]",
         maroon:
-          "rounded-full uppercase tracking-[0.04em] font-semibold bg-maroon-500 text-[var(--ivory-50)] hover:bg-maroon-600 hover:-translate-y-0.5 active:scale-[0.97]",
+          "rounded-full font-medium bg-maroon-500 text-[var(--ivory-50)] hover:bg-maroon-600 hover:-translate-y-0.5 active:scale-[0.97]",
         dark:
-          "rounded-full uppercase tracking-[0.04em] font-semibold bg-ink-900 text-[var(--text-on-dark)] hover:bg-[#3a3228] hover:-translate-y-0.5 active:scale-[0.97]",
+          "rounded-full font-medium bg-ink-900 text-[var(--text-on-dark)] hover:bg-[#3a3228] hover:-translate-y-0.5 active:scale-[0.97]",
         "gold-outline":
-          "rounded-full uppercase tracking-[0.04em] font-semibold border bg-transparent text-text-gold border-[var(--border-gold)] hover:border-gold-500 hover:bg-[rgb(var(--gold-rgb)/0.08)] active:scale-[0.97]",
+          "rounded-full font-medium border bg-transparent text-text-gold border-[var(--border-gold)] hover:border-gold-500 hover:bg-[rgb(var(--gold-rgb)/0.08)] active:scale-[0.97]",
         "gold-ghost":
-          "rounded-full uppercase tracking-[0.04em] font-semibold text-text-primary bg-transparent hover:bg-[rgb(var(--gold-deep-rgb)/0.06)] active:scale-[0.97]",
+          "rounded-full font-medium text-text-primary bg-transparent hover:bg-[rgb(var(--gold-deep-rgb)/0.06)] active:scale-[0.97]",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
