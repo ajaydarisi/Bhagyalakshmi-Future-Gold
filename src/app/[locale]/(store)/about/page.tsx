@@ -169,7 +169,7 @@ export default async function AboutPage() {
           <div className="relative aspect-4/5 overflow-hidden bg-muted">
             <ShopImage
               src={SHOP_IMAGES.storefront}
-              alt="Bhagyalakshmi Future Gold store in Chirala"
+              alt={t("imageAlt.store")}
             />
           </div>
         </div>
@@ -204,11 +204,11 @@ export default async function AboutPage() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
           {[
-            { src: SHOP_IMAGES.storefront, alt: "Bhagyalakshmi Future Gold storefront" },
-            { src: SHOP_IMAGES.interior, alt: "Inside Bhagyalakshmi Future Gold shop" },
+            { src: SHOP_IMAGES.storefront, alt: t("imageAlt.storefront") },
+            { src: SHOP_IMAGES.interior, alt: t("imageAlt.interior") },
             {
               src: SHOP_IMAGES.display,
-              alt: "Jewellery display at Bhagyalakshmi Future Gold",
+              alt: t("imageAlt.display"),
             },
           ].map((img) => (
             <div
@@ -341,7 +341,7 @@ export default async function AboutPage() {
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                   sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                  title="Bhagyalakshmi Future Gold location on Google Maps"
+                  title={t("mapTitle")}
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">

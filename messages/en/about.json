@@ -41,5 +41,12 @@
     "a4": "We are open Monday to Saturday from 10:00 AM to 9:00 PM, and on Sundays from 10:00 AM to 2:00 PM.",
     "q5": "Is the jewellery quality checked?",
     "a5": "Yes, every piece of jewellery passes through our hands before it reaches yours. We personally quality-check each item for finish, durability, and design accuracy. We also provide warranty on specific items."
-  }
+  },
+  "imageAlt": {
+    "store": "Bhagyalakshmi Future Gold store in Chirala",
+    "storefront": "Bhagyalakshmi Future Gold storefront",
+    "interior": "Inside Bhagyalakshmi Future Gold shop",
+    "display": "Jewellery display at Bhagyalakshmi Future Gold"
+  },
+  "mapTitle": "Bhagyalakshmi Future Gold location on Google Maps"
 }

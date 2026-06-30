@@ -75,7 +75,8 @@
       "update": "Update Address",
       "add": "Add Address",
       "cancel": "Cancel"
-    }
+    },
+    "backToCart": "Back to Cart"
   },
   "confirmation": {
     "metaTitle": "Order Confirmed",
@@ -92,5 +93,9 @@
     "shippingAddress": "Shipping Address",
     "viewOrders": "View Orders",
     "continueShopping": "Continue Shopping"
-  }
+  },
+  "sheetTitle": "Cart ({count})",
+  "emptySparkle": "Add some sparkle to your cart!",
+  "checkoutCta": "Checkout",
+  "viewCart": "View Cart"
 }

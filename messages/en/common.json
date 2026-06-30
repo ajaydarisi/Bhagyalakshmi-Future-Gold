@@ -57,5 +57,8 @@
   "breadcrumbHome": "Home",
   "appName": "Bhagyalakshmi Future Gold",
   "signedOut": "Signed out successfully",
-  "discountOff": "{discount}% OFF"
+  "discountOff": "{discount}% OFF",
+  "offline": "You're offline. Some features may be unavailable.",
+  "toggleTheme": "Toggle theme",
+  "photoComingSoon": "Photo coming soon"
 }

@@ -57,5 +57,8 @@
   "breadcrumbHome": "హోమ్",
   "appName": "భాగ్యలక్ష్మి ఫ్యూచర్ గోల్డ్",
   "signedOut": "విజయవంతంగా సైన్ అవుట్ చేయబడింది",
-  "discountOff": "{discount}% తగ్గింపు"
+  "discountOff": "{discount}% తగ్గింపు",
+  "offline": "మీరు ఆఫ్‌లైన్‌లో ఉన్నారు. కొన్ని ఫీచర్లు అందుబాటులో ఉండకపోవచ్చు.",
+  "toggleTheme": "థీమ్ మార్చండి",
+  "photoComingSoon": "ఫోటో త్వరలో వస్తుంది"
 }

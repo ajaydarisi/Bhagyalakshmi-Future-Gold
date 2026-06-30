@@ -32,7 +32,7 @@ export default async function AuthLayout({
                 fill
                 priority
                 sizes="50vw"
-                className="object-cover object-[center_20%] opacity-35"
+                className="object-cover object-[82%_22%]"
               />
               <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgb(28 24 18 / 0.55), rgb(28 24 18 / 0.82))" }} />
 
@@ -42,10 +42,10 @@ export default async function AuthLayout({
 
               <div className="relative max-w-md bfg-animate">
                 <span className="bfg-ornament mb-4 flex">
-                  <span className="bfg-eyebrow">{APP_NAME}</span>
+                  <span className="bfg-eyebrow text-gold-300!">{APP_NAME}</span>
                 </span>
                 <h2 className="font-display text-4xl leading-tight">
-                  <span className="bfg-foil">Adorn every occasion</span>
+                  <span className="bfg-foil">{tBrand("heroTagline")}</span>
                 </h2>
                 <p className="mt-4 text-[var(--text-on-dark)]/75">{tBrand("short")}</p>
               </div>

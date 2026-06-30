@@ -63,7 +63,8 @@ export async function createOrder(
   let couponId: string | null = null;
 
   if (couponCode) {
-    const { data: coupon } = await supabase
+    // Coupons table has RLS with no read policy, so use the admin client to validate server-side.
+    const { data: coupon } = await admin
       .from("coupons")
       .select("*")
       .eq("code", couponCode.toUpperCase())
@@ -254,9 +255,10 @@ export async function verifyPayment(
 
 export async function applyCoupon(code: string, subtotal: number) {
   if (STORE_MODE === "OFFLINE") throw new Error("Store is currently offline");
-  const supabase = await createClient();
+  // Coupons table has RLS with no read policy, so use the admin client to validate server-side.
+  const admin = createAdminClient();
 
-  const { data: coupon } = await supabase
+  const { data: coupon } = await admin
     .from("coupons")
     .select("*")
     .eq("code", code.toUpperCase())

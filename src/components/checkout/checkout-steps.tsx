@@ -10,7 +10,7 @@ interface CheckoutStepsProps {
 
 export function CheckoutSteps({ currentStep }: CheckoutStepsProps) {
   const t = useTranslations("cart.checkout.steps");
-  const steps = [t("address"), t("review"), t("payment")];
+  const steps = [t("review"), t("address"), t("payment")];
   return (
     <div className="flex items-center justify-center gap-2">
       {steps.map((step, index) => (

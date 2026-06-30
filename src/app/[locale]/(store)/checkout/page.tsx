@@ -59,26 +59,40 @@ export default function CheckoutPage() {
     }
   }, [cartLoading, items.length, authLoading, router]);
 
-  const fetchAddresses = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("addresses")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("is_default", { ascending: false });
-    setAddresses(data || []);
-    if (data && data.length > 0 && !selectedAddressId) {
-      setSelectedAddressId(data[0].id);
-    }
-  }, [user, supabase, selectedAddressId]);
+  const fetchAddresses = useCallback(
+    async (userId?: string) => {
+      const uid = userId ?? user?.id;
+      if (!uid) return;
+      const { data } = await supabase
+        .from("addresses")
+        .select("*")
+        .eq("user_id", uid)
+        .order("is_default", { ascending: false });
+      setAddresses(data || []);
+      // Preserve any manual selection; otherwise default to the first address.
+      if (data && data.length > 0) {
+        setSelectedAddressId((prev) => prev || data[0].id);
+      }
+    },
+    [user, supabase]
+  );
 
+  // Fetch whenever the auth session resolves/refreshes. Driving this off
+  // onAuthStateChange (which fires INITIAL_SESSION on subscribe, with the ready
+  // session token) avoids the race where the addresses query ran before the token
+  // was ready and RLS returned nothing — the bug where addresses only appeared
+  // after a manual refresh. We pass session.user.id directly so the fetch doesn't
+  // wait on the separate auth-context `user` state to propagate.
   useEffect(() => {
-    if (!user) return;
-    const load = async () => {
-      await fetchAddresses();
-    };
-    load();
-  }, [user, fetchAddresses]);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const uid = session?.user?.id;
+      // Defer out of the auth callback to avoid Supabase LockManager re-entrancy.
+      if (uid) setTimeout(() => fetchAddresses(uid), 0);
+    });
+    return () => subscription.unsubscribe();
+  }, [fetchAddresses, supabase]);
 
   async function handleAddAddress(data: AddressInput) {
     if (!user) return;
@@ -113,8 +127,8 @@ export default function CheckoutPage() {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
         <div>
-          {/* Step 0: Address */}
-          {step === 0 && (
+          {/* Step 1: Address */}
+          {step === 1 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -174,14 +188,18 @@ export default function CheckoutPage() {
                     ))}
                   </RadioGroup>
                 )}
-                <div className="mt-6 flex justify-end">
+                <div className="mt-6 flex justify-between gap-2">
+                  <Button variant="gold-ghost" size="bfg-md" onClick={() => setStep(0)}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {t("back")}
+                  </Button>
                   <Button
                     variant="gold"
                     size="bfg-md"
-                    onClick={() => setStep(1)}
+                    onClick={() => setStep(2)}
                     disabled={!selectedAddressId}
                   >
-                    {t("continue")}
+                    {t("proceedToPayment")}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
@@ -189,8 +207,8 @@ export default function CheckoutPage() {
             </Card>
           )}
 
-          {/* Step 1: Review */}
-          {step === 1 && (
+          {/* Step 0: Review */}
+          {step === 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>{t("orderReview")}</CardTitle>
@@ -240,12 +258,12 @@ export default function CheckoutPage() {
                 />
 
                 <div className="flex justify-between gap-2">
-                  <Button variant="gold-ghost" size="bfg-md" onClick={() => setStep(0)}>
+                  <Button variant="gold-ghost" size="bfg-md" onClick={() => router.push(ROUTES.cart)}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    {t("back")}
+                    {t("backToCart")}
                   </Button>
-                  <Button variant="gold" size="bfg-md" onClick={() => setStep(2)}>
-                    {t("proceedToPayment")}
+                  <Button variant="gold" size="bfg-md" onClick={() => setStep(1)}>
+                    {t("continue")}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
@@ -281,7 +299,7 @@ export default function CheckoutPage() {
                   onClick={() => setStep(1)}
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  {t("backToReview")}
+                  {t("back")}
                 </Button>
               </CardContent>
             </Card>

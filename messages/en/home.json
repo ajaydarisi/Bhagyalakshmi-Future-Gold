@@ -101,5 +101,11 @@
     "label": "Visit us",
     "title": "See the collection in Chirala",
     "whatsapp": "Chat on WhatsApp"
+  },
+  "imageAlt": {
+    "heroBridal": "South Indian bridal jewellery",
+    "storefront": "Our Chirala storefront",
+    "interior": "Inside the store",
+    "display": "Jewellery display"
   }
 }

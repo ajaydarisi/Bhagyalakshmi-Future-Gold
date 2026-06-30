@@ -217,7 +217,7 @@ export default async function HomePage() {
             <div className="relative aspect-4/5 overflow-hidden rounded-[var(--radius-bfg-xl)] border border-[var(--border-gold)] shadow-[var(--shadow-xl)] lg:aspect-square lg:max-h-[calc(100dvh-16rem)]">
               <Image
                 src="/images/brand/hero-bridal.png"
-                alt="South Indian bridal jewellery"
+                alt={t("imageAlt.heroBridal")}
                 fill
                 priority
                 fetchPriority="high"
@@ -291,13 +291,13 @@ export default async function HomePage() {
             style={{ gridTemplateColumns: "1.3fr 1fr", gridTemplateRows: "1fr 1fr", aspectRatio: "1 / 0.92" }}
           >
             <div className="relative row-span-2 overflow-hidden rounded-[var(--radius-bfg-lg)] border border-[var(--border-sand)]">
-              <Image src="/images/shop/storefront.jpeg" alt="Our Chirala storefront" fill sizes="(max-width:768px) 60vw, 30vw" className="object-cover" />
+              <Image src="/images/shop/storefront.jpeg" alt={t("imageAlt.storefront")} fill sizes="(max-width:768px) 60vw, 30vw" className="object-cover" />
             </div>
             <div className="relative overflow-hidden rounded-[var(--radius-bfg-lg)] border border-[var(--border-sand)]">
-              <Image src="/images/shop/interior.jpeg" alt="Inside the store" fill sizes="(max-width:768px) 40vw, 20vw" className="object-cover" />
+              <Image src="/images/shop/interior.jpeg" alt={t("imageAlt.interior")} fill sizes="(max-width:768px) 40vw, 20vw" className="object-cover" />
             </div>
             <div className="relative overflow-hidden rounded-[var(--radius-bfg-lg)] border border-[var(--border-sand)]">
-              <Image src="/images/shop/display.jpeg" alt="Jewellery display" fill sizes="(max-width:768px) 40vw, 20vw" className="object-cover" />
+              <Image src="/images/shop/display.jpeg" alt={t("imageAlt.display")} fill sizes="(max-width:768px) 40vw, 20vw" className="object-cover" />
             </div>
           </div>
           {/* Copy + promises */}

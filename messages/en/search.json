@@ -22,5 +22,6 @@
     "noAnswer": "AI couldn't find a confident grounded answer for this search yet.",
     "unavailable": "AI couldn't generate a grounded answer right now.",
     "disclaimer": "AI answers are grounded only in the matching catalog results shown here."
-  }
+  },
+  "clearSearch": "Clear search"
 }

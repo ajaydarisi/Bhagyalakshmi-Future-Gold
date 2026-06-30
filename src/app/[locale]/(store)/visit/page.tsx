@@ -29,7 +29,7 @@ export default async function VisitPage() {
       <section className="relative aspect-[16/10] w-full overflow-hidden sm:aspect-[21/9]">
         <ShopImage
           src={SHOP_IMAGES.storefront}
-          alt="Bhagyalakshmi Future Gold store in Chirala"
+          alt={t("imageAlt.store")}
         />
         <div
           className="absolute inset-0"
@@ -126,7 +126,7 @@ export default async function VisitPage() {
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-              title="Bhagyalakshmi Future Gold location on Google Maps"
+              title={t("mapTitle")}
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
