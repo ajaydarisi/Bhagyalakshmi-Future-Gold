@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Users" };
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -9,14 +9,14 @@ export default async function AdminUsersPage() {
   const supabase = await createClient();
   const adminClient = createAdminClient();
 
-  const [{ data: users }, { data: authData }, { data: { user: currentUser } }] =
+  const [{ data: users }, { data: authData }, currentUser] =
     await Promise.all([
       adminClient
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false }),
       adminClient.auth.admin.listUsers(),
-      supabase.auth.getUser(),
+      getAuthUser(supabase),
     ]);
 
   const bannedUserIds = (authData?.users ?? [])

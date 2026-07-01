@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createRazorpayClient } from "@/lib/razorpay/client";
 import { verifyRazorpaySignature } from "@/lib/razorpay/verify";
@@ -15,9 +15,7 @@ export async function createOrder(
   const supabase = await createClient();
   const admin = createAdminClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) throw new Error("Not authenticated");
 
   // Get cart items and shipping address in parallel

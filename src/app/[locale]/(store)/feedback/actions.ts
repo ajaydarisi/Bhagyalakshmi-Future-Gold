@@ -1,15 +1,13 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendFeedbackNotificationEmail } from "@/lib/email";
 import type { FeedbackInput } from "@/lib/validators";
 
 export async function submitFeedback(data: FeedbackInput) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   let name = data.name || "";
   let email = data.email || "";

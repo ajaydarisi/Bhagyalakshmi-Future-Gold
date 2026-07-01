@@ -14,7 +14,7 @@ import { BfgAnimate } from "@/components/shared/bfg-animate";
 import { NetworkProvider } from "@/hooks/use-network";
 import { QueryProvider } from "@/components/providers/query-provider";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { getTopCategories } from "@/lib/queries";
 
 export default async function StoreLayout({
@@ -26,7 +26,8 @@ export default async function StoreLayout({
     createClient(),
     getTopCategories(),
   ]);
-  const { data: { user } } = await supabaseClient.auth.getUser();
+  // Local JWT claim read (no network round-trip) — only user.id is needed here.
+  const user = await getAuthUser(supabaseClient);
 
   return (
     <QueryProvider>

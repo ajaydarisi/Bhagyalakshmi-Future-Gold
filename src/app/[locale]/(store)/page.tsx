@@ -29,6 +29,7 @@ import { getTranslations } from "next-intl/server";
 import { getLocale } from "next-intl/server";
 import { getCategoryName } from "@/lib/i18n-helpers";
 import { getTopCategories } from "@/lib/queries";
+import { PRODUCT_LIST_FIELDS } from "@/lib/queries/products";
 import {
   getOfflineFeaturedProducts,
   getOfflineNewProducts,
@@ -53,7 +54,7 @@ const getFeaturedProducts = unstable_cache(
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("products")
-      .select("*, category:categories(name, name_telugu, slug)")
+      .select(PRODUCT_LIST_FIELDS)
       .eq("is_active", true)
       .eq("featured", true)
       .limit(8);
@@ -72,7 +73,7 @@ const getNewProducts = unstable_cache(
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("products")
-      .select("*, category:categories(name, name_telugu, slug)")
+      .select(PRODUCT_LIST_FIELDS)
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .limit(4);
