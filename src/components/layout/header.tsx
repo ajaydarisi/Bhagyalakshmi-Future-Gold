@@ -47,6 +47,7 @@ import type { NavCategory } from "@/lib/queries";
 import { toast } from "sonner";
 import NextLink from "next/link";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /** Desktop nav item with the BFG sliding gold underline. */
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -83,6 +84,8 @@ export function Header({ categories }: { categories: NavCategory[] }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [langDialogOpen, setLangDialogOpen] = useState(false);
 
+  const isMobile = useIsMobile();
+
   const localeLabels: Record<string, string> = {
     en: "English",
     te: "తెలుగు",
@@ -109,7 +112,7 @@ export function Header({ categories }: { categories: NavCategory[] }) {
   return (
     <>
       {/* Announcement bar */}
-      <div
+      {!isMobile && (<div
         className="flex items-center justify-center gap-2 px-4 py-1.5 text-center text-2xs uppercase tracking-[0.18em] text-ivory-100"
         style={{ background: "var(--grad-ink)" }}
       >
@@ -124,6 +127,7 @@ export function Header({ categories }: { categories: NavCategory[] }) {
             : `${tTrust("offline.visit")} · ${tTrust("offline.visitDesc")}`}
         </span>
       </div>
+      )}
 
       <header className="sticky top-0 z-50 w-full border-b border-[var(--border-sand)] bg-[var(--surface-card)]/90 backdrop-blur supports-backdrop-filter:bg-[var(--surface-card)]/70">
         <div className="container mx-auto flex h-14 lg:h-18 items-center justify-between px-4">

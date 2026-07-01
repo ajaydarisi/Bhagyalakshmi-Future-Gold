@@ -213,7 +213,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 pt-8 pb-[calc(9rem+env(safe-area-inset-bottom))] md:pb-8">
       <ProductCacheWriter product={typedProduct} />
       <div
         hidden
