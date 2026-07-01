@@ -25,6 +25,7 @@ import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/formatters";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST, ROUTES } from "@/lib/constants";
 import type { Address } from "@/types/user";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import type { AddressInput } from "@/lib/validators";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -86,7 +87,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       const uid = session?.user?.id;
       // Defer out of the auth callback to avoid Supabase LockManager re-entrancy.
       if (uid) setTimeout(() => fetchAddresses(uid), 0);
