@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/routing";
+import NextLink from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import {
   ShoppingBag,
@@ -182,15 +183,17 @@ export function MobileNav({
             <>
               <Separator />
               <div className="flex flex-col gap-1">
+                {/* Plain next/link: /admin lives outside the [locale] tree,
+                    so the i18n Link would 404 at /en/admin */}
                 {isAdmin && (
-                  <Link
+                  <NextLink
                     href={ROUTES.admin}
                     onClick={close}
                     className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
                   >
                     <LayoutDashboard className="h-4 w-4" strokeWidth={1.5} />
                     {t("adminDashboard")}
-                  </Link>
+                  </NextLink>
                 )}
                 <Link
                   href={ROUTES.account}

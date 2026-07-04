@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter as useNextRouter } from "next/navigation";
 import { useRouter } from "@/i18n/routing";
 import { Link } from "@/i18n/routing";
 import { useForm } from "react-hook-form";
@@ -38,8 +38,16 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const nextRouter = useNextRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/";
+  // The middleware sets `redirect` to the full original pathname (already
+  // locale-prefixed for store routes, bare for unlocalized routes like
+  // /admin). Only allow same-origin relative paths.
+  const rawRedirect = searchParams.get("redirect");
+  const redirectTo =
+    rawRedirect?.startsWith("/") && !rawRedirect.startsWith("//")
+      ? rawRedirect
+      : null;
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -66,7 +74,13 @@ export function LoginForm() {
 
     trackEvent("login", { method: "email" });
     toast.success(t("successToast"));
-    router.push(redirectTo);
+    if (redirectTo) {
+      // Use the plain router: the i18n router would prepend the locale
+      // again (e.g. /admin -> /en/admin) and hit a 404.
+      nextRouter.push(redirectTo);
+    } else {
+      router.push("/");
+    }
     router.refresh();
   }
 
