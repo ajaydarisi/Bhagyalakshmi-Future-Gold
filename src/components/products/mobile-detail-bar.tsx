@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { ROUTES } from "@/lib/constants";
 import { getProductDetailDisplayState } from "@/lib/offline-store-ui";
+import { isRentalOnlyProduct } from "@/lib/product-pricing";
 import { trackEvent } from "@/lib/gtag";
 import { hapticNotification } from "@/lib/haptics";
 import type { ProductWithCategory } from "@/types/product";
@@ -61,16 +62,19 @@ export function MobileDetailBar({ product, productName }: MobileDetailBarProps) 
       {displayState.showCartAction ? (
         <div className="flex flex-col gap-2">
           <AddToCartButton product={product} />
-          <Button
-            variant="dark"
-            className="w-full"
-            size="bfg-lg"
-            onClick={handleBuyNow}
-            disabled={isOutOfStock || buying}
-          >
-            {buying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {tDetail("buyNow")}
-          </Button>
+          {/* Buy Now skips the rental-dates dialog, so rentals only get Rent Now. */}
+          {!isRentalOnlyProduct(product) && (
+            <Button
+              variant="dark"
+              className="w-full"
+              size="bfg-lg"
+              onClick={handleBuyNow}
+              disabled={isOutOfStock || buying}
+            >
+              {buying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {tDetail("buyNow")}
+            </Button>
+          )}
         </div>
       ) : (
         <div className="flex items-center gap-3">

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { formatPrice, formatDate, formatDateTime } from "@/lib/formatters";
+import { isRentalOverdue } from "@/lib/rental-availability";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { getTranslations } from "next-intl/server";
@@ -61,6 +62,16 @@ export default async function OrderDetailPage({
   const currentStatusIndex = STATUS_FLOW.indexOf(order.status);
   const isCancelled = order.status === "cancelled" || order.status === "refunded";
 
+  const isRentalOrder = order.order_type !== "sale";
+  const latestRentalEnd = (order.order_items as { is_rental: boolean; rental_end: string | null }[])
+    .filter((i) => i.is_rental && i.rental_end)
+    .map((i) => i.rental_end as string)
+    .sort()
+    .pop();
+  const rentalStatusKey = isRentalOverdue(order.rental_status, latestRentalEnd)
+    ? "overdue"
+    : order.rental_status;
+
   // Build a map of status -> timestamp from history
   const statusTimestamps: Record<string, string> = {};
   if (statusHistory) {
@@ -82,6 +93,14 @@ export default async function OrderDetailPage({
           <p className="text-sm text-muted-foreground">
             {t("placedOn", { date: formatDate(order.created_at) })}
           </p>
+          {isRentalOrder && rentalStatusKey && (
+            <p className="mt-1 text-sm text-text-gold">
+              {t(`rentalStatuses.${rentalStatusKey}`)}
+              {latestRentalEnd &&
+                rentalStatusKey !== "returned" &&
+                ` · ${t("returnBy", { date: formatDate(latestRentalEnd) })}`}
+            </p>
+          )}
         </div>
         <OrderStatusBadge status={order.status} />
       </div>
@@ -230,6 +249,9 @@ export default async function OrderDetailPage({
               quantity: number;
               unit_price: number;
               total_price: number;
+              is_rental: boolean;
+              rental_start: string | null;
+              rental_end: string | null;
             }>).map(
               (item) => (
                 <div key={item.id} className="flex gap-4 py-3">
@@ -249,6 +271,15 @@ export default async function OrderDetailPage({
                     <p className="text-sm text-muted-foreground">
                       {t("qty", { quantity: item.quantity, price: formatPrice(item.unit_price) })}
                     </p>
+                    {item.is_rental && item.rental_start && item.rental_end && (
+                      <p className="text-xs text-text-gold">
+                        {t("rentalPeriod", {
+                          start: formatDate(item.rental_start),
+                          end: formatDate(item.rental_end),
+                        })}{" "}
+                        · {t("returnBy", { date: formatDate(item.rental_end) })}
+                      </p>
+                    )}
                   </div>
                   <p className="font-medium">
                     {formatPrice(item.total_price)}

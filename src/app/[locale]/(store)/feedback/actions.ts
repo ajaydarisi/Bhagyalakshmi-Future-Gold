@@ -29,6 +29,20 @@ export async function submitFeedback(data: FeedbackInput) {
   }
 
   const admin = createAdminClient();
+
+  // Basic anti-spam: cap submissions per email per hour, which also caps the
+  // notification emails below. ponytail: per-email throttle only — a determined
+  // attacker can rotate emails; add an IP/global limit if abuse appears.
+  const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count } = await admin
+    .from("feedback")
+    .select("id", { count: "exact", head: true })
+    .eq("email", email)
+    .gte("created_at", since);
+  if ((count ?? 0) >= 5) {
+    throw new Error("Too many feedback submissions. Please try again later.");
+  }
+
   const { error } = await admin.from("feedback").insert({
     user_id: userId,
     name,

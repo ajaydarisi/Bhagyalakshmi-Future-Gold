@@ -80,6 +80,12 @@ export async function replayQueue(): Promise<void> {
     const supabase = createClient();
     const ops = await dequeueAll();
 
+    // Ops are ordered by createdAt and can be causally dependent (e.g. add then
+    // update the same product). On a transient failure we STOP rather than skip
+    // ahead — running a later op after an earlier one failed would apply changes
+    // out of order (an update against a row the failed add never created just
+    // silently affects 0 rows and the change is lost). Only a permanently
+    // failing op (max retries hit) is dropped so it can't block the queue.
     for (const op of ops) {
       try {
         await executeOperation(supabase, op);
@@ -87,11 +93,11 @@ export async function replayQueue(): Promise<void> {
       } catch {
         op.retryCount++;
         if (op.retryCount >= op.maxRetries) {
-          // Discard after max retries
           await remove(op.id);
-        } else {
-          await idbPut(STORE, op);
+          continue; // give up on this op, keep replaying the rest
         }
+        await idbPut(STORE, op);
+        break; // preserve ordering — retry this and the remaining ops later
       }
     }
   } finally {
@@ -113,7 +119,13 @@ async function executeOperation(
       const { error } = await supabase
         .from("cart_items")
         .upsert(
-          { user_id: userId, product_id: productId, quantity },
+          {
+            user_id: userId,
+            product_id: productId,
+            quantity,
+            rental_start: (payload.rentalStart as string | undefined) ?? null,
+            rental_end: (payload.rentalEnd as string | undefined) ?? null,
+          },
           { onConflict: "user_id,product_id" },
         );
       if (error) throw error;

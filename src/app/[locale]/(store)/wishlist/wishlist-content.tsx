@@ -1,9 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
+import { format } from "date-fns";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { CheckAvailabilityButton } from "@/components/products/check-availability-button";
+import { RentalDatesDialog } from "@/components/products/rental-dates-dialog";
+import { isRentalOnlyProduct } from "@/lib/product-pricing";
 import { PriceDisplay } from "@/components/shared/price-display";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useWishlist } from "@/hooks/use-wishlist";
@@ -30,6 +34,8 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
   const locale = useLocale();
   const { items, isLoading, removeItem } = useWishlist();
   const { addItem } = useCart();
+  // Rental-only products need a rental period before moving to the cart.
+  const [rentalProduct, setRentalProduct] = useState<ProductWithCategory | null>(null);
 
   const { data: products = initialProducts } = useQuery({
     queryKey: queryKeys.wishlist.products(userId),
@@ -55,8 +61,11 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
     );
   }
 
-  async function handleMoveToCart(product: ProductWithCategory) {
-    await addItem(product, 1);
+  async function handleMoveToCart(
+    product: ProductWithCategory,
+    rental?: { start: string; end: string },
+  ) {
+    await addItem(product, 1, rental);
     await removeItem(product.id);
     hapticNotification("success");
     toast.success(`${getProductName(product, locale)} moved to cart`);
@@ -116,7 +125,11 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
                     variant="gold"
                     size="bfg-sm"
                     className="flex-1"
-                    onClick={() => handleMoveToCart(product)}
+                    onClick={() =>
+                      isRentalOnlyProduct(product)
+                        ? setRentalProduct(product)
+                        : handleMoveToCart(product)
+                    }
                     disabled={product.stock === 0}
                   >
                     <ShoppingBag className="mr-1 h-3.5 w-3.5" />
@@ -149,6 +162,25 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
           </div>
         );
       })}
+      {rentalProduct && (
+        <RentalDatesDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setRentalProduct(null);
+          }}
+          maxRentalDays={rentalProduct.max_rental_days}
+          productId={rentalProduct.id}
+          confirmLabel={t("moveToCart")}
+          confirmIcon={<ShoppingBag className="mr-2 h-4 w-4" />}
+          onConfirm={(start, end) => {
+            void handleMoveToCart(rentalProduct, {
+              start: format(start, "yyyy-MM-dd"),
+              end: format(end, "yyyy-MM-dd"),
+            });
+            setRentalProduct(null);
+          }}
+        />
+      )}
     </div>
   );
 }

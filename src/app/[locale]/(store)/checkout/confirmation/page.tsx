@@ -92,13 +92,27 @@ export default async function ConfirmationPage({
                   quantity: number;
                   unit_price: number;
                   total_price: number;
+                  is_rental: boolean;
+                  rental_start: string | null;
+                  rental_end: string | null;
                 }>).map(
                   (item) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span>
-                        {item.product_name} x {item.quantity}
-                      </span>
-                      <span>{formatPrice(item.total_price)}</span>
+                    <div key={item.id} className="text-sm">
+                      <div className="flex justify-between">
+                        <span>
+                          {item.product_name} x {item.quantity}
+                        </span>
+                        <span>{formatPrice(item.total_price)}</span>
+                      </div>
+                      {item.is_rental && item.rental_start && item.rental_end && (
+                        <p className="text-xs text-text-gold">
+                          {t("rentalPeriod", {
+                            start: formatDate(item.rental_start),
+                            end: formatDate(item.rental_end),
+                          })}{" "}
+                          · {t("returnBy", { date: formatDate(item.rental_end) })}
+                        </p>
+                      )}
                     </div>
                   )
                 )}

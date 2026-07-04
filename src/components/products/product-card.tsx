@@ -1,13 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/shared/price-display";
+import { RentalDatesDialog } from "@/components/products/rental-dates-dialog";
 import { WishlistButton } from "@/components/wishlist/wishlist-button";
 import { useCart } from "@/hooks/use-cart";
+import { getCartLineUnitPrice, isRentalOnlyProduct } from "@/lib/product-pricing";
 import { ROUTES, IS_ONLINE, BUSINESS_INFO } from "@/lib/constants";
 import { getCategoryName, getProductName } from "@/lib/i18n-helpers";
 import { calculateDiscount } from "@/lib/formatters";
@@ -34,13 +38,16 @@ export function ProductCard({ product }: ProductCardProps) {
   const tWish = useTranslations("wishlist");
   const locale = useLocale();
   const { items, addItem, updateQuantity } = useCart();
+  const [rentalDialogOpen, setRentalDialogOpen] = useState(false);
 
   const displayName = getProductName(product, locale);
   const soldOut = shouldShowSoldOutOverlay(product.stock);
+  const isRentalOnly = isRentalOnlyProduct(product);
 
-  // Inline stepper: only for online, non-rental items already in the bag.
+  // Inline stepper: only for online items already in the bag. For rentals the
+  // quantity is the number of sets for the chosen rental period.
   const qty = items.find((i) => i.product.id === product.id)?.quantity ?? 0;
-  const showStepper = IS_ONLINE && !product.is_rental && qty > 0;
+  const showStepper = IS_ONLINE && qty > 0;
   const initials = (displayName || "BFG")
     .split(" ")
     .slice(0, 2)
@@ -53,24 +60,33 @@ export function ProductCard({ product }: ProductCardProps) {
   const cutPrice = isRentalPriced ? product.rental_discount_price : product.discount_price;
   const discount = calculateDiscount(basePrice, cutPrice ?? null);
 
+  async function addToCart(rental?: { start: string; end: string }) {
+    try {
+      await addItem(product, 1, rental);
+      trackEvent("add_to_cart", {
+        item_id: product.id,
+        item_name: product.name,
+        price: getCartLineUnitPrice(product, rental?.start, rental?.end),
+        quantity: 1,
+      });
+      hapticNotification("success");
+      toast.success(tCart("addedToast", { name: displayName }));
+    } catch {
+      hapticNotification("error");
+      toast.error(tCart("errorToast"));
+    }
+  }
+
   async function handleQuickAction(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
     if (IS_ONLINE) {
-      try {
-        await addItem(product, 1);
-        trackEvent("add_to_cart", {
-          item_id: product.id,
-          item_name: product.name,
-          price: product.discount_price || product.price,
-          quantity: 1,
-        });
-        hapticNotification("success");
-        toast.success(tCart("addedToast", { name: displayName }));
-      } catch {
-        hapticNotification("error");
-        toast.error(tCart("errorToast"));
+      // Rentals are priced per day, so a rental period must be chosen first.
+      if (isRentalOnly) {
+        setRentalDialogOpen(true);
+        return;
       }
+      await addToCart();
     } else {
       const message = buildAvailabilityMessage({
         productName: displayName,
@@ -106,6 +122,7 @@ export function ProductCard({ product }: ProductCardProps) {
   );
 
   return (
+    <>
     <Link href={ROUTES.product(product.slug)} className="group block">
       <article
         className={cn(
@@ -247,5 +264,22 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </article>
     </Link>
+    {IS_ONLINE && isRentalOnly && (
+      <RentalDatesDialog
+        open={rentalDialogOpen}
+        onOpenChange={setRentalDialogOpen}
+        maxRentalDays={product.max_rental_days}
+        productId={product.id}
+        confirmLabel={t("rentNow")}
+        confirmIcon={<ShoppingBag className="mr-2 h-4 w-4" />}
+        onConfirm={(start, end) =>
+          void addToCart({
+            start: format(start, "yyyy-MM-dd"),
+            end: format(end, "yyyy-MM-dd"),
+          })
+        }
+      />
+    )}
+    </>
   );
 }

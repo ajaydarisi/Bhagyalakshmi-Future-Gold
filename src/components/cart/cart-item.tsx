@@ -5,7 +5,8 @@ import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { useCart } from "@/hooks/use-cart";
-import { formatPrice } from "@/lib/formatters";
+import { formatDate, formatPrice } from "@/lib/formatters";
+import { getCartLineUnitPrice, getRentalDays } from "@/lib/product-pricing";
 import { ROUTES } from "@/lib/constants";
 import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -19,8 +20,10 @@ interface CartItemProps {
 export function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem } = useCart();
   const t = useTranslations("products.card");
+  const tCart = useTranslations("cart");
   const { product, quantity } = item;
-  const price = product.discount_price || product.price;
+  const price = getCartLineUnitPrice(product, item.rental_start, item.rental_end);
+  const hasRentalPeriod = Boolean(item.rental_start && item.rental_end);
 
   return (
     <div className="flex gap-4 py-4">
@@ -61,6 +64,15 @@ export function CartItem({ item }: CartItemProps) {
         </div>
         {product.material && (
           <p className="text-xs text-muted-foreground">{product.material}</p>
+        )}
+        {hasRentalPeriod && (
+          <p className="text-xs text-text-gold">
+            {tCart("rentalPeriod", {
+              start: formatDate(item.rental_start!),
+              end: formatDate(item.rental_end!),
+              days: getRentalDays(item.rental_start!, item.rental_end!),
+            })}
+          </p>
         )}
         <div className="mt-auto flex items-center justify-between">
           <QuantityStepper

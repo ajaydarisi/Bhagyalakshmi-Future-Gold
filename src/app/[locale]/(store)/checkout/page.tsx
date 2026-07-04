@@ -25,7 +25,6 @@ import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/formatters";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST, ROUTES } from "@/lib/constants";
 import type { Address } from "@/types/user";
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import type { AddressInput } from "@/lib/validators";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -78,22 +77,16 @@ export default function CheckoutPage() {
     [user, supabase]
   );
 
-  // Fetch whenever the auth session resolves/refreshes. Driving this off
-  // onAuthStateChange (which fires INITIAL_SESSION on subscribe, with the ready
-  // session token) avoids the race where the addresses query ran before the token
-  // was ready and RLS returned nothing — the bug where addresses only appeared
-  // after a manual refresh. We pass session.user.id directly so the fetch doesn't
-  // wait on the separate auth-context `user` state to propagate.
+  // Fetch once the auth context has resolved the user. useAuth sets `user`
+  // from onAuthStateChange only after the session token is stored in the
+  // (singleton) Supabase client, so the RLS-scoped query is guaranteed
+  // token-ready here. Keying off the single shared subscription avoids the
+  // race — a second onAuthStateChange in this page competed with useAuth for
+  // the LockManager and sometimes lost, returning no addresses until a manual
+  // refresh (and leaving "Pay Now" disabled because no address got selected).
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
-      const uid = session?.user?.id;
-      // Defer out of the auth callback to avoid Supabase LockManager re-entrancy.
-      if (uid) setTimeout(() => fetchAddresses(uid), 0);
-    });
-    return () => subscription.unsubscribe();
-  }, [fetchAddresses, supabase]);
+    if (user?.id) fetchAddresses(user.id);
+  }, [user?.id, fetchAddresses]);
 
   async function handleAddAddress(data: AddressInput) {
     if (!user) return;

@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getFirebaseMessaging } from "@/lib/firebase-admin";
+import { formatDate } from "@/lib/formatters";
 
 const ORDER_STATUS_MESSAGES: Record<
   string,
@@ -58,7 +59,24 @@ export async function sendOrderStatusNotification(
 
   const messaging = getFirebaseMessaging();
   const title = template.title;
-  const body = template.body(order.order_number);
+  let body = template.body(order.order_number);
+
+  // Rental orders: remind the customer to return rented items when delivered.
+  if (newStatus === "delivered") {
+    const { data: rentalItems } = await supabase
+      .from("order_items")
+      .select("rental_end")
+      .eq("order_id", orderId)
+      .eq("is_rental", true);
+
+    const dueDates = (rentalItems ?? [])
+      .map((i) => i.rental_end)
+      .filter((d): d is string => Boolean(d))
+      .sort();
+    if (dueDates.length > 0) {
+      body += ` Please return the rented items by ${formatDate(dueDates[0])}.`;
+    }
+  }
 
   try {
     const response = await messaging.sendEachForMulticast({

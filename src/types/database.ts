@@ -262,6 +262,8 @@ export type Database = {
           user_id: string;
           product_id: string;
           quantity: number;
+          rental_start: string | null;
+          rental_end: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -270,6 +272,8 @@ export type Database = {
           user_id: string;
           product_id: string;
           quantity?: number;
+          rental_start?: string | null;
+          rental_end?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -278,6 +282,8 @@ export type Database = {
           user_id?: string;
           product_id?: string;
           quantity?: number;
+          rental_start?: string | null;
+          rental_end?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -364,6 +370,8 @@ export type Database = {
           shipping_address: Json;
           billing_address: Json | null;
           notes: string | null;
+          order_type: "sale" | "rental" | "mixed";
+          rental_status: "booked" | "active" | "returned" | null;
           created_at: string;
           updated_at: string;
         };
@@ -387,6 +395,8 @@ export type Database = {
           shipping_address: Json;
           billing_address?: Json | null;
           notes?: string | null;
+          order_type?: "sale" | "rental" | "mixed";
+          rental_status?: "booked" | "active" | "returned" | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -410,6 +420,8 @@ export type Database = {
           shipping_address?: Json;
           billing_address?: Json | null;
           notes?: string | null;
+          order_type?: "sale" | "rental" | "mixed";
+          rental_status?: "booked" | "active" | "returned" | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -424,6 +436,9 @@ export type Database = {
           quantity: number;
           unit_price: number;
           total_price: number;
+          is_rental: boolean;
+          rental_start: string | null;
+          rental_end: string | null;
           created_at: string;
         };
         Insert: {
@@ -435,6 +450,9 @@ export type Database = {
           quantity: number;
           unit_price: number;
           total_price: number;
+          is_rental?: boolean;
+          rental_start?: string | null;
+          rental_end?: string | null;
           created_at?: string;
         };
         Update: {
@@ -446,6 +464,9 @@ export type Database = {
           quantity?: number;
           unit_price?: number;
           total_price?: number;
+          is_rental?: boolean;
+          rental_start?: string | null;
+          rental_end?: string | null;
           created_at?: string;
         };
       };

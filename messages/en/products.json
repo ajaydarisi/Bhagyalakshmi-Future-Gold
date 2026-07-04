@@ -95,5 +95,6 @@
     "shared": "Shared successfully",
     "copiedToClipboard": "Link copied to clipboard",
     "shareFailed": "Could not share. Please try again."
-  }
+  },
+  "rentalUnavailable": "This item is not available for the selected dates — please choose a different period"
 }

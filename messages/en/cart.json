@@ -14,6 +14,7 @@
   "freeShippingUnlocked": "You've unlocked free shipping!",
   "proceedToCheckout": "Proceed to Checkout",
   "continueShopping": "Continue Shopping",
+  "rentalPeriod": "Rental: {start} – {end} ({days, plural, one {# day} other {# days}})",
   "checkout": {
     "selectAddress": "Select Address",
     "addNew": "Add New",
@@ -92,7 +93,9 @@
     "total": "Total",
     "shippingAddress": "Shipping Address",
     "viewOrders": "View Orders",
-    "continueShopping": "Continue Shopping"
+    "continueShopping": "Continue Shopping",
+    "rentalPeriod": "Rental: {start} – {end}",
+    "returnBy": "Return by {date}"
   },
   "sheetTitle": "Cart ({count})",
   "emptySparkle": "Add some sparkle to your cart!",

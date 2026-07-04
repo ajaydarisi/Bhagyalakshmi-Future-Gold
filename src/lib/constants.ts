@@ -55,6 +55,15 @@ export const ORDER_STATUSES = [
   { value: "refunded", label: "Refunded", color: "bg-gray-100 text-gray-800" },
 ] as const;
 
+// Rental lifecycle for non-sale orders. "overdue" is derived (active + past
+// latest rental_end), never stored in the DB.
+export const RENTAL_STATUSES = [
+  { value: "booked", label: "Booked", color: "bg-blue-100 text-blue-800" },
+  { value: "active", label: "Active", color: "bg-green-100 text-green-800" },
+  { value: "returned", label: "Returned", color: "bg-gray-100 text-gray-800" },
+  { value: "overdue", label: "Overdue", color: "bg-red-100 text-red-800" },
+] as const;
+
 export const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
   { value: "price-asc", label: "Price: Low → High" },

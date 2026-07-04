@@ -4,13 +4,20 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 export async function changePassword(
-  email: string,
+  _clientEmail: string,
   currentPassword: string,
   newPassword: string
 ) {
-  if (!email) {
+  // Derive the email from the verified server session — never trust the
+  // client-supplied one. Otherwise this action is an unauthenticated
+  // password-guessing oracle: anyone could call it with a victim's email and
+  // brute-force currentPassword with no session and no rate limit.
+  const supabase = await createClient();
+  const user = await getAuthUser(supabase);
+  if (!user?.email) {
     return { success: false, error: "not_authenticated" };
   }
+  const email = user.email;
 
   if (currentPassword === newPassword) {
     return { success: false, error: "same_password" };

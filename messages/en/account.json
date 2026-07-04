@@ -48,6 +48,14 @@
       "delivered": "Delivered",
       "cancelled": "Cancelled",
       "refunded": "Refunded"
+    },
+    "rentalPeriod": "Rental: {start} – {end}",
+    "returnBy": "Return by {date}",
+    "rentalStatuses": {
+      "booked": "Rental booked",
+      "active": "Rental with you",
+      "returned": "Rental returned",
+      "overdue": "Rental overdue — please return the items"
     }
   },
   "addresses": {

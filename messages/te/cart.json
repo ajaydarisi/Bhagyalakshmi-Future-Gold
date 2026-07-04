@@ -92,10 +92,13 @@
     "total": "మొత్తం",
     "shippingAddress": "షిప్పింగ్ చిరునామా",
     "viewOrders": "ఆర్డర్‌లు చూడండి",
-    "continueShopping": "షాపింగ్ కొనసాగించండి"
+    "continueShopping": "షాపింగ్ కొనసాగించండి",
+    "rentalPeriod": "అద్దె: {start} – {end}",
+    "returnBy": "{date} నాటికి తిరిగి ఇవ్వాలి"
   },
   "sheetTitle": "కార్ట్ ({count})",
   "emptySparkle": "మీ కార్ట్‌కు కొంత మెరుపును జోడించండి!",
   "checkoutCta": "చెక్‌అవుట్",
-  "viewCart": "కార్ట్ చూడండి"
+  "viewCart": "కార్ట్ చూడండి",
+  "rentalPeriod": "అద్దె: {start} – {end} ({days, plural, one {# రోజు} other {# రోజులు}})"
 }

@@ -93,10 +93,21 @@ export const productSchema = z
     max_rental_days: z.number().int().positive().optional().nullable(),
     set_number: z.number().int().positive().optional().nullable(),
   })
-  .refine((data) => data.is_sale || data.is_rental, {
-    message: "Product must be available for sale, rental, or both",
+  .refine((data) => data.is_sale !== data.is_rental, {
+    // Rental products must never be sold: exactly one of the two flags.
+    message: "Product must be either for sale or for rental, not both",
     path: ["is_sale"],
   });
+
+export const categorySchema = z.object({
+  name: z.string().min(2, "Category name must be at least 2 characters"),
+  name_telugu: z.string().nullable(),
+  slug: z.string().min(1, "Slug is required"),
+  description: z.string().nullable(),
+  image_url: z.string().nullable(),
+  sort_order: z.number().int().min(0, "Sort order cannot be negative"),
+  parent_id: z.string().uuid("Invalid parent category").nullable(),
+});
 
 export const changePasswordSchema = z
   .object({
@@ -134,3 +145,4 @@ export const feedbackSchema = z.object({
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type ProductInput = z.infer<typeof productSchema>;
 export type FeedbackInput = z.infer<typeof feedbackSchema>;
+export type CategoryInput = z.infer<typeof categorySchema>;

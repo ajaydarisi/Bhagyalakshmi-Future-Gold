@@ -85,6 +85,8 @@ create table public.cart_items (
   user_id uuid references public.profiles(id) on delete cascade not null,
   product_id uuid references public.products(id) on delete cascade not null,
   quantity integer not null default 1 check (quantity > 0),
+  rental_start date,
+  rental_end date,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   unique(user_id, product_id)
@@ -129,6 +131,10 @@ create table public.orders (
   shipping_address jsonb not null,
   billing_address jsonb,
   notes text,
+  order_type text not null default 'sale'
+    check (order_type in ('sale', 'rental', 'mixed')),
+  rental_status text
+    check (rental_status in ('booked', 'active', 'returned')),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -143,6 +149,9 @@ create table public.order_items (
   quantity integer not null check (quantity > 0),
   unit_price numeric(10,2) not null,
   total_price numeric(10,2) not null,
+  is_rental boolean not null default false,
+  rental_start date,
+  rental_end date,
   created_at timestamptz default now()
 );
 
@@ -163,6 +172,19 @@ create table public.payment_transactions (
   updated_at timestamptz default now()
 );
 
+-- FEEDBACK (customer feedback; written via service role only)
+create table public.feedback (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete set null,
+  name text not null,
+  email text not null,
+  rating integer not null check (rating between 1 and 5),
+  message text not null,
+  created_at timestamptz default now()
+);
+
+alter table public.feedback enable row level security;
+
 -- ============================================
 -- INDEXES
 -- ============================================
@@ -180,6 +202,8 @@ create index idx_products_active_material on public.products(is_active, material
 
 -- Orders
 create index idx_orders_user on public.orders(user_id);
+create index idx_order_items_rental_period
+  on public.order_items (product_id, rental_start, rental_end) where is_rental;
 create index idx_orders_status on public.orders(status);
 create index idx_orders_user_created on public.orders(user_id, created_at desc);
 create index idx_orders_status_created on public.orders(status, created_at);
@@ -260,8 +284,8 @@ create policy "Users can insert own orders" on public.orders for insert with che
 create policy "Users can view own order items" on public.order_items for select
   using (exists (select 1 from public.orders where orders.id = order_items.order_id and orders.user_id = auth.uid()));
 
--- Coupons: everyone can read active coupons
-create policy "Active coupons are publicly readable" on public.coupons for select using (is_active = true);
+-- Coupons: no public read policy — the app validates coupons only via the
+-- service-role client, so codes/values are never exposed to the anon key.
 
 -- Payment transactions
 create policy "Users can view own transactions" on public.payment_transactions for select
@@ -307,6 +331,52 @@ create trigger update_addresses_updated_at before update on public.addresses
 create trigger update_payment_transactions_updated_at before update on public.payment_transactions
   for each row execute procedure public.update_updated_at();
 
+-- Prevent privilege escalation: only the service role may change profiles.role
+create or replace function public.prevent_role_change()
+returns trigger as $$
+begin
+  if new.role is distinct from old.role
+     and current_user not in ('service_role', 'postgres', 'supabase_admin') then
+    raise exception 'Not allowed to change role';
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger profiles_prevent_role_change
+  before update on public.profiles
+  for each row execute function public.prevent_role_change();
+
+-- Atomic stock decrement — never drives stock below zero under concurrency
+create or replace function public.decrement_product_stock(items jsonb)
+returns void as $$
+declare
+  item jsonb;
+begin
+  for item in select * from jsonb_array_elements(items)
+  loop
+    update public.products
+    set stock = stock - (item->>'quantity')::int
+    where id = (item->>'product_id')::uuid
+      and stock >= (item->>'quantity')::int;
+  end loop;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+-- Atomic coupon usage — enforces max_uses at the database
+create or replace function public.increment_coupon_usage(coupon_id uuid)
+returns void as $$
+begin
+  update public.coupons
+  set used_count = used_count + 1
+  where id = coupon_id
+    and (max_uses is null or used_count < max_uses);
+end;
+$$ language plpgsql security definer set search_path = public;
+
+revoke all on function public.decrement_product_stock(jsonb) from public, anon, authenticated;
+revoke all on function public.increment_coupon_usage(uuid) from public, anon, authenticated;
+
 -- ============================================
 -- PUSH NOTIFICATIONS
 -- ============================================
@@ -329,9 +399,9 @@ alter table public.device_tokens enable row level security;
 
 create policy "Users manage own device tokens" on public.device_tokens
   for all using (auth.uid() = user_id);
-
-create policy "Anyone can insert device tokens" on public.device_tokens
-  for insert with check (true);
+-- Token registration goes through the service-role route (/api/notifications/
+-- register-token); no anon insert policy so tokens can't be bound to arbitrary
+-- user_ids.
 
 create trigger update_device_tokens_updated_at before update on public.device_tokens
   for each row execute procedure public.update_updated_at();

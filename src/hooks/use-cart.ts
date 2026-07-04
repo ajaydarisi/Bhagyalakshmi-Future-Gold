@@ -15,13 +15,18 @@ import {
 import { useAuth } from "./use-auth";
 import { useNetwork } from "./use-network";
 import { enqueue, replayQueue } from "@/lib/operation-queue";
+import { getCartLineUnitPrice } from "@/lib/product-pricing";
 
 interface CartContextType {
   items: CartItem[];
   isLoading: boolean;
   itemCount: number;
   subtotal: number;
-  addItem: (product: Product, quantity?: number) => Promise<void>;
+  addItem: (
+    product: Product,
+    quantity?: number,
+    rental?: { start: string; end: string },
+  ) => Promise<void>;
   updateQuantity: (productId: string, quantity: number) => Promise<void>;
   removeItem: (productId: string) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -61,7 +66,9 @@ export function useCartProvider(): CartContextType {
   const [isLoading, setIsLoading] = useState(true);
   const { user, isLoading: authLoading } = useAuth();
   const { isOnline } = useNetwork();
-  const prevUserIdRef = useRef<string | null>(null);
+  // undefined = "not initialized yet" — null must stay distinct so the
+  // guest (userId === null) first run isn't skipped by the dedup guard below.
+  const prevUserIdRef = useRef<string | null | undefined>(undefined);
   const prevIsOnlineRef = useRef(true);
   // Use ref for stable access to items in callbacks without re-creating them
   const itemsRef = useRef(items);
@@ -73,18 +80,20 @@ export function useCartProvider(): CartContextType {
     try {
       const { data, error } = await supabase
         .from("cart_items")
-        .select("id, quantity, product_id, product:products(*)")
+        .select("id, quantity, product_id, rental_start, rental_end, product:products(*)")
         .eq("user_id", userId);
 
       if (error) throw error;
 
       if (data) {
-        const cartItems: CartItem[] = (data as { id: string; quantity: number; product_id: string; product: unknown }[])
+        const cartItems: CartItem[] = (data as { id: string; quantity: number; product_id: string; rental_start: string | null; rental_end: string | null; product: unknown }[])
           .filter((item) => item.product)
           .map((item) => ({
             id: item.id,
             product: item.product as Product,
             quantity: item.quantity,
+            rental_start: item.rental_start,
+            rental_end: item.rental_end,
           }));
         setItems(cartItems);
         // Keep localStorage snapshot for offline fallback
@@ -108,12 +117,21 @@ export function useCartProvider(): CartContextType {
       const productIds = currentItems.map((i) => i.product.id);
       const { data } = await supabase
         .from("products")
-        .select("id, price, discount_price, stock")
+        .select("id, price, discount_price, stock, is_sale, is_rental, rental_price, rental_discount_price")
         .in("id", productIds);
 
       if (!data || data.length === 0) return;
 
-      type FreshPrice = { id: string; price: number; discount_price: number | null; stock: number };
+      type FreshPrice = {
+        id: string;
+        price: number;
+        discount_price: number | null;
+        stock: number;
+        is_sale: boolean;
+        is_rental: boolean;
+        rental_price: number | null;
+        rental_discount_price: number | null;
+      };
       const priceMap = new Map<string, FreshPrice>(
         (data as FreshPrice[]).map((p) => [p.id, p]),
       );
@@ -128,6 +146,10 @@ export function useCartProvider(): CartContextType {
             price: fresh.price,
             discount_price: fresh.discount_price,
             stock: fresh.stock,
+            is_sale: fresh.is_sale,
+            is_rental: fresh.is_rental,
+            rental_price: fresh.rental_price,
+            rental_discount_price: fresh.rental_discount_price,
           },
         };
       });
@@ -143,11 +165,38 @@ export function useCartProvider(): CartContextType {
     const localItems = getLocalCart();
     if (localItems.length === 0) return;
 
-    const upsertItems = localItems.map((item) => ({
-      user_id: userId,
-      product_id: item.product.id,
-      quantity: item.quantity,
-    }));
+    // Merge additively with the existing DB cart instead of overwriting it —
+    // a plain upsert clobbers a quantity already saved on another device and
+    // wipes rental dates. Sum the guest and saved quantities (capped at the
+    // product's stock), and keep the guest's rental dates when present.
+    const { data: existing } = await supabase
+      .from("cart_items")
+      .select("product_id, quantity, rental_start, rental_end")
+      .eq("user_id", userId);
+
+    type ExistingRow = {
+      product_id: string;
+      quantity: number;
+      rental_start: string | null;
+      rental_end: string | null;
+    };
+    const byProduct = new Map<string, ExistingRow>(
+      ((existing ?? []) as ExistingRow[]).map((row) => [row.product_id, row]),
+    );
+
+    const upsertItems = localItems.map((item) => {
+      const prev = byProduct.get(item.product.id);
+      const summed = (prev?.quantity ?? 0) + item.quantity;
+      const stock = item.product?.stock;
+      return {
+        user_id: userId,
+        product_id: item.product.id,
+        quantity: typeof stock === "number" ? Math.min(summed, stock) : summed,
+        rental_start: item.rental_start ?? prev?.rental_start ?? null,
+        rental_end: item.rental_end ?? prev?.rental_end ?? null,
+      };
+    });
+
     await supabase
       .from("cart_items")
       .upsert(upsertItems, { onConflict: "user_id,product_id" });
@@ -193,6 +242,8 @@ export function useCartProvider(): CartContextType {
               user_id: user.id,
               product_id: item.product.id,
               quantity: item.quantity,
+              rental_start: item.rental_start ?? null,
+              rental_end: item.rental_end ?? null,
             }));
             supabase
               .from("cart_items")
@@ -221,18 +272,38 @@ export function useCartProvider(): CartContextType {
   }, [user, isOnline, fetchCartFromDB, refreshCartPrices]);
 
   const addItem = useCallback(
-    async (product: Product, quantity = 1) => {
+    async (
+      product: Product,
+      quantity = 1,
+      rental?: { start: string; end: string },
+    ) => {
       const currentItems = itemsRef.current;
       const existing = currentItems.find((i) => i.product.id === product.id);
 
-      // Optimistic update — apply immediately
+      // Optimistic update — apply immediately. Adding again with new rental
+      // dates replaces the stored period (one cart line per product).
       const newItems = existing
         ? currentItems.map((i) =>
             i.product.id === product.id
-              ? { ...i, quantity: i.quantity + quantity }
+              ? {
+                  ...i,
+                  quantity: i.quantity + quantity,
+                  ...(rental
+                    ? { rental_start: rental.start, rental_end: rental.end }
+                    : {}),
+                }
               : i,
           )
-        : [...currentItems, { id: crypto.randomUUID(), product, quantity }];
+        : [
+            ...currentItems,
+            {
+              id: crypto.randomUUID(),
+              product,
+              quantity,
+              rental_start: rental?.start ?? null,
+              rental_end: rental?.end ?? null,
+            },
+          ];
       setItems(newItems);
 
       if (!user) {
@@ -246,12 +317,21 @@ export function useCartProvider(): CartContextType {
       const write = existing
         ? supabase
             .from("cart_items")
-            .update({ quantity: existing.quantity + quantity })
+            .update({
+              quantity: existing.quantity + quantity,
+              ...(rental
+                ? { rental_start: rental.start, rental_end: rental.end }
+                : {}),
+            })
             .eq("user_id", user.id)
             .eq("product_id", product.id)
-        : supabase
-            .from("cart_items")
-            .insert({ user_id: user.id, product_id: product.id, quantity });
+        : supabase.from("cart_items").insert({
+            user_id: user.id,
+            product_id: product.id,
+            quantity,
+            rental_start: rental?.start ?? null,
+            rental_end: rental?.end ?? null,
+          });
 
       Promise.resolve(write).then(
         () => setLocalCart(newItems),
@@ -261,6 +341,8 @@ export function useCartProvider(): CartContextType {
             userId: user.id,
             productId: product.id,
             quantity: existing ? existing.quantity + quantity : quantity,
+            rentalStart: rental?.start,
+            rentalEnd: rental?.end,
           }).catch(() => {});
         },
       );
@@ -361,7 +443,9 @@ export function useCartProvider(): CartContextType {
     () =>
       items.reduce(
         (sum, i) =>
-          sum + (i.product.discount_price || i.product.price) * i.quantity,
+          sum +
+          getCartLineUnitPrice(i.product, i.rental_start, i.rental_end) *
+            i.quantity,
         0,
       ),
     [items],

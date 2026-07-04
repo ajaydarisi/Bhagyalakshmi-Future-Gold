@@ -40,38 +40,67 @@ export async function POST(request: Request) {
         })
         .eq("razorpay_order_id", razorpayOrderId);
 
-      // Update order status
-      await admin
+      // Update order status. The pending guard doubles as a fulfillment lock:
+      // if verifyPayment already processed this order, no row transitions and
+      // we skip decrement/cart-clear so nothing runs twice.
+      const { data: transitioned } = await admin
         .from("orders")
         .update({ status: "paid" })
         .eq("id", transaction.order_id)
-        .eq("status", "pending"); // Only update if still pending (idempotent)
+        .eq("status", "pending")
+        .select("user_id, order_type, coupon_id");
 
-      // Decrement stock and get order user_id in parallel
-      const [{ data: orderItems }, { data: order }] = await Promise.all([
-        admin.from("order_items").select("product_id, quantity").eq("order_id", transaction.order_id),
-        admin.from("orders").select("user_id").eq("id", transaction.order_id).single(),
-      ]);
+      if (transitioned && transitioned.length > 0) {
+        const order = transitioned[0];
 
-      if (orderItems && orderItems.length > 0) {
-        const items = orderItems
-          .filter((i) => i.product_id)
-          .map((i) => ({ product_id: i.product_id, quantity: i.quantity }));
-        await admin.rpc("decrement_product_stock" as never, { items } as never);
-      }
-
-      // Clear user's cart
-      if (order?.user_id) {
         await admin
-          .from("cart_items")
-          .delete()
-          .eq("user_id", order.user_id);
-      }
+          .from("order_status_history")
+          .insert({ order_id: transaction.order_id, status: "paid" });
 
-      // Send push notification for payment confirmation
-      sendOrderStatusNotification(transaction.order_id, "paid").catch(
-        console.error
-      );
+        // Count coupon usage now that payment succeeded (atomic, enforces max_uses)
+        if (order.coupon_id) {
+          await admin.rpc("increment_coupon_usage" as never, {
+            coupon_id: order.coupon_id,
+          } as never);
+        }
+
+        const { data: orderItems } = await admin
+          .from("order_items")
+          .select("product_id, quantity, is_rental")
+          .eq("order_id", transaction.order_id);
+
+        // Rental lines never decrement stock — for rentals, stock is the
+        // rental capacity and availability is computed per booked period.
+        if (orderItems && orderItems.length > 0) {
+          const items = orderItems
+            .filter((i) => i.product_id && !i.is_rental)
+            .map((i) => ({ product_id: i.product_id, quantity: i.quantity }));
+          if (items.length > 0) {
+            await admin.rpc("decrement_product_stock" as never, { items } as never);
+          }
+        }
+
+        // Rental lifecycle: paid rental orders start as "booked"
+        if (order.order_type !== "sale") {
+          await admin
+            .from("orders")
+            .update({ rental_status: "booked" })
+            .eq("id", transaction.order_id);
+        }
+
+        // Clear user's cart
+        if (order.user_id) {
+          await admin
+            .from("cart_items")
+            .delete()
+            .eq("user_id", order.user_id);
+        }
+
+        // Send push notification for payment confirmation
+        sendOrderStatusNotification(transaction.order_id, "paid").catch(
+          console.error
+        );
+      }
     }
 
     if (event.event === "payment.failed") {

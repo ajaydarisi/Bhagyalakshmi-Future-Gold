@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { productSchema, couponSchema } from "@/lib/validators";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { productSchema, couponSchema, categorySchema } from "@/lib/validators";
 import { generateSlug } from "@/lib/formatters";
 import { sendOrderStatusNotification } from "@/lib/notifications";
 import {
@@ -13,6 +14,25 @@ import {
 import type { OrderStatus } from "@/types/order";
 import * as deepl from "deepl-node";
 
+/**
+ * Authorization gate for every admin mutation. Server actions are directly
+ * invocable POST endpoints, so the admin/layout.tsx page guard does NOT protect
+ * them — each action must verify the caller is an admin itself. Throws if not.
+ */
+async function requireAdmin() {
+  const supabase = await createClient();
+  const user = await getAuthUser(supabase);
+  if (!user) throw new Error("Unauthorized");
+
+  const { data: profile } = await createAdminClient()
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") throw new Error("Forbidden");
+}
+
 // ---------------------------------------------------------------------------
 // Translation
 // ---------------------------------------------------------------------------
@@ -20,6 +40,7 @@ import * as deepl from "deepl-node";
 export async function translateToTelugu(
   text: string
 ): Promise<{ translation: string } | { error: string }> {
+  await requireAdmin();
   const authKey = process.env.DEEPL_AUTH_KEY;
   if (!authKey) {
     return { error: "DeepL API key is not configured" };
@@ -90,6 +111,7 @@ async function getCategoryDescendantIds(categoryId: string): Promise<string[]> {
 // ---------------------------------------------------------------------------
 
 export async function createProduct(formData: FormData) {
+  await requireAdmin();
   const raw = Object.fromEntries(formData.entries());
 
   const data = productSchema.parse({
@@ -173,6 +195,7 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(id: string, formData: FormData) {
+  await requireAdmin();
   const raw = Object.fromEntries(formData.entries());
 
   const data = productSchema.parse({
@@ -240,6 +263,7 @@ export async function updateProduct(id: string, formData: FormData) {
 }
 
 export async function deleteProduct(id: string) {
+  await requireAdmin();
   const supabase = createAdminClient();
 
   // Fetch product images so we can clean up storage
@@ -285,6 +309,7 @@ export async function deleteProduct(id: string) {
 // ---------------------------------------------------------------------------
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus) {
+  await requireAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -294,6 +319,15 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Rental lifecycle: delivery puts the rental in the customer's hands
+  if (status === "delivered") {
+    await supabase
+      .from("orders")
+      .update({ rental_status: "active" })
+      .eq("id", orderId)
+      .neq("order_type", "sale");
   }
 
   // Record status change in history
@@ -313,24 +347,57 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   return { success: true };
 }
 
+export async function markRentalReturned(orderId: string) {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("orders")
+    .update({ rental_status: "returned", updated_at: new Date().toISOString() })
+    .eq("id", orderId)
+    .neq("order_type", "sale")
+    .select("id");
+
+  if (error) {
+    return { error: error.message };
+  }
+  if (!data || data.length === 0) {
+    return { error: "Not a rental order" };
+  }
+
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${orderId}`);
+
+  return { success: true };
+}
+
 // ---------------------------------------------------------------------------
 // Categories
 // ---------------------------------------------------------------------------
 
+function parseCategoryFormData(formData: FormData) {
+  const name = (formData.get("name") as string) ?? "";
+  return categorySchema.safeParse({
+    name,
+    name_telugu: (formData.get("name_telugu") as string) || null,
+    slug: (formData.get("slug") as string) || generateSlug(name),
+    description: (formData.get("description") as string) || null,
+    image_url: (formData.get("image_url") as string) || null,
+    sort_order: Number(formData.get("sort_order") ?? 0),
+    parent_id: (formData.get("parent_id") as string) || null,
+  });
+}
+
 export async function createCategory(formData: FormData) {
-  const name = formData.get("name") as string;
-  const name_telugu = (formData.get("name_telugu") as string) || null;
-  const slug = (formData.get("slug") as string) || generateSlug(name);
-  const description = (formData.get("description") as string) || null;
-  const image_url = (formData.get("image_url") as string) || null;
-  const sort_order = Number(formData.get("sort_order") ?? 0);
-  const parent_id = (formData.get("parent_id") as string) || null;
+  await requireAdmin();
+  const parsed = parseCategoryFormData(formData);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid category data" };
+  }
 
   const supabase = createAdminClient();
 
-  const { error } = await supabase
-    .from("categories")
-    .insert({ name, name_telugu, slug, description, image_url, sort_order, parent_id });
+  const { error } = await supabase.from("categories").insert(parsed.data);
 
   if (error) {
     return { error: error.message };
@@ -342,19 +409,17 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function updateCategory(id: string, formData: FormData) {
-  const name = formData.get("name") as string;
-  const name_telugu = (formData.get("name_telugu") as string) || null;
-  const slug = (formData.get("slug") as string) || generateSlug(name);
-  const description = (formData.get("description") as string) || null;
-  const image_url = (formData.get("image_url") as string) || null;
-  const sort_order = Number(formData.get("sort_order") ?? 0);
-  const parent_id = (formData.get("parent_id") as string) || null;
+  await requireAdmin();
+  const parsed = parseCategoryFormData(formData);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid category data" };
+  }
 
   const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("categories")
-    .update({ name, name_telugu, slug, description, image_url, sort_order, parent_id })
+    .update(parsed.data)
     .eq("id", id);
 
   if (error) {
@@ -381,6 +446,7 @@ export async function updateCategory(id: string, formData: FormData) {
 }
 
 export async function deleteCategory(id: string) {
+  await requireAdmin();
   const supabase = createAdminClient();
 
   const categoryIds = await getCategoryDescendantIds(id).catch((descendantError) => {
@@ -420,6 +486,7 @@ export async function updateUserRole(
   userId: string,
   role: "customer" | "admin"
 ) {
+  await requireAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -436,6 +503,7 @@ export async function updateUserRole(
 }
 
 export async function deleteUser(userId: string) {
+  await requireAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase.auth.admin.deleteUser(userId);
@@ -449,6 +517,7 @@ export async function deleteUser(userId: string) {
 }
 
 export async function toggleUserDisabled(userId: string, disable: boolean) {
+  await requireAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase.auth.admin.updateUserById(userId, {
@@ -468,6 +537,7 @@ export async function toggleUserDisabled(userId: string, disable: boolean) {
 // ---------------------------------------------------------------------------
 
 export async function createCoupon(formData: FormData) {
+  await requireAdmin();
   const raw = Object.fromEntries(formData.entries());
 
   const data = couponSchema.parse({
@@ -494,6 +564,7 @@ export async function createCoupon(formData: FormData) {
 }
 
 export async function updateCoupon(id: string, formData: FormData) {
+  await requireAdmin();
   const raw = Object.fromEntries(formData.entries());
 
   const data = couponSchema.parse({
@@ -520,6 +591,7 @@ export async function updateCoupon(id: string, formData: FormData) {
 }
 
 export async function deleteCoupon(id: string) {
+  await requireAdmin();
   const supabase = createAdminClient();
 
   const { error } = await supabase.from("coupons").delete().eq("id", id);
