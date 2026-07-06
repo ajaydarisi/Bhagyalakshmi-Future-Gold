@@ -85,6 +85,9 @@ export default function CheckoutPage() {
   // the LockManager and sometimes lost, returning no addresses until a manual
   // refresh (and leaving "Pay Now" disabled because no address got selected).
   useEffect(() => {
+    // fetchAddresses only setState()s after an awaited query (a microtask), so
+    // it can't cause the synchronous cascading render this rule guards against.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (user?.id) fetchAddresses(user.id);
   }, [user?.id, fetchAddresses]);
 
