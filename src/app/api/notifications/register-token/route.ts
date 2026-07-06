@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     // userId is NOT trusted — otherwise anyone could register their token under
     // a victim's id and receive that victim's push notifications. No session
     // means an anonymous device (user_id null).
+    // Always derive from the verified session (getAuthUser uses getClaims for perf).
     let resolvedUserId: string | null = null;
     try {
       const supabaseAuth = await createClient();

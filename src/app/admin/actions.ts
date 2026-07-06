@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { productSchema, couponSchema, categorySchema } from "@/lib/validators";
 import { generateSlug } from "@/lib/formatters";
 import { ORDER_STATUS_TRANSITIONS, STOCK_HOLDING_STATUSES } from "@/lib/constants";
@@ -18,25 +18,6 @@ import {
 import type { OrderStatus } from "@/types/order";
 import * as deepl from "deepl-node";
 
-/**
- * Authorization gate for every admin mutation. Server actions are directly
- * invocable POST endpoints, so the admin/layout.tsx page guard does NOT protect
- * them — each action must verify the caller is an admin itself. Throws if not.
- */
-async function requireAdmin() {
-  const supabase = await createClient();
-  const user = await getAuthUser(supabase);
-  if (!user) throw new Error("Unauthorized");
-
-  const { data: profile } = await createAdminClient()
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") throw new Error("Forbidden");
-}
-
 // ---------------------------------------------------------------------------
 // Translation
 // ---------------------------------------------------------------------------
@@ -45,6 +26,7 @@ export async function translateToTelugu(
   text: string
 ): Promise<{ translation: string } | { error: string }> {
   await requireAdmin();
+
   const authKey = process.env.DEEPL_AUTH_KEY;
   if (!authKey) {
     return { error: "DeepL API key is not configured" };
@@ -116,6 +98,7 @@ async function getCategoryDescendantIds(categoryId: string): Promise<string[]> {
 
 export async function createProduct(formData: FormData) {
   await requireAdmin();
+
   const raw = Object.fromEntries(formData.entries());
 
   const data = productSchema.parse({
@@ -200,6 +183,7 @@ export async function createProduct(formData: FormData) {
 
 export async function updateProduct(id: string, formData: FormData) {
   await requireAdmin();
+
   const raw = Object.fromEntries(formData.entries());
 
   const data = productSchema.parse({
@@ -282,6 +266,7 @@ export async function updateProduct(id: string, formData: FormData) {
 
 export async function deleteProduct(id: string) {
   await requireAdmin();
+
   const supabase = createAdminClient();
 
   // Fetch product images so we can clean up storage
@@ -328,6 +313,7 @@ export async function deleteProduct(id: string) {
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   await requireAdmin();
+
   const supabase = createAdminClient();
 
   // Read the current status first: it gates the transition (below) and tells us
@@ -512,6 +498,7 @@ export async function updateCategory(id: string, formData: FormData) {
 
 export async function deleteCategory(id: string) {
   await requireAdmin();
+
   const supabase = createAdminClient();
 
   const categoryIds = await getCategoryDescendantIds(id).catch((descendantError) => {
@@ -552,6 +539,7 @@ export async function updateUserRole(
   role: "customer" | "admin"
 ) {
   await requireAdmin();
+
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -569,6 +557,7 @@ export async function updateUserRole(
 
 export async function deleteUser(userId: string) {
   await requireAdmin();
+
   const supabase = createAdminClient();
 
   const { error } = await supabase.auth.admin.deleteUser(userId);
@@ -583,6 +572,7 @@ export async function deleteUser(userId: string) {
 
 export async function toggleUserDisabled(userId: string, disable: boolean) {
   await requireAdmin();
+
   const supabase = createAdminClient();
 
   const { error } = await supabase.auth.admin.updateUserById(userId, {
@@ -603,6 +593,7 @@ export async function toggleUserDisabled(userId: string, disable: boolean) {
 
 export async function createCoupon(formData: FormData) {
   await requireAdmin();
+
   const raw = Object.fromEntries(formData.entries());
 
   const data = couponSchema.parse({
@@ -630,6 +621,7 @@ export async function createCoupon(formData: FormData) {
 
 export async function updateCoupon(id: string, formData: FormData) {
   await requireAdmin();
+
   const raw = Object.fromEntries(formData.entries());
 
   const data = couponSchema.parse({
@@ -657,6 +649,7 @@ export async function updateCoupon(id: string, formData: FormData) {
 
 export async function deleteCoupon(id: string) {
   await requireAdmin();
+
   const supabase = createAdminClient();
 
   const { error } = await supabase.from("coupons").delete().eq("id", id);

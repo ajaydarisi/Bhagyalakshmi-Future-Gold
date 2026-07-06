@@ -64,7 +64,11 @@ export function SignupForm() {
     });
 
     if (error) {
-      toast.error(error.message);
+      // Supabase returns code "weak_password" when leaked-password protection
+      // rejects a breached/common password — show a friendly localized message.
+      toast.error(
+        error.code === "weak_password" ? t("weakPassword") : error.message
+      );
       setIsLoading(false);
       return;
     }

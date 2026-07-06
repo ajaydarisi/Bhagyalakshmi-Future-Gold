@@ -134,7 +134,8 @@ export async function createOrder(
   let couponId: string | null = null;
 
   if (couponCode) {
-    // Coupons table has RLS with no read policy, so use the admin client to validate server-side.
+    // Coupons table has no public read policy (service-role only). Validate
+    // server-side with admin client.
     const { data: coupon } = await admin
       .from("coupons")
       .select("*")
@@ -265,7 +266,36 @@ export async function verifyPayment(
   razorpaySignature: string
 ) {
   if (STORE_MODE === "OFFLINE") throw new Error("Store is currently offline");
+
+  const supabase = await createClient();
+  const user = await getAuthUser(supabase);
+  if (!user) throw new Error("Not authenticated");
+
   const admin = createAdminClient();
+
+  // Resolve the order via the Razorpay order id recorded at creation time —
+  // never trust the caller-supplied internal orderId on its own. This binds
+  // the signed (razorpayOrderId, razorpayPaymentId) pair to exactly one
+  // internal order, so a valid signature from a cheap order cannot be
+  // replayed to mark a different (expensive) order as paid.
+  const { data: transaction } = await admin
+    .from("payment_transactions")
+    .select("order_id")
+    .eq("razorpay_order_id", razorpayOrderId)
+    .single();
+
+  if (!transaction) throw new Error("Payment verification failed");
+
+  const { data: orderRow } = await admin
+    .from("orders")
+    .select("id, user_id")
+    .eq("id", transaction.order_id)
+    .single();
+
+  // The resolved order must match the claimed order and belong to the caller.
+  if (!orderRow || orderRow.id !== orderId || orderRow.user_id !== user.id) {
+    throw new Error("Payment verification failed");
+  }
 
   const isValid = verifyRazorpaySignature(
     razorpayOrderId,
@@ -280,22 +310,6 @@ export async function verifyPayment(
       .eq("razorpay_order_id", razorpayOrderId);
     throw new Error("Payment verification failed");
   }
-
-  // Resolve the order from the Razorpay order id, NOT the client-supplied
-  // orderId. A valid signature only proves the (razorpayOrderId, paymentId)
-  // pair is genuine — it does not prove it belongs to `orderId`. Without this
-  // lookup a customer could pay a ₹1 order and replay that signature to mark an
-  // unrelated expensive order as paid.
-  const { data: transaction } = await admin
-    .from("payment_transactions")
-    .select("order_id")
-    .eq("razorpay_order_id", razorpayOrderId)
-    .single();
-
-  if (!transaction || transaction.order_id !== orderId) {
-    throw new Error("Payment verification failed");
-  }
-  const resolvedOrderId = transaction.order_id;
 
   // Update payment transaction (scoped to this Razorpay order)
   await admin
@@ -313,7 +327,7 @@ export async function verifyPayment(
   const { data: transitioned } = await admin
     .from("orders")
     .update({ status: "paid" })
-    .eq("id", resolvedOrderId)
+    .eq("id", orderId)
     .eq("status", "pending")
     .select("user_id, order_type, coupon_id");
 
@@ -321,6 +335,7 @@ export async function verifyPayment(
     return { success: true };
   }
   const order = transitioned[0];
+  const resolvedOrderId = orderId;
 
   // Record paid status in history
   await admin
@@ -371,7 +386,8 @@ export async function verifyPayment(
 
 export async function applyCoupon(code: string, subtotal: number) {
   if (STORE_MODE === "OFFLINE") throw new Error("Store is currently offline");
-  // Coupons table has RLS with no read policy, so use the admin client to validate server-side.
+  // Coupons table has no public read policy (service-role only). Validate
+  // server-side with admin client (caller must know the exact code).
   const admin = createAdminClient();
 
   const { data: coupon } = await admin

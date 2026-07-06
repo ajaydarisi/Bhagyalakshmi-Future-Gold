@@ -49,7 +49,10 @@ export function ResetPasswordForm() {
     });
 
     if (error) {
-      toast.error(error.message);
+      // "weak_password" => leaked-password protection rejected a breached password.
+      toast.error(
+        error.code === "weak_password" ? t("weakPassword") : error.message
+      );
       setIsLoading(false);
       return;
     }
