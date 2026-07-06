@@ -26,7 +26,7 @@ const BUSINESS_INFO = {
     country: "India",
   },
   phone: "+91 9290011275",
-  email: "darisilakshmi3@gmail.com",
+  email: "contact@bfg.darisi.in",
   hours: {
     weekdays: "10:00 AM – 9:00 PM",
     sunday: "10:00 AM – 2:00 PM",
