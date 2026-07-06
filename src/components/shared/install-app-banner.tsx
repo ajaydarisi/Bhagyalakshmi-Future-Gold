@@ -1,22 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+const subscribe = () => () => {};
+
+// Client-only decision (depends on Capacitor, only available in the browser).
+// Server snapshot is `false` so the banner is absent from SSR and appears after
+// hydration — never on native — matching the previous mount-effect behaviour,
+// without setting state synchronously inside an effect.
+function getShowOnClient() {
+  if (process.env.NEXT_PUBLIC_SHOW_APP_BANNER !== "true") return false;
+  if (!process.env.NEXT_PUBLIC_PLAY_STORE_URL) return false;
+  const cap = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+  return !cap?.isNativePlatform?.();
+}
+
 export function InstallAppBanner() {
   const t = useTranslations("home.installApp");
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_SHOW_APP_BANNER !== "true") return;
-    if (!process.env.NEXT_PUBLIC_PLAY_STORE_URL) return;
-
-    const cap = (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
-    if (cap?.isNativePlatform?.()) return;
-
-    setShow(true);
-  }, []);
+  const show = useSyncExternalStore(subscribe, getShowOnClient, () => false);
 
   if (!show) return null;
 
@@ -24,12 +27,13 @@ export function InstallAppBanner() {
     <section className="relative overflow-hidden bg-background text-foreground py-3 border-y border-border">
       {/* Sleek background effect */}
       <div className="absolute inset-0 bg-linear-to-r from-primary/10 via-transparent to-primary/5 dark:from-primary/20 dark:to-primary/10 pointer-events-none" />
-      <div className="absolute top-0 right-1/4 w-32 h-32 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-32 h-32 bg-[rgb(var(--gold-rgb)/0.2)] rounded-full blur-3xl pointer-events-none" />
 
-      <div className="container mx-auto px-4 relative flex items-center justify-between gap-4 z-10">
+      {/* lg:pr-40 keeps the Play Store CTA clear of the fixed "Ask AI" launcher (bottom-right). */}
+      <div className="container mx-auto px-4 lg:pr-40 relative flex items-center justify-between gap-4 z-10">
         <div className="flex items-center gap-4 min-w-0">
           <div className="shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-card border border-border shadow-xs dark:bg-zinc-900/50">
-            <Download className="w-6 h-6 text-primary" />
+            <Download className="w-6 h-6 text-gold-600" />
           </div>
           <div className="min-w-0">
             <p className="text-sm md:text-base font-semibold tracking-tight text-foreground">{t("title")}</p>
@@ -44,9 +48,9 @@ export function InstallAppBanner() {
             href={process.env.NEXT_PUBLIC_PLAY_STORE_URL} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors px-4 py-2 rounded-lg group shadow-sm"
+            className="flex items-center gap-2 bg-gold-500 text-[var(--text-on-gold)] hover:bg-gold-600 transition-colors px-4 py-2 rounded-lg group shadow-sm"
           >
-            <svg viewBox="0 0 512 512" className="w-5 h-5 text-primary-foreground group-hover:text-primary-foreground/90 transition-colors" fill="currentColor">
+            <svg viewBox="0 0 512 512" className="w-5 h-5 text-[var(--text-on-gold)] group-hover:text-[var(--text-on-gold)]/90 transition-colors" fill="currentColor">
               <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z" />
             </svg>
             <div className="flex flex-col items-start leading-none ml-1">

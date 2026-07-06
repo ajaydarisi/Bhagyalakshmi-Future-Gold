@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { formatPrice, formatDateTime } from "@/lib/formatters";
+import { formatPrice, formatDate, formatDateTime } from "@/lib/formatters";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { OrderStatusUpdater } from "@/components/admin/order-status-updater";
+import { RentalStatusBadge } from "@/components/admin/rental-status-badge";
+import { RentalReturnButton } from "@/components/admin/rental-return-button";
+import { isRentalOverdue } from "@/lib/rental-availability";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -23,6 +26,9 @@ interface OrderItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  is_rental: boolean;
+  rental_start: string | null;
+  rental_end: string | null;
 }
 
 interface ShippingAddress {
@@ -85,18 +91,35 @@ export default async function OrderDetailPage({
   const shipping = order.shipping_address as unknown as ShippingAddress;
   const payment = order.payment_transactions?.[0];
 
+  const isRentalOrder = order.order_type !== "sale";
+  const latestRentalEnd = (order.order_items as OrderItem[])
+    .filter((i) => i.is_rental && i.rental_end)
+    .map((i) => i.rental_end as string)
+    .sort()
+    .pop();
+  const rentalOverdue = isRentalOverdue(order.rental_status, latestRentalEnd);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold md:text-3xl">
+          <h1 className="font-display text-3xl text-text-primary md:text-4xl">
             Order {order.order_number}
           </h1>
           <p className="text-muted-foreground">
             Placed on {formatDateTime(order.created_at)}
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          {isRentalOrder && (
+            <RentalStatusBadge
+              rentalStatus={order.rental_status}
+              isOverdue={rentalOverdue}
+            />
+          )}
+          {isRentalOrder && order.rental_status === "active" && (
+            <RentalReturnButton orderId={order.id} />
+          )}
           <OrderStatusBadge status={order.status} />
           <OrderStatusUpdater orderId={order.id} currentStatus={order.status} />
         </div>
@@ -135,9 +158,18 @@ export default async function OrderDetailPage({
                               />
                             </div>
                           )}
-                          <span className="font-medium">
-                            {item.product_name}
-                          </span>
+                          <div>
+                            <span className="font-medium">
+                              {item.product_name}
+                            </span>
+                            {item.is_rental && item.rental_start && item.rental_end && (
+                              <p className="text-xs text-muted-foreground">
+                                Rental: {formatDate(item.rental_start)} –{" "}
+                                {formatDate(item.rental_end)} · Return by{" "}
+                                {formatDate(item.rental_end)}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
@@ -167,7 +199,7 @@ export default async function OrderDetailPage({
                   <span>{formatPrice(order.shipping_cost)}</span>
                 </div>
                 {order.discount_amount > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between text-[var(--bfg-success)]">
                     <span>Discount</span>
                     <span>-{formatPrice(order.discount_amount)}</span>
                   </div>

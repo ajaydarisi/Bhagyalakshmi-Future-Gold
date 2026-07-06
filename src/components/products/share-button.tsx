@@ -54,7 +54,7 @@ export function ShareButton({
     return (
       <button
         onClick={handleShare}
-        className="rounded-full p-2 border border-transparent hover:border-primary/50 hover:bg-accent transition-colors"
+        className="rounded-full p-2 border border-transparent hover:border-[var(--border-gold)] hover:bg-accent transition-colors"
         aria-label={t("shareProduct")}
       >
         <Share2 className="h-5 w-5 text-muted-foreground" />

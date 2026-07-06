@@ -26,3 +26,23 @@ export async function createClient() {
     }
   );
 }
+
+type ServerClient = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * Resolve the current user from the session JWT via getClaims().
+ *
+ * With asymmetric JWT signing keys this verifies the token locally with no
+ * network round-trip — replacing the per-request getUser() call to the Supabase
+ * auth server. On the legacy shared secret it transparently falls back to a
+ * network verification, so this is always safe to use.
+ */
+export async function getAuthUser(supabase: ServerClient) {
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims?.sub) return null;
+  return {
+    id: claims.sub as string,
+    email: (claims.email as string | undefined) ?? null,
+  };
+}

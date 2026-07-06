@@ -34,11 +34,11 @@ export function ProductsHeading({ title, countLabel }: ProductsHeadingProps) {
 
   return (
     <div>
-      <h1 className="flex items-center gap-2 text-2xl font-bold md:text-3xl">
+      <h1 className="flex items-center gap-2 font-display text-3xl text-text-primary md:text-4xl">
         {title}
-        {loading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
+        {loading && <Loader2 className="h-5 w-5 animate-spin text-text-gold" />}
       </h1>
-        <p className="text-sm text-muted-foreground">{countLabel}</p>
+      <p className="mt-1 text-sm text-text-secondary">{countLabel}</p>
     </div>
   );
 }

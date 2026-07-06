@@ -32,7 +32,7 @@ import type {
   CatalogMessage,
   Citation,
 } from "@/types/search";
-import { Bot, Loader2, MessageCircle, Send, User } from "lucide-react";
+import { Bot, Loader2, MessageCircle, Send, Sparkles, User } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import {
@@ -732,16 +732,25 @@ export function StorefrontAssistant() {
 
   return (
     <>
-      <Button
-        type="button"
-        aria-label={t("launcherLabel")}
-        data-testid="assistant-launcher"
-        className="fixed bottom-24 right-4 z-40 rounded-full shadow-lg lg:bottom-6 lg:right-6 cursor-pointer"
-        onClick={() => handleOpenChange(true)}
-      >
-        <Bot className="size-5" />
-        <span className="hidden sm:inline">{t("launcherLabel")}</span>
-      </Button>
+      <div className="fixed bottom-24 right-4 z-40 lg:bottom-6 lg:right-6">
+        {/* attention pulse ring */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-gold-400/60"
+        />
+        <Button
+          type="button"
+          variant="gold"
+          size="bfg-md"
+          aria-label={t("launcherLabel")}
+          data-testid="assistant-launcher"
+          className="bfg-gold-shimmer group cursor-pointer rounded-full shadow-[var(--shadow-gold)] hover:shadow-[0_10px_32px_rgb(var(--gold-rgb)/0.5)]"
+          onClick={() => handleOpenChange(true)}
+        >
+          <Sparkles className="size-5 motion-safe:animate-[bfg-twinkle_2.2s_ease-in-out_infinite] group-hover:rotate-12 transition-transform" />
+          <span className="hidden sm:inline">{t("launcherLabel")}</span>
+        </Button>
+      </div>
 
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent
@@ -765,7 +774,7 @@ export function StorefrontAssistant() {
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <p className="text-xs font-medium text-muted-foreground">
                         {t("starterLabel")}
                       </p>
                       <div className="grid gap-2">
@@ -773,8 +782,8 @@ export function StorefrontAssistant() {
                           <Button
                             key={prompt}
                             type="button"
-                            variant="outline"
-                            className="h-auto justify-start whitespace-normal py-3 text-left"
+                            variant="gold-outline"
+                            className="h-auto justify-start whitespace-normal py-3 text-left normal-case tracking-normal"
                             onClick={() => {
                               void sendMessage(prompt);
                             }}
@@ -795,7 +804,7 @@ export function StorefrontAssistant() {
                     }`}
                   >
                     {entry.role === "assistant" && (
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-100 text-gold-700">
                         <Bot className="size-4" />
                       </div>
                     )}
@@ -803,7 +812,7 @@ export function StorefrontAssistant() {
                     <div
                       className={`max-w-[85%] space-y-3 rounded-2xl px-4 py-3 text-sm ${
                         entry.role === "user"
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-gold-500 text-white"
                           : entry.status === "failed"
                             ? "border border-destructive/30 bg-destructive/5"
                             : "border bg-background"
@@ -855,7 +864,7 @@ export function StorefrontAssistant() {
                                   <Link
                                     key={citation.sourceKey}
                                     href={citation.href}
-                                    className="rounded-full border px-3 py-1 text-xs hover:border-primary hover:text-primary"
+                                    className="max-w-full break-words rounded-full border px-3 py-1 text-xs hover:border-[var(--border-gold)] hover:text-text-gold"
                                     onClick={() => handleCitationClick(citation)}
                                   >
                                     {citation.title}
@@ -863,7 +872,7 @@ export function StorefrontAssistant() {
                                 ) : (
                                   <span
                                     key={citation.sourceKey}
-                                    className="rounded-full border px-3 py-1 text-xs"
+                                    className="max-w-full break-words rounded-full border px-3 py-1 text-xs"
                                   >
                                     {citation.title}
                                   </span>
@@ -880,13 +889,13 @@ export function StorefrontAssistant() {
                             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                               {t("followUp")}
                             </p>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-col items-start gap-2">
                               {entry.followUpSuggestions.map((suggestion, index) => (
                                 <Button
                                   key={`${entry.id}-${index}-${suggestion.prompt}`}
                                   type="button"
-                                  variant="outline"
-                                  className="h-auto rounded-full px-3 py-1 text-left text-xs"
+                                  variant="gold-outline"
+                                  className="h-auto max-w-full whitespace-normal break-words rounded-full px-3 py-1 text-left text-xs"
                                   onClick={() => {
                                     void sendMessage(suggestion.prompt);
                                   }}
@@ -905,7 +914,7 @@ export function StorefrontAssistant() {
                           </p>
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="gold-outline"
                             size="sm"
                             onClick={() => {
                               void retryAssistantEntry(entry.id);
@@ -965,6 +974,8 @@ export function StorefrontAssistant() {
                   <p className="text-xs text-muted-foreground">{t("disclaimer")}</p>
                   <Button
                     type="button"
+                    variant="gold"
+                    size="bfg-md"
                     onClick={() => {
                       void sendMessage();
                     }}

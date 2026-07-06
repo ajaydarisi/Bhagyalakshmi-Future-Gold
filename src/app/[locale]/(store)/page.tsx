@@ -9,9 +9,19 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProductWithCategory } from "@/types/product";
 import { ExternalLink } from "@/components/shared/external-link";
+import { SectionHeading } from "@/components/brand/section-heading";
 import { FeaturedProductsSection } from "@/components/home/featured-products-section";
 import { NewArrivalsSection } from "@/components/home/new-arrivals-section";
-import { ArrowRight, Clock, Mail, MapPin, Phone } from "lucide-react";
+import {
+  ArrowRight,
+  MapPin,
+  Truck,
+  ShieldCheck,
+  Gem,
+  MessageCircle,
+  Sparkles,
+  Check,
+} from "lucide-react";
 import { unstable_cache } from "next/cache";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
@@ -19,6 +29,7 @@ import { getTranslations } from "next-intl/server";
 import { getLocale } from "next-intl/server";
 import { getCategoryName } from "@/lib/i18n-helpers";
 import { getTopCategories } from "@/lib/queries";
+import { PRODUCT_LIST_FIELDS } from "@/lib/queries/products";
 import {
   getOfflineFeaturedProducts,
   getOfflineNewProducts,
@@ -43,7 +54,7 @@ const getFeaturedProducts = unstable_cache(
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("products")
-      .select("*, category:categories(name, name_telugu, slug)")
+      .select(PRODUCT_LIST_FIELDS)
       .eq("is_active", true)
       .eq("featured", true)
       .limit(8);
@@ -62,7 +73,7 @@ const getNewProducts = unstable_cache(
     const supabase = createAdminClient();
     const { data } = await supabase
       .from("products")
-      .select("*, category:categories(name, name_telugu, slug)")
+      .select(PRODUCT_LIST_FIELDS)
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .limit(4);
@@ -81,7 +92,6 @@ export default async function HomePage() {
 
   const locale = await getLocale();
   const t = await getTranslations("home");
-  const tBrand = await getTranslations("constants.brandStory");
   const tAbout = await getTranslations("about");
 
   const SITE_URL =
@@ -166,137 +176,151 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {process.env.NEXT_PUBLIC_CONFETTI_ENABLED === "true" && <Confetti />}
-      {/* Hero Section — Wedding Season */}
-      <section className="relative overflow-hidden wedding-hero md:min-h-[70vh]">
-        {/* Background image */}
-        <Image
-          src="/images/hero.png"
-          alt="South Indian bridal wedding jewelry set"
-          fill
-          priority
-          fetchPriority="high"
-          sizes="100vw"
-          className="object-cover object-[70%_30%] md:object-[center_30%] opacity-70 dark:opacity-50 md:opacity-100"
-        />
-        {/* Dark gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-linear-to-t from-white/90 via-white/70 to-white/40 md:bg-linear-to-r md:from-white/70 md:via-0% md:to-transparent dark:from-black/85 dark:via-black/60 dark:to-black/30 md:dark:from-black/80 md:dark:via-black/50 md:dark:to-transparent" />
-        {/* Subtle traditional dot pattern overlay */}
-        <div className="absolute inset-0 wedding-hero-pattern" />
-        {/* Soft vignette */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.05)_100%)] dark:bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.3)_100%)]" />
-
-        <div className="container mx-auto relative px-4 py-8 pb-10 md:py-20 lg:py-24 flex items-center min-h-[inherit]">
-          <div className="max-w-xl lg:max-w-2xl text-center lg:text-left">
-            {/* Badge */}
-            <div className="wedding-ornament justify-center lg:justify-start mb-6 font-bold">
-              <span className="text-xs uppercase tracking-[0.25em] text-primary font-sans">
-                {t("hero.badge")}
-              </span>
-            </div>
-
-            {/* Headline */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight text-foreground dark:text-white">
-              {t("hero.titleLine1")}
-              <br />
-              <span className="text-primary">{t("hero.titleLine2")}</span>
+      {/* Hero — editorial split-grid (DS kit composition) */}
+      <section className="wedding-hero-pattern relative overflow-hidden" style={{ background: "var(--grad-ivory-warm)" }}>
+        {/* lg height fills the viewport below the chrome (announcement+header+app banner ≈ 11rem) so the hero is one screenful; py-10 pads the image top/bottom. */}
+        <div className="container mx-auto grid items-center gap-8 px-4 py-12 lg:grid-cols-[1.05fr_0.95fr] lg:min-h-[calc(100dvh-11rem)] lg:py-10">
+          {/* Copy */}
+          <div className="bfg-animate flex max-w-xl flex-col gap-5">
+            <span className="bfg-ornament self-start">
+              <span className="bfg-eyebrow">{t("hero.eyebrow")}</span>
+            </span>
+            <h1 className="font-display text-text-primary" style={{ fontSize: "clamp(3rem, 6vw, 5.25rem)", lineHeight: 1.05 }}>
+              {t("hero.titleA")} <span className="bfg-foil">{t("hero.titleB")}</span>
             </h1>
-
-            {/* Subheading */}
-            <p className="mt-5 text-base md:text-lg text-foreground/85 dark:text-white/85 max-w-xl mx-auto lg:mx-0 font-brand">
-              {t("hero.subtitle")}
-            </p>
-
-            {/* Description */}
-            <p className="mt-3 text-sm md:text-base text-muted-foreground dark:text-white/65 max-w-lg mx-auto lg:mx-0 font-sans">
-              {t("hero.description")}
-            </p>
-
-            {/* Ornamental divider */}
-            <div className="mt-8 flex items-center gap-3 justify-center lg:justify-start">
-              <span className="h-px w-12 bg-linear-to-r from-transparent to-primary/60" />
-              <span className="text-primary/80 text-lg">✦</span>
-              <span className="h-px w-12 bg-linear-to-l from-transparent to-primary/60" />
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button
-                size="lg"
-                className="btn-gold-shimmer text-white font-semibold hover:opacity-90 transition-opacity"
-                asChild
-              >
+            <p className="max-w-[44ch] text-lg leading-relaxed text-text-secondary">{t("hero.sub")}</p>
+            <div className="mt-1 flex flex-wrap gap-3">
+              <Button variant="gold" size="bfg-lg" asChild>
                 <Link href={`${ROUTES.products}?category=marriage-rental-sets`}>
-                  {t("hero.shopCollection")}
+                  {t("hero.ctaShop")}
+                  <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-primary/50 bg-transparent dark:text-white text-primary hover:text-primary hover:bg-primary/10 hover:border-primary/70"
-                asChild
-              >
-                <Link href={`${ROUTES.products}?category=marriage-rental-sets&sort=discount`}>
-                  {t("hero.rentalSets")}
+              <Button variant="gold-ghost" size="bfg-lg" asChild>
+                <Link href={ROUTES.about}>
+                  <MapPin className="mr-1 h-4 w-4" />
+                  {t("hero.ctaVisit")}
                 </Link>
               </Button>
             </div>
+            <div className="mt-4 flex gap-6">
+              {([["4.9★", t("hero.statReviews")], ["220+", t("hero.statDesigns")], ["100%", t("hero.statChecked")]] as const).map(([big, small]) => (
+                <div key={big} className="flex flex-col">
+                  <span className="font-display text-2xl text-text-primary">{big}</span>
+                  <span className="text-xs text-text-muted">{small}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Media */}
+          <div className="bfg-animate relative">
+            <div className="relative aspect-4/5 overflow-hidden rounded-[var(--radius-bfg-xl)] border border-[var(--border-gold)] shadow-[var(--shadow-xl)] lg:aspect-square lg:max-h-[calc(100dvh-16rem)]">
+              <Image
+                src="/images/brand/hero-bridal.png"
+                alt={t("imageAlt.heroBridal")}
+                fill
+                priority
+                fetchPriority="high"
+                sizes="(max-width: 1024px) 80vw, 45vw"
+                className="object-cover object-[82%_22%]"
+              />
+            </div>
+            {/* Floating chip */}
+            <div
+              className="absolute bottom-5 left-4 flex items-center gap-3 rounded-[var(--radius-bfg-lg)] border border-[var(--border-sand)] p-4 shadow-[var(--shadow-lg)] sm:-left-5"
+              style={{ background: "rgb(252 250 246 / 0.92)", backdropFilter: "blur(8px)", animation: "bfg-float 5s var(--ease-soft) infinite" }}
+            >
+              <span className="grid size-10 place-items-center rounded-full bg-gold-100 text-gold-600">
+                <Gem className="size-5" strokeWidth={1.7} />
+              </span>
+              <div>
+                <div className="text-sm font-semibold text-ink-900">{t("hero.chipTitle")}</div>
+                <div className="text-xs text-stone-600">{t("hero.chipSub")}</div>
+              </div>
+            </div>
+            {/* Sparkles */}
+            {([["8%", "12%", "0s"], ["88%", "20%", "0.6s"], ["80%", "86%", "1.1s"]] as const).map(([l, tp, d], i) => (
+              <span
+                key={i}
+                aria-hidden
+                className="pointer-events-none absolute text-gold-400"
+                style={{ left: l, top: tp, animation: `bfg-twinkle 2.4s var(--ease-soft) ${d} infinite` }}
+              >
+                <Sparkles className="size-4" />
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Install App Banner — Android only */}
+      {/* Install App Banner — web only; sits at the bottom of the hero */}
       <InstallAppBanner />
 
-      {/* Categories */}
-      <section className="container mx-auto px-4 py-10 lg:py-20">
-        <div className="mb-8 lg:mb-12 text-center">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-            <span className="underline decoration-primary underline-offset-4 decoration-2">{t("categories.label")}</span>
-          </p>
-          <h2 className="text-3xl md:text-4xl">{t("categories.title")}</h2>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {(topCategories ?? []).map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`${ROUTES.products}?category=${cat.slug}`}
-              className="group relative flex items-center justify-center py-10 px-4 text-center border border-border bg-card transition-all duration-300 hover:border-primary hover:shadow-md"
-            >
-              <h3 className="text-sm md:text-lg uppercase tracking-[0.15em] font-medium group-hover:text-primary transition-colors">
-                {getCategoryName(cat, locale)}
-              </h3>
-            </Link>
-          ))}
+      {/* Category strip — circular icon band (DS kit) */}
+      <section className="border-y border-[var(--border-sand)] bg-surface-card">
+        <div className="container mx-auto px-4 py-8 lg:py-10">
+          <div className="bfg-stagger flex flex-wrap justify-center gap-3 sm:gap-6 lg:gap-10">
+            {(topCategories ?? []).map((cat, i) => (
+              <Link
+                key={cat.slug}
+                href={`${ROUTES.products}?category=${cat.slug}`}
+                style={{ "--i": i } as React.CSSProperties}
+                className="group flex flex-col items-center gap-3 rounded-[var(--radius-bfg-lg)] p-3 transition-transform duration-300 hover:-translate-y-1"
+              >
+                <span
+                  className="grid size-16 place-items-center rounded-full border border-[var(--border-gold)] text-gold-700"
+                  style={{ background: "var(--grad-gold-soft)" }}
+                >
+                  <Gem className="size-7" strokeWidth={1.5} />
+                </span>
+                <span className="text-sm font-medium text-text-primary transition-colors group-hover:text-text-gold">
+                  {getCategoryName(cat, locale)}
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Brand Story */}
-      <section className="py-10 lg:py-20 bg-accent">
-        <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-              <span className="underline decoration-primary underline-offset-4 decoration-2">{t("brandStory.label")}</span>
-            </p>
-            <h2 className="text-3xl md:text-4xl leading-snug">
-              <span className="underline decoration-primary underline-offset-4 decoration-2">{t("brandStory.title")}</span>
-              <br />
-              {t("brandStory.titleLine2")}
-            </h2>
-            <p className="mt-4 text-muted-foreground leading-relaxed max-w-md font-sans">
-              {tBrand("short")}
-            </p>
-            <Button variant="outline" className="mt-6" asChild>
+      {/* Story band — shop-photo collage + promises (DS kit) */}
+      <section className="py-12 lg:py-20">
+        <div className="container mx-auto grid items-center gap-10 px-4 md:grid-cols-2">
+          {/* Photo collage */}
+          <div
+            className="bfg-animate grid gap-3"
+            style={{ gridTemplateColumns: "1.3fr 1fr", gridTemplateRows: "1fr 1fr", aspectRatio: "1 / 0.92" }}
+          >
+            <div className="relative row-span-2 overflow-hidden rounded-[var(--radius-bfg-lg)] border border-[var(--border-sand)]">
+              <Image src="/images/shop/storefront.jpeg" alt={t("imageAlt.storefront")} fill sizes="(max-width:768px) 60vw, 30vw" className="object-cover" />
+            </div>
+            <div className="relative overflow-hidden rounded-[var(--radius-bfg-lg)] border border-[var(--border-sand)]">
+              <Image src="/images/shop/interior.jpeg" alt={t("imageAlt.interior")} fill sizes="(max-width:768px) 40vw, 20vw" className="object-cover" />
+            </div>
+            <div className="relative overflow-hidden rounded-[var(--radius-bfg-lg)] border border-[var(--border-sand)]">
+              <Image src="/images/shop/display.jpeg" alt={t("imageAlt.display")} fill sizes="(max-width:768px) 40vw, 20vw" className="object-cover" />
+            </div>
+          </div>
+          {/* Copy + promises */}
+          <div className="bfg-animate flex flex-col items-start gap-4">
+            <span className="bfg-ornament">
+              <span className="bfg-eyebrow">{t("story.eyebrow")}</span>
+            </span>
+            <h2 className="font-display text-3xl md:text-4xl text-text-primary">{t("story.title")}</h2>
+            <p className="max-w-[46ch] text-lg leading-relaxed text-text-secondary">{t("story.body")}</p>
+            <div className="mt-1 flex flex-col gap-3">
+              {[t("story.promise1"), t("story.promise2"), t("story.promise3")].map((p) => (
+                <span key={p} className="inline-flex items-center gap-2.5 text-text-body">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-gold-100 text-gold-700">
+                    <Check className="size-3.5" strokeWidth={2} />
+                  </span>
+                  {p}
+                </span>
+              ))}
+            </div>
+            <Button variant="gold-outline" size="bfg-md" className="mt-2" asChild>
               <Link href={ROUTES.about}>{t("brandStory.cta")}</Link>
             </Button>
-          </div>
-          <div className="relative aspect-4/5 overflow-hidden">
-            <Image
-              src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80"
-              alt="Elegant jewellery craftsmanship"
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-            />
           </div>
         </div>
       </section>
@@ -308,23 +332,22 @@ export default async function HomePage() {
 
       {/* Wishlist CTA — offline only */}
       {!IS_ONLINE && (
-        <section className="bg-accent/30">
-          <div className="container mx-auto px-4 py-10 lg:py-16 text-center max-w-xl">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-              <span className="underline decoration-primary underline-offset-4 decoration-2">{t("wishlistCta.label")}</span>
-            </p>
-            <h2 className="text-2xl md:text-3xl leading-snug">
-              {t("wishlistCta.title")}
-            </h2>
-            <p className="mt-3 text-muted-foreground font-sans">
-              {t("wishlistCta.description")}
-            </p>
-            <Button variant="outline" className="mt-6" asChild>
-              <Link href={ROUTES.products}>
-                {t("wishlistCta.cta")}
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
+        <section style={{ background: "var(--bg-page-warm)" }}>
+          <div className="container mx-auto px-4 py-10 lg:py-16">
+            <SectionHeading
+              className="mx-auto bfg-animate"
+              eyebrow={t("wishlistCta.label")}
+              title={t("wishlistCta.title")}
+              subtitle={t("wishlistCta.description")}
+            />
+            <div className="mt-6 flex justify-center">
+              <Button variant="gold" size="bfg-md" asChild>
+                <Link href={ROUTES.products}>
+                  {t("wishlistCta.cta")}
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </section>
       )}
@@ -334,146 +357,94 @@ export default async function HomePage() {
         initialProducts={(newProducts ?? []) as unknown as ProductWithCategory[]}
       />
 
-      {/* Trust Bar */}
-      <section className="container mx-auto px-4 py-10 lg:py-16">
-        <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
+      {/* Trust bar — minimal icon + label (DS kit) */}
+      <section className="border-y border-[var(--border-sand)]" style={{ background: "var(--bg-page-warm)" }}>
+        <div className="container mx-auto grid grid-cols-2 gap-5 px-4 py-6 lg:grid-cols-4">
           {(IS_ONLINE
             ? [
-                { title: t("trustBar.online.shipping"), description: t("trustBar.online.shippingDesc") },
-                { title: t("trustBar.online.checkout"), description: t("trustBar.online.checkoutDesc") },
-                { title: t("trustBar.online.returns"), description: t("trustBar.online.returnsDesc") },
-                { title: t("trustBar.online.quality"), description: t("trustBar.online.qualityDesc") },
+                { icon: Truck, label: t("trustLabels.shipping") },
+                { icon: ShieldCheck, label: t("trustLabels.quality") },
+                { icon: Gem, label: t("trustLabels.rentals") },
+                { icon: Check, label: t("trustLabels.secure") },
               ]
             : [
-                { title: t("trustBar.offline.whatsapp"), description: t("trustBar.offline.whatsappDesc") },
-                { title: t("trustBar.offline.visit"), description: t("trustBar.offline.visitDesc") },
-                { title: t("trustBar.offline.favourites"), description: t("trustBar.offline.favouritesDesc") },
-                { title: t("trustBar.offline.quality"), description: t("trustBar.offline.qualityDesc") },
+                { icon: MapPin, label: t("trustLabels.visit") },
+                { icon: ShieldCheck, label: t("trustLabels.quality") },
+                { icon: Gem, label: t("trustLabels.rentals") },
+                { icon: Sparkles, label: t("trustLabels.custom") },
               ]
-          ).map((feature) => (
-            <div key={feature.title} className="text-center py-4">
-              <h3 className="text-xs uppercase tracking-[0.15em] font-medium">
-                {feature.title}
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1 font-sans">
-                {feature.description}
-              </p>
-            </div>
-          ))}
+          ).map((feature, i) => {
+            const Icon = feature.icon;
+            return (
+              <div key={i} className="flex items-center justify-center gap-3">
+                <Icon className="size-6 shrink-0 text-gold-600" strokeWidth={1.6} />
+                <span className="text-sm font-medium text-text-body">{feature.label}</span>
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* Visit Us */}
-      <section className="border-t">
-        <div className="container mx-auto px-4 py-10 lg:py-20">
-          <div className="grid md:grid-cols-2 gap-12">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                <span className="underline decoration-primary underline-offset-4 decoration-2">{t("visitUs.label")}</span>
-              </p>
-              <h2 className="text-3xl md:text-4xl mb-8">{t("visitUs.title")}</h2>
-
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium mb-1">{tAbout("address")}</p>
-                    <p className="text-sm text-muted-foreground font-sans">
-                      {[
-                        BUSINESS_INFO.address.street,
-                        BUSINESS_INFO.address.city,
-                        `${BUSINESS_INFO.address.district} Dist.`,
-                        BUSINESS_INFO.address.state,
-                        BUSINESS_INFO.address.pincode,
-                      ].filter(Boolean).join(", ")}
-                    </p>
-                  </div>
+      {/* Visit band — compact ink card (DS kit): newsletter online / visit CTA offline */}
+      <section style={{ background: "var(--surface-card)" }}>
+        <div className="container mx-auto px-4 py-12 lg:py-20">
+          <div
+            className="bfg-animate relative mx-auto flex max-w-[900px] flex-col items-center gap-4 overflow-hidden rounded-[var(--radius-bfg-xl)] px-6 py-12 text-center text-[var(--text-on-dark)] sm:px-8 sm:py-14"
+            style={{ background: "var(--grad-ink)" }}
+          >
+            {IS_ONLINE ? (
+              <>
+                <span className="bfg-ornament">
+                  <span className="font-brand text-xs uppercase tracking-[0.22em] text-gold-300">{t("newsletter.title")}</span>
+                </span>
+                <h2 className="font-display text-3xl md:text-4xl">{t("newsletter.subtitle")}</h2>
+                <div className="mt-2 flex w-[min(420px,90%)] gap-2">
+                  <input
+                    type="email"
+                    placeholder={t("newsletter.emailPlaceholder")}
+                    aria-label={t("newsletter.title")}
+                    className="h-12 flex-1 rounded-full border border-white/25 bg-white/10 px-5 text-ivory-50 outline-none placeholder:text-white/50 focus:border-gold-400"
+                  />
+                  <Button variant="gold" size="bfg-md">{t("newsletter.join")}</Button>
                 </div>
-
-                {BUSINESS_INFO.phone && (
-                  <div className="flex items-start gap-3">
-                    <Phone className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium mb-1">{tAbout("phone")}</p>
-                      <a
-                        href={`tel:${BUSINESS_INFO.phone}`}
-                        className="text-sm text-muted-foreground font-sans hover:text-primary transition-colors"
-                      >
-                        {BUSINESS_INFO.phone}
+              </>
+            ) : (
+              <>
+                <span className="bfg-ornament">
+                  <span className="font-brand text-xs uppercase tracking-[0.22em] text-gold-300">{t("visitUs.label")}</span>
+                </span>
+                <h2 className="font-display text-3xl md:text-4xl">{t("visitUs.title")}</h2>
+                <p className="max-w-[46ch] text-lg text-[var(--text-on-dark)]/75">
+                  {[BUSINESS_INFO.address.street, BUSINESS_INFO.address.city, BUSINESS_INFO.address.state, BUSINESS_INFO.address.pincode]
+                    .filter(Boolean)
+                    .join(", ")}{" "}
+                  · {tAbout("monSat")}: {BUSINESS_INFO.hours.weekdays}
+                </p>
+                <div className="mt-2 flex flex-wrap justify-center gap-3">
+                  {BUSINESS_INFO.whatsapp && (
+                    <Button variant="gold" size="bfg-md" asChild>
+                      <a href={`https://wa.me/91${BUSINESS_INFO.whatsapp}`} target="_blank" rel="noopener noreferrer">
+                        <MessageCircle className="mr-1 h-4 w-4" />
+                        {t("visitUs.whatsapp")}
                       </a>
-                    </div>
-                  </div>
-                )}
-
-                {BUSINESS_INFO.email && (
-                  <div className="flex items-start gap-3">
-                    <Mail className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium mb-1">{tAbout("email")}</p>
-                      <a
-                        href={`mailto:${BUSINESS_INFO.email}`}
-                        className="text-sm text-muted-foreground font-sans hover:text-primary transition-colors"
+                    </Button>
+                  )}
+                  {BUSINESS_INFO.map.linkUrl && (
+                    <Button variant="gold-outline" size="bfg-md" className="border-white/30 text-ivory-50 hover:bg-white/10" asChild>
+                      <ExternalLink
+                        href={BUSINESS_INFO.map.linkUrl}
+                        geoUri={`geo:0,0?q=${encodeURIComponent(`${BUSINESS_INFO.name}, ${BUSINESS_INFO.address.city}, ${BUSINESS_INFO.address.state}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                       >
-                        {BUSINESS_INFO.email}
-                      </a>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-start gap-3">
-                  <Clock className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium mb-1">{tAbout("businessHours")}</p>
-                    <p className="text-sm text-muted-foreground font-sans">
-                      {tAbout("monSat")}: {BUSINESS_INFO.hours.weekdays}
-                    </p>
-                    <p className="text-sm text-muted-foreground font-sans">
-                      {tAbout("sunday")}: {BUSINESS_INFO.hours.sunday}
-                    </p>
-                  </div>
+                        <MapPin className="mr-1 h-4 w-4" />
+                        {tAbout("getDirections")}
+                      </ExternalLink>
+                    </Button>
+                  )}
                 </div>
-              </div>
-
-              {BUSINESS_INFO.map.linkUrl && (
-                <Button variant="outline" className="mt-8" asChild>
-                  <ExternalLink
-                    href={BUSINESS_INFO.map.linkUrl}
-                    geoUri={`geo:0,0?q=${encodeURIComponent(`${BUSINESS_INFO.name}, ${BUSINESS_INFO.address.street}, ${BUSINESS_INFO.address.city}, ${BUSINESS_INFO.address.state} ${BUSINESS_INFO.address.pincode}`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <MapPin className="mr-2 h-4 w-4" />
-                    {tAbout("getDirections")}
-                  </ExternalLink>
-                </Button>
-              )}
-            </div>
-
-            <div className="relative aspect-square overflow-hidden bg-muted">
-              {BUSINESS_INFO.map.embedUrl ? (
-                <iframe
-                  src={BUSINESS_INFO.map.embedUrl}
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                  title="Bhagyalakshmi Future Gold location on Google Maps"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                  <MapPin className="h-8 w-8 mb-2" />
-                  <span className="text-sm font-sans">
-                    {tAbout("mapFallbackCity")}
-                  </span>
-                  <span className="text-xs font-sans mt-1">
-                    {tAbout("mapFallbackState")}
-                  </span>
-                </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
       </section>

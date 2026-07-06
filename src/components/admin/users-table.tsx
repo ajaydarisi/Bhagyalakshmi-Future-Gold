@@ -124,7 +124,7 @@ function ActionsCell({
         title={isBanned ? "Enable user" : "Disable user"}
       >
         {isBanned ? (
-          <ShieldCheck className="h-4 w-4 text-green-600" />
+          <ShieldCheck className="h-4 w-4 text-[var(--bfg-success)]" />
         ) : (
           <ShieldBan className="h-4 w-4 text-yellow-600" />
         )}

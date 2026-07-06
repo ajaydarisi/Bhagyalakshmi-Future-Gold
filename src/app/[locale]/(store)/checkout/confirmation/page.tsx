@@ -49,18 +49,24 @@ export default async function ConfirmationPage({
 
   return (
     <div className="container mx-auto px-4 py-16">
-      <div className="mx-auto max-w-2xl text-center">
+      <div className="mx-auto max-w-2xl text-center bfg-animate">
         <div className="mb-6 flex justify-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-950">
-            <CheckCircle className="h-10 w-10 text-green-600" />
+          <div
+            className="flex h-24 w-24 items-center justify-center rounded-full text-[var(--ivory-50)]"
+            style={{ background: "var(--grad-gold)", boxShadow: "var(--shadow-gold)" }}
+          >
+            <CheckCircle className="h-11 w-11" strokeWidth={1.7} />
           </div>
         </div>
-        <h1 className="text-3xl font-bold">{t("title")}</h1>
-        <p className="mt-2 text-muted-foreground">
+        <span className="bfg-ornament justify-center">
+          <span className="bfg-eyebrow">{t("metaTitle")}</span>
+        </span>
+        <h1 className="mt-3 font-display text-4xl text-text-primary">{t("title")}</h1>
+        <p className="mt-2 text-text-secondary">
           {t("description")}
         </p>
 
-        <Card className="mt-8 text-left">
+        <Card className="mt-8 text-left border-[var(--border-gold)] shadow-[var(--shadow-md)]">
           <CardContent className="p-6 space-y-4">
             <div className="flex justify-between">
               <div>
@@ -86,13 +92,27 @@ export default async function ConfirmationPage({
                   quantity: number;
                   unit_price: number;
                   total_price: number;
+                  is_rental: boolean;
+                  rental_start: string | null;
+                  rental_end: string | null;
                 }>).map(
                   (item) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span>
-                        {item.product_name} x {item.quantity}
-                      </span>
-                      <span>{formatPrice(item.total_price)}</span>
+                    <div key={item.id} className="text-sm">
+                      <div className="flex justify-between">
+                        <span>
+                          {item.product_name} x {item.quantity}
+                        </span>
+                        <span>{formatPrice(item.total_price)}</span>
+                      </div>
+                      {item.is_rental && item.rental_start && item.rental_end && (
+                        <p className="text-xs text-text-gold">
+                          {t("rentalPeriod", {
+                            start: formatDate(item.rental_start),
+                            end: formatDate(item.rental_end),
+                          })}{" "}
+                          · {t("returnBy", { date: formatDate(item.rental_end) })}
+                        </p>
+                      )}
                     </div>
                   )
                 )}
@@ -107,7 +127,7 @@ export default async function ConfirmationPage({
                 <span>{formatPrice(order.subtotal)}</span>
               </div>
               {order.discount_amount > 0 && (
-                <div className="flex justify-between text-green-600">
+                <div className="flex justify-between text-[var(--bfg-success)]">
                   <span>{t("discount")}</span>
                   <span>-{formatPrice(order.discount_amount)}</span>
                 </div>
@@ -150,14 +170,14 @@ export default async function ConfirmationPage({
           </CardContent>
         </Card>
 
-        <div className="mt-8 flex justify-center gap-4">
-          <Button asChild>
+        <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+          <Button variant="gold" size="bfg-md" asChild>
             <Link href={ROUTES.accountOrders}>
               <Package className="mr-2 h-4 w-4" />
               {t("viewOrders")}
             </Link>
           </Button>
-          <Button variant="outline" asChild>
+          <Button variant="gold-outline" size="bfg-md" asChild>
             <Link href={ROUTES.products}>
               {t("continueShopping")}
               <ArrowRight className="ml-2 h-4 w-4" />

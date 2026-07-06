@@ -1,9 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
+import { format } from "date-fns";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { CheckAvailabilityButton } from "@/components/products/check-availability-button";
+import { RentalDatesDialog } from "@/components/products/rental-dates-dialog";
+import { isRentalOnlyProduct } from "@/lib/product-pricing";
 import { PriceDisplay } from "@/components/shared/price-display";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useWishlist } from "@/hooks/use-wishlist";
@@ -11,7 +15,7 @@ import { useCart } from "@/hooks/use-cart";
 import { toast } from "sonner";
 import { Heart, ShoppingBag, Trash2 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
-import { getProductName } from "@/lib/i18n-helpers";
+import { getCategoryName, getProductName } from "@/lib/i18n-helpers";
 import { getWishlistPrimaryActionMode } from "@/lib/offline-store-ui";
 import { useLocale, useTranslations } from "next-intl";
 import type { ProductWithCategory } from "@/types/product";
@@ -30,6 +34,8 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
   const locale = useLocale();
   const { items, isLoading, removeItem } = useWishlist();
   const { addItem } = useCart();
+  // Rental-only products need a rental period before moving to the cart.
+  const [rentalProduct, setRentalProduct] = useState<ProductWithCategory | null>(null);
 
   const { data: products = initialProducts } = useQuery({
     queryKey: queryKeys.wishlist.products(userId),
@@ -46,7 +52,7 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
   if (wishlistedProducts.length === 0) {
     return (
       <EmptyState
-        icon={<Heart className="h-16 w-16" />}
+        icon={<Heart className="h-8 w-8" strokeWidth={1.7} />}
         title={t("empty")}
         description={t("emptyDescription")}
         actionLabel={t("browseProducts")}
@@ -55,8 +61,11 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
     );
   }
 
-  async function handleMoveToCart(product: ProductWithCategory) {
-    await addItem(product, 1);
+  async function handleMoveToCart(
+    product: ProductWithCategory,
+    rental?: { start: string; end: string },
+  ) {
+    await addItem(product, 1, rental);
     await removeItem(product.id);
     hapticNotification("success");
     toast.success(`${getProductName(product, locale)} moved to cart`);
@@ -66,11 +75,16 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
     <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {wishlistedProducts.map((product) => {
         const displayName = getProductName(product, locale);
+        const initials = (displayName || "BFG").split(" ").slice(0, 2).map((w) => w[0]).join("");
         return (
-          <div key={product.id} className="group rounded-lg border p-4">
+          <div
+            key={product.id}
+            className="group flex flex-col overflow-hidden rounded-[var(--radius-card)] border bg-surface-card shadow-[var(--shadow-sm)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--border-gold)] hover:shadow-[var(--shadow-lg)]"
+            style={{ borderColor: "var(--border-sand)" }}
+          >
             <Link
               href={ROUTES.product(product.slug)}
-              className="relative block aspect-square overflow-hidden rounded-md bg-muted"
+              className="relative block aspect-4/5 overflow-hidden bg-sand-200"
             >
               {product.images[0] ? (
                 <Image
@@ -78,37 +92,47 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
                   alt={displayName}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  className="object-cover"
+                  className="object-cover transition-transform duration-700 ease-[var(--ease-out)] group-hover:scale-[1.06]"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-muted-foreground">
-                  {t("noImage")}
+                <div className="absolute inset-0 grid place-items-center" style={{ background: "var(--grad-gold-soft)" }}>
+                  <span className="bfg-foil font-display font-bold" style={{ fontSize: "2.4rem", letterSpacing: "0.06em", opacity: 0.9 }}>
+                    {initials}
+                  </span>
                 </div>
               )}
             </Link>
-            <div className="mt-3">
+            <div className="flex flex-1 flex-col gap-2 p-4">
+              {product.category && (
+                <span className="text-2xs uppercase tracking-[0.1em] text-text-gold">
+                  {getCategoryName(product.category, locale)}
+                </span>
+              )}
               <Link
                 href={ROUTES.product(product.slug)}
-                className="font-medium hover:text-primary"
+                className="line-clamp-2 font-body text-base font-semibold leading-snug text-text-primary transition-colors hover:text-text-gold"
               >
                 {displayName}
               </Link>
-              <div className="mt-1">
-                <PriceDisplay
-                  price={product.is_sale ? product.price : (product.rental_price ?? product.price)}
-                  discountPrice={product.is_sale ? product.discount_price : product.rental_discount_price}
-                  size="sm"
-                />
-              </div>
-              <div className="mt-3 flex gap-2">
+              <PriceDisplay
+                price={product.is_sale ? product.price : (product.rental_price ?? product.price)}
+                discountPrice={product.is_sale ? product.discount_price : product.rental_discount_price}
+                size="sm"
+              />
+              <div className="mt-auto flex items-center gap-2 pt-2">
                 {primaryActionMode === "move-to-cart" ? (
                   <Button
-                    size="sm"
+                    variant="gold"
+                    size="bfg-sm"
                     className="flex-1"
-                    onClick={() => handleMoveToCart(product)}
+                    onClick={() =>
+                      isRentalOnlyProduct(product)
+                        ? setRentalProduct(product)
+                        : handleMoveToCart(product)
+                    }
                     disabled={product.stock === 0}
                   >
-                    <ShoppingBag className="mr-1 h-3 w-3" />
+                    <ShoppingBag className="mr-1 h-3.5 w-3.5" />
                     {product.stock === 0 ? t("outOfStock") : t("moveToCart")}
                   </Button>
                 ) : (
@@ -121,21 +145,42 @@ export function WishlistContent({ initialProducts, userId }: WishlistContentProp
                   />
                 )}
                 <Button
-                  size="sm"
-                  variant="outline"
+                  variant="gold-outline"
+                  size="bfg-sm"
+                  className="shrink-0 px-3"
+                  aria-label={t("removeFromWishlist")}
                   onClick={() => {
                     hapticNotification("warning");
                     removeItem(product.id);
                     toast.success(t("removed"));
                   }}
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
           </div>
         );
       })}
+      {rentalProduct && (
+        <RentalDatesDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setRentalProduct(null);
+          }}
+          maxRentalDays={rentalProduct.max_rental_days}
+          productId={rentalProduct.id}
+          confirmLabel={t("moveToCart")}
+          confirmIcon={<ShoppingBag className="mr-2 h-4 w-4" />}
+          onConfirm={(start, end) => {
+            void handleMoveToCart(rentalProduct, {
+              start: format(start, "yyyy-MM-dd"),
+              end: format(end, "yyyy-MM-dd"),
+            });
+            setRentalProduct(null);
+          }}
+        />
+      )}
     </div>
   );
 }

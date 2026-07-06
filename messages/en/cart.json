@@ -11,8 +11,10 @@
   "free": "Free",
   "total": "Total",
   "freeShippingMessage": "Add {amount} more for free shipping",
+  "freeShippingUnlocked": "You've unlocked free shipping!",
   "proceedToCheckout": "Proceed to Checkout",
   "continueShopping": "Continue Shopping",
+  "rentalPeriod": "Rental: {start} – {end} ({days, plural, one {# day} other {# days}})",
   "checkout": {
     "selectAddress": "Select Address",
     "addNew": "Add New",
@@ -74,7 +76,8 @@
       "update": "Update Address",
       "add": "Add Address",
       "cancel": "Cancel"
-    }
+    },
+    "backToCart": "Back to Cart"
   },
   "confirmation": {
     "metaTitle": "Order Confirmed",
@@ -90,6 +93,12 @@
     "total": "Total",
     "shippingAddress": "Shipping Address",
     "viewOrders": "View Orders",
-    "continueShopping": "Continue Shopping"
-  }
+    "continueShopping": "Continue Shopping",
+    "rentalPeriod": "Rental: {start} – {end}",
+    "returnBy": "Return by {date}"
+  },
+  "sheetTitle": "Cart ({count})",
+  "emptySparkle": "Add some sparkle to your cart!",
+  "checkoutCta": "Checkout",
+  "viewCart": "View Cart"
 }

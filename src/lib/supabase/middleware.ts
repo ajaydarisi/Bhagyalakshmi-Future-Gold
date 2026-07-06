@@ -56,17 +56,18 @@ export async function updateSession(
     }
   );
 
-  // Use getUser() to verify the token with Supabase server.
-  // getSession() only reads from cookies without verification, which can
-  // cause stale/expired sessions to appear valid and break auth flows.
-  // Wrapped in try-catch so network failures or Supabase downtime degrade
-  // gracefully (guest state) instead of crashing the entire request with 500.
-  let user = null;
+  // Use getClaims() to verify the token. With asymmetric JWT signing keys this
+  // verifies the JWT locally (no network round-trip to the auth server), which
+  // runs on every request via the middleware matcher. It still verifies the
+  // signature — unlike getSession(), which only reads cookies unverified.
+  // Wrapped in try-catch so any failure degrades gracefully (guest state)
+  // instead of crashing the entire request with 500.
+  let user: { id: string } | null = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getClaims();
+    if (data?.claims?.sub) user = { id: data.claims.sub };
   } catch {
-    // Network error or Supabase unreachable — treat as unauthenticated
+    // Verification failed or Supabase unreachable — treat as unauthenticated
   }
 
   const { pathname } = request.nextUrl;

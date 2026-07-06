@@ -4,6 +4,7 @@
     "allProducts": "All Products",
     "rentals": "Rentals",
     "about": "About",
+    "visit": "Visit",
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "myProfile": "My Profile",
@@ -42,7 +43,8 @@
     "visitOurStore": "Visit Our Store",
     "brandDescription": "Quality-checked fashion jewellery from Chirala.",
     "allRightsReserved": "All rights reserved.",
-    "poweredBy": "Powered by"
+    "poweredBy": "Powered by",
+    "whatsapp": "Chat on WhatsApp"
   },
   "notFound": {
     "title": "Page Not Found",
@@ -56,5 +58,8 @@
   "breadcrumbHome": "Home",
   "appName": "Bhagyalakshmi Future Gold",
   "signedOut": "Signed out successfully",
-  "discountOff": "{discount}% OFF"
+  "discountOff": "{discount}% OFF",
+  "offline": "You're offline. Some features may be unavailable.",
+  "toggleTheme": "Toggle theme",
+  "photoComingSoon": "Photo coming soon"
 }

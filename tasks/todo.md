@@ -1,31 +1,49 @@
-# Follow-up: storage lockdown, leaked-password UX, design tokenization
+# Task Log
 
-## (a) Storage bucket listing lockdown — DONE
-- [x] migration 010: drop broad public SELECT policies on product-images & public-downloads
-- [x] applied to BFG Prod + verified (0 listing policies, 2 public buckets, advisor warnings cleared)
-- [x] update canonical storage.sql
+## Dedicated Rental Flow (v2) — DONE 2026-07-03
 
-## (b) Leaked-password protection — CODE DONE / TOGGLE PENDING
-- [x] signup-form: map weak_password error -> friendly localized message
-- [x] reset-password-form: same
-- [x] add i18n keys (en/te)
-- [ ] (MANUAL, user) enable Dashboard toggle: Auth -> Policies -> "Leaked password protection"
-- note: in-app change-password uses admin updateUserById (service role) which
-  bypasses HIBP by design (it verifies the current password first); signup +
-  reset (user-session updateUser) are the covered paths.
+Design approved 2026-07-02 (D1 allow mixed carts · D2 sale/rental flags mutually exclusive · D3 daily pricing · D4 deposit out of scope · D5 booked→active→returned, overdue derived · D6 extensions/late fees out of scope).
 
-## (c) Design tokenization + contrast — DONE
-- [x] --gold-rgb / --gold-deep-rgb tokens; hardcoded gold replaced in wedding-hero(+pattern), zero visual change
-- [x] light muted-foreground 0.50 -> 0.44 for WCAG AA on small secondary text
+### Implementation
+- [x] Migration 011/012: rental order fields, increment_product_stock RPC, self-block fix in getBookedRanges
+- [x] productSchema: is_sale/is_rental mutually exclusive (rental never sold)
+- [x] lib/rental-availability.ts: getBookedRanges, maxConcurrentBooked (per-day peak), isRentalOverdue, countsAsBooked
+- [x] createOrder: availability check per rental line + order_type + rental pricing
+- [x] verifyPayment + webhook: pending→paid as fulfillment lock; rental lines skip stock; rental_status='booked'; coupon increment
+- [x] updateOrderStatus: guards + delivered→active, cancelled/refunded restore sale stock via RPC
+- [x] markRentalReturned admin action
+- [x] GET /api/rentals/availability + RentalDatesDialog
+- [x] Admin UI for rentals, customer order views, i18n
+- [x] tests/rental-logic-check.ts
 
-## Review
-- Migrations 008, 009 (DB-only), 010 applied to BFG Prod; all advisor ERROR-level
-  and function/storage findings resolved.
-- Remaining advisor items (none blocking):
-  - leaked-password protection: needs the manual Dashboard toggle (code ready).
-  - extension `vector` in public schema: invasive to move; left as-is.
-  - order_status_history INSERT `WITH CHECK (true)`: minor, candidate for a future tighten.
-  - rls_enabled_no_policy (coupons/feedback/notifications/catalog_retrieval_documents/health): intentional (service-role-only tables).
-- Code deployed to prod via main (Vercel).
-- Verification: tsc clean, eslint clean, auth JSON valid.
-</content>
+### Review / evidence
+- tsc clean; eslint clean.
+- tests pass. Live checks on Prod.
+- Accepted: concurrent checkout race (pre-payment); soft-holds via pending.
+
+## Follow-up: storage lockdown, leaked-password UX, design tokenization + security (2026-07)
+
+### (a) Storage bucket listing lockdown — DONE
+- [x] migrations 008-010: drop broad public SELECT policies on product-images & public-downloads; storage.sql update
+- [x] applied to BFG Prod + verified
+
+### (b) Leaked-password protection — CODE DONE / TOGGLE PENDING
+- [x] signup-form + reset-password-form: map weak_password error -> friendly message + i18n
+- [ ] (MANUAL) enable in Supabase Dashboard Auth policies
+
+### (c) Design tokenization + contrast — DONE
+- [x] gold rgb tokens, muted-foreground contrast
+
+### (d) Security hardening follow-ups (RLS, RPCs, admin auth, payment binding)
+- [x] requireAdmin() extracted + used on all admin actions + ai routes
+- [x] device token binding to session only
+- [x] payment verify uses tx lookup + ownership check
+- [x] search_path pinned on functions; RLS tweaks; new RPCs (increment stock)
+- [x] migrations 008_security_hardening, 009_followup, 010_storage
+
+### Review
+- Migrations applied; advisor items addressed.
+- tsc / eslint clean.
+
+## Notes
+- See also CLAUDE.md, tasks/codebase-analysis.md for ongoing items.

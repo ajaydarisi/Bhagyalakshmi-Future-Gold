@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored design-system reference export (own runtime/bundle — not app code).
+    "bfg-design-system/**",
+    // Design handoff prototype (standalone JSX mockups — not app code).
+    "design_handoff_mobile_storefront/**",
   ]),
 ]);
 

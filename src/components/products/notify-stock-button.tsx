@@ -23,23 +23,26 @@ export function NotifyStockButton({ productId }: NotifyStockButtonProps) {
   const t = useTranslations("products.detail");
 
   useEffect(() => {
-    if (!user) {
-      setChecking(false);
-      return;
-    }
+    // Only a logged-in user has an alert to look up. The guest case is handled
+    // by the render gate below, so no state is set synchronously in the effect.
+    if (!user) return;
 
-    async function checkAlert() {
+    let active = true;
+    (async () => {
       const { data } = await supabase
         .from("stock_alerts")
         .select("id")
         .eq("product_id", productId)
-        .eq("user_id", user!.id)
+        .eq("user_id", user.id)
         .maybeSingle();
+      if (!active) return;
       setSubscribed(!!data);
       setChecking(false);
-    }
+    })();
 
-    checkAlert();
+    return () => {
+      active = false;
+    };
   }, [user, productId, supabase]);
 
   async function handleToggle() {
@@ -79,7 +82,9 @@ export function NotifyStockButton({ productId }: NotifyStockButtonProps) {
     setLoading(false);
   }
 
-  if (isLoading || checking) return null;
+  // Block render only while an actively-checking logged-in user's lookup is in flight.
+  // Guests (no user) fall straight through to the button (which routes them to login).
+  if (isLoading || (user && checking)) return null;
 
   return (
     <Button

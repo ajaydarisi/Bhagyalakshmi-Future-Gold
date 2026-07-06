@@ -10,17 +10,28 @@ values ('product-images', 'product-images', true);
 --    A broad SELECT policy is intentionally omitted so anonymous clients
 --    cannot enumerate/list every file in the bucket. See migration 010.
 
--- 3. Allow authenticated users to upload product images
-create policy "Authenticated users can upload product images"
+-- 3. Only admins may upload product images. Uploads run under the admin's
+--    authenticated session (lib/supabase/storage.ts), so gate on profiles.role
+--    — a plain 'authenticated' check let any customer overwrite/delete photos.
+create policy "Admins can upload product images"
 on storage.objects for insert
-with check (bucket_id = 'product-images' and auth.role() = 'authenticated');
+with check (
+  bucket_id = 'product-images'
+  and exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+);
 
--- 4. Allow authenticated users to update product images
-create policy "Authenticated users can update product images"
+-- 4. Only admins may update product images
+create policy "Admins can update product images"
 on storage.objects for update
-using (bucket_id = 'product-images' and auth.role() = 'authenticated');
+using (
+  bucket_id = 'product-images'
+  and exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+);
 
--- 5. Allow authenticated users to delete product images
-create policy "Authenticated users can delete product images"
+-- 5. Only admins may delete product images
+create policy "Admins can delete product images"
 on storage.objects for delete
-using (bucket_id = 'product-images' and auth.role() = 'authenticated');
+using (
+  bucket_id = 'product-images'
+  and exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+);

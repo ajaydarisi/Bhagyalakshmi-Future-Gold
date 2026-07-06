@@ -3,15 +3,17 @@
 import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 export function ShopImage({ src, alt }: { src: string; alt: string }) {
   const [error, setError] = useState(false);
+  const t = useTranslations();
 
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-muted text-muted-foreground">
         <ImageIcon className="h-8 w-8 mb-2" />
-        <span className="text-xs">Photo coming soon</span>
+        <span className="text-xs">{t("photoComingSoon")}</span>
       </div>
     );
   }

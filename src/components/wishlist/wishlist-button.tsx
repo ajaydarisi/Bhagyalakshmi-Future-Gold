@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { useWishlist } from "@/hooks/use-wishlist";
@@ -13,35 +13,68 @@ import { ROUTES } from "@/lib/constants";
 import { trackEvent } from "@/lib/gtag";
 import { hapticImpact, hapticSelection } from "@/lib/haptics";
 
-const PARTICLES = [
-  "animate-[heart-float-1_0.6s_ease-out_forwards]",
-  "animate-[heart-float-2_0.5s_ease-out_0.05s_forwards]",
-  "animate-[heart-float-3_0.7s_ease-out_0.1s_forwards]",
-  "animate-[heart-float-4_0.55s_ease-out_0.08s_forwards]",
-  "animate-[heart-float-5_0.65s_ease-out_0.03s_forwards]",
+const SPARKLES = [
+  { left: "16%", top: "20%", delay: "0s" },
+  { left: "82%", top: "30%", delay: "0.08s" },
+  { left: "74%", top: "78%", delay: "0.14s" },
+  { left: "22%", top: "72%", delay: "0.05s" },
 ];
 
 interface WishlistButtonProps {
   productId: string;
   variant?: "icon" | "default";
+  /** Diameter in px for the floating icon variant. */
+  size?: number;
 }
 
-export function WishlistButton({
-  productId,
-  variant = "default",
-}: WishlistButtonProps) {
+/** Celebratory gold sparkle burst, retriggered via `key`. */
+function Sparkles({ size }: { size: number }) {
+  return (
+    <>
+      {SPARKLES.map((p, i) => (
+        <span
+          key={i}
+          aria-hidden
+          className="pointer-events-none absolute rounded-full"
+          style={{
+            left: p.left,
+            top: p.top,
+            width: Math.max(3, size * 0.07),
+            height: Math.max(3, size * 0.07),
+            background: "var(--gold-400)",
+            animation: `bfg-twinkle 0.7s var(--ease-out) ${p.delay} infinite`,
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
+export function WishlistButton({ productId, variant = "default", size = 40 }: WishlistButtonProps) {
   const { isInWishlist, addItem, removeItem } = useWishlist();
   const { isLoggedIn } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations("wishlist");
   const isWishlisted = isInWishlist(productId);
-  const [showParticles, setShowParticles] = useState(false);
+  const [burst, setBurst] = useState(0);
+  const [showSparkles, setShowSparkles] = useState(false);
+  const sparkleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const triggerParticles = useCallback(() => {
-    setShowParticles(true);
-    setTimeout(() => setShowParticles(false), 700);
+  // Blink the gold dots on wishlist, then remove them after 3s.
+  const triggerBurst = useCallback(() => {
+    setBurst((b) => b + 1);
+    setShowSparkles(true);
+    if (sparkleTimer.current) clearTimeout(sparkleTimer.current);
+    sparkleTimer.current = setTimeout(() => setShowSparkles(false), 1000);
   }, []);
+
+  useEffect(
+    () => () => {
+      if (sparkleTimer.current) clearTimeout(sparkleTimer.current);
+    },
+    []
+  );
 
   async function handleToggle() {
     if (!isLoggedIn) {
@@ -57,57 +90,63 @@ export function WishlistButton({
       toast.success(t("removed"));
     } else {
       hapticImpact("medium");
-      triggerParticles();
+      triggerBurst();
       await addItem(productId);
       trackEvent("add_to_wishlist", { item_id: productId });
       toast.success(t("added"));
     }
   }
 
+  const heart = (
+    <Heart
+      key={burst}
+      strokeWidth={1.7}
+      className={cn(
+        "transition-colors",
+        isWishlisted ? "fill-maroon-500 text-maroon-500" : "text-stone-600"
+      )}
+      style={burst ? { animation: "bfg-heart-pop 0.42s var(--ease-out)" } : undefined}
+    />
+  );
+
   if (variant === "icon") {
     return (
       <button
+        type="button"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           handleToggle();
         }}
-        className="relative rounded-full p-2 border border-transparent hover:border-red-500"
         aria-label={isWishlisted ? t("removeFromWishlist") : t("addToWishlist")}
+        aria-pressed={isWishlisted}
+        className="relative inline-flex items-center justify-center rounded-full border transition-transform active:scale-90"
+        style={{
+          width: size,
+          height: size,
+          background: "rgb(252 250 246 / 0.9)",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+          boxShadow: "var(--shadow-sm)",
+          borderColor: "var(--border-sand)",
+        }}
       >
-        <Heart
-          className={cn(
-            "h-5 w-5 transition-colors",
-            isWishlisted
-              ? "fill-red-500 text-red-500 animate-[heart-pop_0.3s_ease-out]"
-              : "text-red-500"
-          )}
-        />
-        {showParticles && PARTICLES.map((anim, i) => (
-          <Heart
-            key={i}
-            className={cn("pointer-events-none absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 fill-red-500 text-red-500", anim)}
-          />
-        ))}
+        <span className="flex h-full w-full items-center justify-center [&>svg]:size-[46%] [&>svg]:min-h-[18px] [&>svg]:min-w-[18px]">{heart}</span>
+        {isWishlisted && showSparkles && <Sparkles key={`s${burst}`} size={size} />}
       </button>
     );
   }
 
   return (
-    <Button variant="outline" size="lg" onClick={handleToggle} className="relative overflow-visible">
-      <Heart
-        className={cn(
-          "mr-2 h-4 w-4 transition-colors",
-          isWishlisted && "fill-red-500 text-red-500 animate-[heart-pop_0.3s_ease-out]"
-        )}
-      />
+    <Button
+      variant="gold-outline"
+      size="bfg-md"
+      onClick={handleToggle}
+      iconLeft={<span className="[&>svg]:size-4">{heart}</span>}
+      className="relative overflow-visible"
+    >
       {isWishlisted ? t("buttoned") : t("button")}
-      {showParticles && PARTICLES.map((anim, i) => (
-        <Heart
-          key={i}
-          className={cn("pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 fill-red-500 text-red-500", anim)}
-        />
-      ))}
+      {isWishlisted && showSparkles && <Sparkles key={`s${burst}`} size={28} />}
     </Button>
   );
 }

@@ -14,7 +14,7 @@ export default async function AdminCouponsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold md:text-3xl">Coupons</h1>
+      <h1 className="font-display text-3xl text-text-primary md:text-4xl">Coupons</h1>
       <CouponsManager coupons={coupons ?? []} />
     </div>
   );

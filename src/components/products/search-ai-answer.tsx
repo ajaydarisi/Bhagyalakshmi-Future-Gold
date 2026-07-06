@@ -91,7 +91,7 @@ export function SearchAiAnswer({ query, locale }: SearchAiAnswerProps) {
                       <Link
                         key={citation.sourceKey}
                         href={citation.href}
-                        className="rounded-full border px-3 py-1 text-sm hover:border-primary hover:text-primary"
+                        className="rounded-full border px-3 py-1 text-sm hover:border-[var(--border-gold)] hover:text-text-gold"
                       >
                         {citation.title}
                       </Link>

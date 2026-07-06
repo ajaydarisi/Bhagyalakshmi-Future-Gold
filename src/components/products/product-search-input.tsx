@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useProductSearchSuggestions } from "@/hooks/use-product-search-suggestions";
 import { cn } from "@/lib/utils";
 import { Search, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { ProductSearchSuggestions } from "./product-search-suggestions";
 import type { ProductSearchHit } from "@/types/search";
@@ -29,6 +30,7 @@ export function ProductSearchInput({
   className,
   inputClassName,
 }: ProductSearchInputProps) {
+  const t = useTranslations("search");
   const [isFocusWithin, setIsFocusWithin] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const suggestions = useProductSearchSuggestions({
@@ -150,7 +152,7 @@ export function ProductSearchInput({
             closeSuggestions();
             onQueryChange("");
           }}
-          aria-label="Clear search"
+          aria-label={t("clearSearch")}
           className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
         >
           <X className="h-4 w-4" />

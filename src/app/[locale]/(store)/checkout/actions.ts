@@ -1,11 +1,31 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createRazorpayClient } from "@/lib/razorpay/client";
 import { verifyRazorpaySignature } from "@/lib/razorpay/verify";
 import { generateOrderNumber } from "@/lib/formatters";
+import {
+  getCartLineUnitPrice,
+  getRentalDays,
+  isRentalOnlyProduct,
+} from "@/lib/product-pricing";
+import { getBookedRanges, maxConcurrentBooked } from "@/lib/rental-availability";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST, STORE_MODE } from "@/lib/constants";
+
+type CheckoutProduct = {
+  id: string;
+  name: string;
+  images: string[];
+  stock: number;
+  price: number;
+  discount_price: number | null;
+  is_sale: boolean;
+  is_rental: boolean;
+  rental_price: number | null;
+  rental_discount_price: number | null;
+  max_rental_days: number | null;
+};
 
 export async function createOrder(
   addressId: string,
@@ -15,16 +35,14 @@ export async function createOrder(
   const supabase = await createClient();
   const admin = createAdminClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) throw new Error("Not authenticated");
 
   // Get cart items and shipping address in parallel
   const [{ data: cartItems }, { data: address }] = await Promise.all([
     supabase
       .from("cart_items")
-      .select("quantity, product:products(*)")
+      .select("quantity, rental_start, rental_end, product:products(*)")
       .eq("user_id", user.id),
     supabase
       .from("addresses")
@@ -40,21 +58,74 @@ export async function createOrder(
 
   if (!address) throw new Error("Address not found");
 
-  // Validate stock
+  // Validate stock and rental periods.
+  // ponytail: stock and coupon usage are validated here at order creation but
+  // only committed at payment (decrement_product_stock / increment_coupon_usage).
+  // Two concurrent last-unit checkouts can both pass this check, so a single-unit
+  // oversell — or a coupon discount granted past max_uses — is possible. The RPCs
+  // cap the counters (stock never goes negative, used_count never exceeds
+  // max_uses), so the residual is a paid order without its decrement/one extra
+  // discounted order. Full fix: reserve stock + coupon usage at order creation in
+  // one transaction. Tracked as accepted debt.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   for (const item of cartItems) {
-    const product = item.product as unknown as { stock: number; name: string };
+    const product = item.product as unknown as CheckoutProduct;
     if (product.stock < item.quantity) {
       throw new Error(`${product.name} is out of stock`);
     }
+    if (isRentalOnlyProduct(product)) {
+      if (!item.rental_start || !item.rental_end) {
+        throw new Error(`Please select rental dates for ${product.name}`);
+      }
+      const start = new Date(item.rental_start);
+      const end = new Date(item.rental_end);
+      if (end < start) {
+        throw new Error(`Invalid rental dates for ${product.name}`);
+      }
+      if (start < today) {
+        throw new Error(
+          `Rental start date for ${product.name} has passed — please update it in your cart`
+        );
+      }
+      const days = getRentalDays(item.rental_start, item.rental_end);
+      if (product.max_rental_days && days > product.max_rental_days) {
+        throw new Error(
+          `${product.name} can be rented for at most ${product.max_rental_days} days`
+        );
+      }
+
+      // Availability: units booked by confirmed orders on any overlapping day
+      // must leave room for this line. Other buyers' recent pending orders act
+      // as soft holds, but the caller's own pending orders are excluded so a
+      // retried checkout isn't blocked by its own abandoned attempt.
+      const ranges = await getBookedRanges(
+        admin,
+        product.id,
+        item.rental_start,
+        user.id
+      );
+      const peak = maxConcurrentBooked(ranges, item.rental_start, item.rental_end);
+      if (peak + item.quantity > product.stock) {
+        throw new Error(
+          `${product.name} is not available for the selected dates — please choose a different period`
+        );
+      }
+    }
   }
 
-  // Calculate subtotal
+  const hasRental = cartItems.some((item) =>
+    isRentalOnlyProduct(item.product as unknown as CheckoutProduct)
+  );
+  const hasSale = cartItems.some(
+    (item) => !isRentalOnlyProduct(item.product as unknown as CheckoutProduct)
+  );
+  const orderType = hasRental ? (hasSale ? "mixed" : "rental") : "sale";
+
+  // Calculate subtotal — rental-only items are priced at rental price/day × days
   const subtotal = cartItems.reduce((sum, item) => {
-    const product = item.product as unknown as {
-      price: number;
-      discount_price: number | null;
-    };
-    const price = product.discount_price || product.price;
+    const product = item.product as unknown as CheckoutProduct;
+    const price = getCartLineUnitPrice(product, item.rental_start, item.rental_end);
     return sum + price * item.quantity;
   }, 0);
 
@@ -63,6 +134,8 @@ export async function createOrder(
   let couponId: string | null = null;
 
   if (couponCode) {
+    // Coupons table has no public read policy (service-role only). Validate
+    // server-side with admin client.
     const { data: coupon } = await admin
       .from("coupons")
       .select("*")
@@ -91,6 +164,10 @@ export async function createOrder(
     }
   }
 
+  // Never let a fixed-amount coupon exceed the subtotal and push the charge
+  // negative — clamp the discount to the subtotal.
+  discountAmount = Math.min(discountAmount, subtotal);
+
   const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
   const total = subtotal - discountAmount + shippingCost;
 
@@ -102,6 +179,7 @@ export async function createOrder(
       order_number: orderNumber,
       user_id: user.id,
       status: "pending",
+      order_type: orderType,
       subtotal,
       shipping_cost: shippingCost,
       discount_amount: discountAmount,
@@ -128,16 +206,12 @@ export async function createOrder(
     .from("order_status_history")
     .insert({ order_id: order.id, status: "pending" });
 
-  // Create order items
+  // Create order items. For rentals unit_price is the whole rental period for
+  // one set, and rental_end doubles as the return-due date.
   const orderItems = cartItems.map((item) => {
-    const product = item.product as unknown as {
-      id: string;
-      name: string;
-      images: string[];
-      price: number;
-      discount_price: number | null;
-    };
-    const price = product.discount_price || product.price;
+    const product = item.product as unknown as CheckoutProduct;
+    const isRental = isRentalOnlyProduct(product);
+    const price = getCartLineUnitPrice(product, item.rental_start, item.rental_end);
     return {
       order_id: order.id,
       product_id: product.id,
@@ -146,6 +220,9 @@ export async function createOrder(
       quantity: item.quantity,
       unit_price: price,
       total_price: price * item.quantity,
+      is_rental: isRental,
+      rental_start: isRental ? item.rental_start : null,
+      rental_end: isRental ? item.rental_end : null,
     };
   });
 
@@ -171,10 +248,8 @@ export async function createOrder(
     status: "created",
   });
 
-  // Increment coupon usage
-  if (couponId) {
-    await admin.rpc("increment_coupon_usage" as never, { coupon_id: couponId } as never);
-  }
+  // Coupon usage is incremented only when the order is actually paid (see
+  // verifyPayment / webhook), so abandoned checkouts don't consume a use.
 
   return {
     orderId: order.id,
@@ -193,9 +268,7 @@ export async function verifyPayment(
   if (STORE_MODE === "OFFLINE") throw new Error("Store is currently offline");
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
   if (!user) throw new Error("Not authenticated");
 
   const admin = createAdminClient();
@@ -213,14 +286,14 @@ export async function verifyPayment(
 
   if (!transaction) throw new Error("Payment verification failed");
 
-  const { data: order } = await admin
+  const { data: orderRow } = await admin
     .from("orders")
     .select("id, user_id")
     .eq("id", transaction.order_id)
     .single();
 
   // The resolved order must match the claimed order and belong to the caller.
-  if (!order || order.id !== orderId || order.user_id !== user.id) {
+  if (!orderRow || orderRow.id !== orderId || orderRow.user_id !== user.id) {
     throw new Error("Payment verification failed");
   }
 
@@ -238,7 +311,7 @@ export async function verifyPayment(
     throw new Error("Payment verification failed");
   }
 
-  // Update payment transaction
+  // Update payment transaction (scoped to this Razorpay order)
   await admin
     .from("payment_transactions")
     .update({
@@ -248,41 +321,73 @@ export async function verifyPayment(
     })
     .eq("razorpay_order_id", razorpayOrderId);
 
-  // Update order status (only pending -> paid, idempotent)
-  await admin
+  // Update order status. The pending guard doubles as a fulfillment lock:
+  // if the Razorpay webhook already processed this payment, no row
+  // transitions and we skip the decrement/cart-clear so nothing runs twice.
+  const { data: transitioned } = await admin
     .from("orders")
     .update({ status: "paid" })
-    .eq("id", order.id)
-    .eq("status", "pending");
+    .eq("id", orderId)
+    .eq("status", "pending")
+    .select("user_id, order_type, coupon_id");
+
+  if (!transitioned || transitioned.length === 0) {
+    return { success: true };
+  }
+  const order = transitioned[0];
+  const resolvedOrderId = orderId;
 
   // Record paid status in history
   await admin
     .from("order_status_history")
-    .insert({ order_id: order.id, status: "paid" });
+    .insert({ order_id: resolvedOrderId, status: "paid" });
 
-  // Decrement stock
+  // Count coupon usage now that payment succeeded (atomic, enforces max_uses)
+  if (order.coupon_id) {
+    await admin.rpc("increment_coupon_usage" as never, {
+      coupon_id: order.coupon_id,
+    } as never);
+  }
+
   const { data: orderItems } = await admin
     .from("order_items")
-    .select("product_id, quantity")
-    .eq("order_id", order.id);
+    .select("product_id, quantity, is_rental")
+    .eq("order_id", resolvedOrderId);
 
+  // Rental lines never decrement stock — for rentals, stock is the rental
+  // capacity and availability is computed per period from booked orders.
   if (orderItems && orderItems.length > 0) {
     const items = orderItems
-      .filter((i) => i.product_id)
+      .filter((i) => i.product_id && !i.is_rental)
       .map((i) => ({ product_id: i.product_id, quantity: i.quantity }));
-    await admin.rpc("decrement_product_stock" as never, { items } as never);
+    if (items.length > 0) {
+      await admin.rpc("decrement_product_stock" as never, { items } as never);
+    }
+  }
+
+  // Rental lifecycle: paid rental orders start as "booked"
+  if (order.order_type !== "sale") {
+    await admin
+      .from("orders")
+      .update({ rental_status: "booked" })
+      .eq("id", resolvedOrderId);
   }
 
   // Clear user's cart
-  await admin.from("cart_items").delete().eq("user_id", order.user_id);
+  if (order.user_id) {
+    await admin
+      .from("cart_items")
+      .delete()
+      .eq("user_id", order.user_id);
+  }
 
   return { success: true };
 }
 
 export async function applyCoupon(code: string, subtotal: number) {
   if (STORE_MODE === "OFFLINE") throw new Error("Store is currently offline");
-  // Coupons are no longer publicly readable via RLS; validate server-side
-  // with the service-role client (requires knowing the exact code).
+  // Coupons table has no public read policy (service-role only). Validate
+  // server-side with admin client (caller must know the exact code).
   const admin = createAdminClient();
 
   const { data: coupon } = await admin

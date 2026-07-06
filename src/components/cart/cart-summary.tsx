@@ -26,18 +26,18 @@ export function CartSummary({ discount = 0, showShipping = true }: CartSummaryPr
   return (
     <div className="space-y-3">
       <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground">{t("subtotal")}</span>
+        <span className="text-text-secondary">{t("subtotal")}</span>
         <span>{formatPrice(subtotal)}</span>
       </div>
       {discount > 0 && (
-        <div className="flex justify-between text-sm text-green-600">
+        <div className="flex justify-between text-sm text-[var(--bfg-success)]">
           <span>{t("discount")}</span>
           <span>-{formatPrice(discount)}</span>
         </div>
       )}
       {showShipping && (
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">{t("shipping")}</span>
+          <span className="text-text-secondary">{t("shipping")}</span>
           <span>
             {subtotal === 0
               ? "-"
@@ -48,14 +48,14 @@ export function CartSummary({ discount = 0, showShipping = true }: CartSummaryPr
         </div>
       )}
       {showShipping && subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-text-gold">
           {t("freeShippingMessage", { amount: formatPrice(FREE_SHIPPING_THRESHOLD - subtotal) })}
         </p>
       )}
-      <Separator />
-      <div className="flex justify-between font-semibold">
-        <span>{t("total")}</span>
-        <span>{formatPrice(total)}</span>
+      <Separator className="bg-[var(--divider)]" />
+      <div className="flex items-baseline justify-between">
+        <span className="font-semibold text-text-primary">{t("total")}</span>
+        <span className="font-display text-2xl text-text-primary">{formatPrice(total)}</span>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
@@ -10,16 +10,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Token required" }, { status: 400 });
     }
 
-    // Always derive the user from the verified session — never trust a
-    // client-supplied userId, which would let a caller bind a device token
-    // to another user's account. Anonymous (pre-login) tokens are allowed
-    // and stored with a null user_id.
+    // Bind the token to the authenticated session user only. A client-supplied
+    // userId is NOT trusted — otherwise anyone could register their token under
+    // a victim's id and receive that victim's push notifications. No session
+    // means an anonymous device (user_id null).
+    // Always derive from the verified session (getAuthUser uses getClaims for perf).
     let resolvedUserId: string | null = null;
     try {
       const supabaseAuth = await createClient();
-      const {
-        data: { user },
-      } = await supabaseAuth.auth.getUser();
+      const user = await getAuthUser(supabaseAuth);
       if (user) resolvedUserId = user.id;
     } catch {
       // No session available, continue without user

@@ -118,7 +118,7 @@ export default function AddressesPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--gold-500)] border-t-transparent" />
       </div>
     );
   }
@@ -126,13 +126,13 @@ export default function AddressesPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{t("title")}</h2>
+        <h2 className="font-display text-2xl text-text-primary">{t("title")}</h2>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);
           if (!open) setEditingAddress(null);
         }}>
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button variant="gold" size="bfg-sm">
               <Plus className="mr-2 h-4 w-4" />
               {t("addAddress")}
             </Button>
@@ -157,7 +157,7 @@ export default function AddressesPage() {
 
       {addresses.length === 0 ? (
         <EmptyState
-          icon={<MapPin className="h-16 w-16" />}
+          icon={<MapPin className="h-8 w-8" strokeWidth={1.7} />}
           title={t("empty")}
           description={t("emptyDesc")}
         />
@@ -170,7 +170,7 @@ export default function AddressesPage() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{address.label}</span>
                     {address.is_default && (
-                      <Badge variant="secondary">{t("default")}</Badge>
+                      <Badge variant="gold" size="sm">{t("default")}</Badge>
                     )}
                   </div>
                   <div className="flex gap-1">
@@ -227,7 +227,7 @@ export default function AddressesPage() {
                   <Button
                     variant="link"
                     size="sm"
-                    className="mt-2 h-auto p-0"
+                    className="mt-2 h-auto p-0 text-text-gold"
                     onClick={() => handleSetDefault(address.id)}
                   >
                     {t("setDefault")}

@@ -78,8 +78,12 @@ export function getRentalDateConstraints(args: {
   return {
     endDateMin: args.startDate ?? today,
     endDateMax:
+      // maxRentalDays is an inclusive day count (getRentalDays counts the start
+      // day), so the last valid end date is start + (maxRentalDays - 1).
+      // Using maxRentalDays here would let the picker offer a period the
+      // checkout server then rejects with "can be rented for at most N days".
       args.startDate && args.maxRentalDays
-        ? addDays(args.startDate, args.maxRentalDays)
+        ? addDays(args.startDate, args.maxRentalDays - 1)
         : undefined,
   };
 }

@@ -3,9 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { productSchema, couponSchema } from "@/lib/validators";
+import { productSchema, couponSchema, categorySchema } from "@/lib/validators";
 import { generateSlug } from "@/lib/formatters";
-import { sendOrderStatusNotification } from "@/lib/notifications";
+import { ORDER_STATUS_TRANSITIONS, STOCK_HOLDING_STATUSES } from "@/lib/constants";
+import {
+  sendOrderStatusNotification,
+  sendProductNotification,
+} from "@/lib/notifications";
 import {
   removeProductRetrievalDocument,
   syncProductRetrievalDocument,
@@ -208,6 +212,14 @@ export async function updateProduct(id: string, formData: FormData) {
 
   const supabase = createAdminClient();
 
+  // Capture stock before the write so we can detect a 0 → in-stock restock and
+  // notify subscribers (see below).
+  const { data: prev } = await supabase
+    .from("products")
+    .select("stock")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("products")
     .update({ ...data, updated_at: new Date().toISOString() })
@@ -215,6 +227,12 @@ export async function updateProduct(id: string, formData: FormData) {
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Just came back in stock — notify users who subscribed via the notify-stock
+  // button. Fire-and-forget: a notification failure must not fail the save.
+  if (prev?.stock === 0 && data.stock > 0) {
+    sendProductNotification(id, "back_in_stock").catch(console.error);
   }
 
   let retrievalStatus: "ready" | "failed" = "ready";
@@ -298,6 +316,26 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
 
   const supabase = createAdminClient();
 
+  // Read the current status first: it gates the transition (below) and tells us
+  // whether the order was holding decremented stock that a cancel/refund releases.
+  const { data: current } = await supabase
+    .from("orders")
+    .select("status")
+    .eq("id", orderId)
+    .single();
+
+  if (!current) {
+    return { error: "Order not found" };
+  }
+
+  const from = current.status as string;
+  if (status === from) {
+    return { error: "Order is already in that status" };
+  }
+  if (!ORDER_STATUS_TRANSITIONS[from]?.includes(status)) {
+    return { error: `Cannot change order from ${from} to ${status}` };
+  }
+
   const { error } = await supabase
     .from("orders")
     .update({ status, updated_at: new Date().toISOString() })
@@ -305,6 +343,42 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Rental lifecycle: delivery puts the rental in the customer's hands
+  if (status === "delivered") {
+    await supabase
+      .from("orders")
+      .update({ rental_status: "active" })
+      .eq("id", orderId)
+      .neq("order_type", "sale");
+  }
+
+  // Restore stock when a paid order is cancelled/refunded. Only sale lines
+  // decrement on payment, so only they are re-incremented; rentals never touch
+  // stock. The transition guard lets an order enter a release state only once
+  // from a stock-holding state, so this runs exactly once — no need to track
+  // whether a restore already happened.
+  // ponytail: if concurrent multi-admin edits on one order ever become real,
+  // add a `stock_restored` boolean column to make the restore atomic.
+  if (
+    (status === "cancelled" || status === "refunded") &&
+    (STOCK_HOLDING_STATUSES as readonly string[]).includes(from)
+  ) {
+    const { data: orderItems } = await supabase
+      .from("order_items")
+      .select("product_id, quantity, is_rental")
+      .eq("order_id", orderId);
+
+    const items = (orderItems ?? [])
+      .filter((i) => i.product_id && !i.is_rental)
+      .map((i) => ({ product_id: i.product_id, quantity: i.quantity }));
+
+    if (items.length > 0) {
+      await supabase.rpc("increment_product_stock" as never, {
+        items,
+      } as never);
+    }
   }
 
   // Record status change in history
@@ -324,26 +398,57 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   return { success: true };
 }
 
+export async function markRentalReturned(orderId: string) {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("orders")
+    .update({ rental_status: "returned", updated_at: new Date().toISOString() })
+    .eq("id", orderId)
+    .neq("order_type", "sale")
+    .select("id");
+
+  if (error) {
+    return { error: error.message };
+  }
+  if (!data || data.length === 0) {
+    return { error: "Not a rental order" };
+  }
+
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${orderId}`);
+
+  return { success: true };
+}
+
 // ---------------------------------------------------------------------------
 // Categories
 // ---------------------------------------------------------------------------
 
+function parseCategoryFormData(formData: FormData) {
+  const name = (formData.get("name") as string) ?? "";
+  return categorySchema.safeParse({
+    name,
+    name_telugu: (formData.get("name_telugu") as string) || null,
+    slug: (formData.get("slug") as string) || generateSlug(name),
+    description: (formData.get("description") as string) || null,
+    image_url: (formData.get("image_url") as string) || null,
+    sort_order: Number(formData.get("sort_order") ?? 0),
+    parent_id: (formData.get("parent_id") as string) || null,
+  });
+}
+
 export async function createCategory(formData: FormData) {
   await requireAdmin();
-
-  const name = formData.get("name") as string;
-  const name_telugu = (formData.get("name_telugu") as string) || null;
-  const slug = (formData.get("slug") as string) || generateSlug(name);
-  const description = (formData.get("description") as string) || null;
-  const image_url = (formData.get("image_url") as string) || null;
-  const sort_order = Number(formData.get("sort_order") ?? 0);
-  const parent_id = (formData.get("parent_id") as string) || null;
+  const parsed = parseCategoryFormData(formData);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid category data" };
+  }
 
   const supabase = createAdminClient();
 
-  const { error } = await supabase
-    .from("categories")
-    .insert({ name, name_telugu, slug, description, image_url, sort_order, parent_id });
+  const { error } = await supabase.from("categories").insert(parsed.data);
 
   if (error) {
     return { error: error.message };
@@ -356,20 +461,16 @@ export async function createCategory(formData: FormData) {
 
 export async function updateCategory(id: string, formData: FormData) {
   await requireAdmin();
-
-  const name = formData.get("name") as string;
-  const name_telugu = (formData.get("name_telugu") as string) || null;
-  const slug = (formData.get("slug") as string) || generateSlug(name);
-  const description = (formData.get("description") as string) || null;
-  const image_url = (formData.get("image_url") as string) || null;
-  const sort_order = Number(formData.get("sort_order") ?? 0);
-  const parent_id = (formData.get("parent_id") as string) || null;
+  const parsed = parseCategoryFormData(formData);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid category data" };
+  }
 
   const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("categories")
-    .update({ name, name_telugu, slug, description, image_url, sort_order, parent_id })
+    .update(parsed.data)
     .eq("id", id);
 
   if (error) {

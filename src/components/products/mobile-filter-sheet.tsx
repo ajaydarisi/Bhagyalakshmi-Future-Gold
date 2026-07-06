@@ -100,7 +100,13 @@ export function MobileFilterSheet({ categories }: MobileFilterSheetProps) {
           {t("title")}{filterCount > 0 && ` (${filterCount})`}
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" showCloseButton={false} className="flex w-80 flex-col overflow-hidden px-0 pb-0">
+      <SheetContent
+        side="bottom"
+        showCloseButton={false}
+        className="mx-auto flex h-[85vh] max-w-lg flex-col overflow-hidden rounded-t-[1.5rem] px-0 pb-0"
+      >
+        {/* Drag handle */}
+        <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-[var(--border-strong)]" />
         <SheetHeader className="border-b px-4 py-3">
           <SheetTitle>{t("title")}</SheetTitle>
         </SheetHeader>
@@ -113,6 +119,7 @@ export function MobileFilterSheet({ categories }: MobileFilterSheetProps) {
         </div>
         <SheetFooter className="border-t px-4 py-3">
           <Button
+            variant="gold"
             className="w-full"
             onClick={handleApply}
             disabled={applying}

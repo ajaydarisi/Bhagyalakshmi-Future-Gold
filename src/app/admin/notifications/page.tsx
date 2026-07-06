@@ -16,7 +16,7 @@ export default async function AdminNotificationsPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold md:text-3xl">Notifications</h1>
+      <h1 className="font-display text-3xl text-text-primary md:text-4xl">Notifications</h1>
       <NotificationComposer />
       <NotificationsTable notifications={notifications ?? []} />
     </div>

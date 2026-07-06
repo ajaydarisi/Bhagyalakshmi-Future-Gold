@@ -14,7 +14,7 @@ import type { ProductWithCategory } from "@/types/product";
 import type { CatalogSearchResponse } from "@/types/search";
 
 export const PRODUCT_LIST_FIELDS =
-  "id, name, name_telugu, slug, price, discount_price, images, tags, stock, is_sale, is_rental, rental_price, rental_discount_price, material, set_number, category:categories(name, name_telugu, slug)";
+  "id, name, name_telugu, slug, price, discount_price, images, tags, stock, is_sale, is_rental, rental_price, rental_discount_price, max_rental_days, material, set_number, category:categories(name, name_telugu, slug)";
 
 export interface FetchProductsParams {
   categoryIds: string[];
@@ -280,7 +280,7 @@ export async function fetchFeaturedProducts(): Promise<ProductWithCategory[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("products")
-    .select("*, category:categories(name, name_telugu, slug)")
+    .select(PRODUCT_LIST_FIELDS)
     .eq("is_active", true)
     .eq("featured", true)
     .limit(8);
@@ -295,7 +295,7 @@ export async function fetchNewProducts(): Promise<ProductWithCategory[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("products")
-    .select("*, category:categories(name, name_telugu, slug)")
+    .select(PRODUCT_LIST_FIELDS)
     .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(4);
@@ -308,9 +308,7 @@ export async function fetchWishlistProducts(
   const supabase = createClient();
   const { data } = await supabase
     .from("wishlist_items")
-    .select(
-      "product_id, product:products(*, category:categories(name, name_telugu, slug))"
-    )
+    .select(`product_id, product:products(${PRODUCT_LIST_FIELDS})`)
     .eq("user_id", userId);
 
   return (data || [])

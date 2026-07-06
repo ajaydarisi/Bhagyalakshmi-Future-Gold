@@ -41,11 +41,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <Breadcrumbs items={[{ label: t("breadcrumb") }]} homeLabel={tRoot("breadcrumbHome")} />
 
       <div className="mt-6">
-        <h1 className="text-2xl font-bold md:text-3xl">
+        <span className="bfg-eyebrow">{t("breadcrumb")}</span>
+        <h1 className="mt-1 font-display text-3xl text-text-primary md:text-4xl">
           {query ? t("resultsFor", { query }) : t("title")}
         </h1>
         {query && response && (
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-text-secondary">
             {t("resultCount", { count: response.total })}
           </p>
         )}
@@ -60,7 +61,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           />
         ) : query ? (
           <EmptyState
-            icon={<Search className="h-16 w-16" />}
+            icon={<Search className="h-8 w-8" strokeWidth={1.7} />}
             title={t("noResults")}
             description={t("noResultsDesc", { query })}
             actionLabel={t("browseAll")}
@@ -68,7 +69,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           />
         ) : (
           <EmptyState
-            icon={<Search className="h-16 w-16" />}
+            icon={<Search className="h-8 w-8" strokeWidth={1.7} />}
             title={t("emptyTitle")}
             description={t("emptyDesc")}
           />

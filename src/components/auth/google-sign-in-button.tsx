@@ -133,7 +133,8 @@ export function GoogleSignInButton({ label, errorLabel }: GoogleSignInButtonProp
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="gold-outline"
+      size="bfg-md"
       className="w-full"
       disabled={isLoading}
       onClick={handleGoogleSignIn}

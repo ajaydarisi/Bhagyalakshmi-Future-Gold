@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminSidebar, AdminMobileNav, AdminHeader } from "@/components/layout/admin-sidebar";
 import { ThemeProvider } from "@/components/shared/theme-provider";
@@ -18,9 +20,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   if (!user) {
     redirect("/login");
@@ -37,8 +37,13 @@ export default async function AdminLayout({
     redirect("/");
   }
 
+  // Admin routes aren't localized, so they lack the [locale] layout's provider.
+  // Client components here (e.g. ThemeToggle) still call useTranslations, which
+  // needs this context; getMessages() falls back to the default locale.
+  const messages = await getMessages();
+
   return (
-    <>
+    <NextIntlClientProvider messages={messages}>
       <SetHtmlLang locale="en" />
       <NavProgress />
       <ThemeProvider
@@ -61,6 +66,6 @@ export default async function AdminLayout({
         </div>
         <Toaster />
       </ThemeProvider>
-    </>
+    </NextIntlClientProvider>
   );
 }

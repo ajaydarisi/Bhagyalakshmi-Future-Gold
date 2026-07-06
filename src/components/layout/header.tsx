@@ -14,9 +14,10 @@ import {
   LayoutDashboard,
   Menu,
   Search,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Logo } from "@/components/brand/logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,12 +45,33 @@ import { IS_ONLINE, ROUTES } from "@/lib/constants";
 import { getCategoryName } from "@/lib/i18n-helpers";
 import type { NavCategory } from "@/lib/queries";
 import { toast } from "sonner";
-import Image from "next/image";
 import NextLink from "next/link";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+/** Desktop nav item with the BFG sliding gold underline. */
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="group relative text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-gold"
+    >
+      {children}
+      <span className="absolute -bottom-1 left-0 h-px w-0 bg-gold-500 transition-all duration-300 group-hover:w-full" />
+    </Link>
+  );
+}
+
+/** Round ghost icon button with a warm gold hover tint. */
+const ICON_BTN = "rounded-full hover:bg-[rgb(var(--gold-deep-rgb)/0.07)]";
+/** Maroon count bubble for cart/wishlist. */
+const COUNT_BADGE =
+  "absolute -top-1 -right-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-maroon-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-[var(--surface-card)] shadow-[0_1px_3px_rgb(0_0_0/0.25)]";
 
 export function Header({ categories }: { categories: NavCategory[] }) {
   const t = useTranslations("nav");
   const tCommon = useTranslations();
+  const tTrust = useTranslations("home.trustBar");
   const { user, profile, isAdmin, isLoading } = useAuth();
   const { itemCount } = useCart();
   const { items: wishlistItems } = useWishlist();
@@ -61,6 +83,8 @@ export function Header({ categories }: { categories: NavCategory[] }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [langDialogOpen, setLangDialogOpen] = useState(false);
+
+  const isMobile = useIsMobile();
 
   const localeLabels: Record<string, string> = {
     en: "English",
@@ -87,10 +111,28 @@ export function Header({ categories }: { categories: NavCategory[] }) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 pt-[env(safe-area-inset-top)]">
-        <div className="container mx-auto flex h-12 lg:h-16 items-center justify-between px-4">
+      {/* Announcement bar */}
+      {!isMobile && (<div
+        className="flex items-center justify-center gap-2 px-4 py-1.5 text-center text-2xs uppercase tracking-[0.18em] text-ivory-100"
+        style={{ background: "var(--grad-ink)" }}
+      >
+        {IS_ONLINE ? (
+          <Sparkles className="size-3 text-gold-300" strokeWidth={1.7} />
+        ) : (
+          <MapPin className="size-3 text-gold-300" strokeWidth={1.7} />
+        )}
+        <span className="text-gold-300">
+          {IS_ONLINE
+            ? `${tTrust("online.shipping")} · ${tTrust("online.shippingDesc")}`
+            : `${tTrust("offline.visit")} · ${tTrust("offline.visitDesc")}`}
+        </span>
+      </div>
+      )}
+
+      <header className="sticky top-0 z-50 w-full border-b border-[var(--border-sand)] bg-[var(--surface-card)]/90 backdrop-blur supports-backdrop-filter:bg-[var(--surface-card)]/70">
+        <div className="container mx-auto flex h-14 lg:h-18 items-center justify-between px-4">
           {/* Left: Mobile menu + Logo */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -100,27 +142,17 @@ export function Header({ categories }: { categories: NavCategory[] }) {
             >
               <Menu className="h-5 w-5" strokeWidth={1.5} />
             </Button>
-            <Link
-              href="/"
-              className="flex items-center gap-2 font-brand tracking-wide text-primary"
-            >
-              <Image
-                src="/images/logo.png"
-                alt={tCommon("appName")}
-                width={60}
-                height={40}
-                className="h-8 w-12 lg:h-10 lg:w-15 rounded-lg"
-                priority
-              />
-              <span className="text-xs sm:text-sm lg:text-base">{tCommon("appName")}</span>
+            <Link href="/" aria-label={tCommon("appName")}>
+              <Logo layout="horizontal" size="sm" />
             </Link>
           </div>
 
           {/* Center: Navigation (desktop only) */}
           <nav className="hidden lg:flex items-center gap-8">
             <DropdownMenu>
-              <DropdownMenuTrigger className="text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-primary cursor-pointer">
+              <DropdownMenuTrigger className="group relative text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-gold cursor-pointer">
                 {t("categories")}
+                <span className="absolute -bottom-1 left-0 h-px w-0 bg-gold-500 transition-all duration-300 group-hover:w-full" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" className="w-56">
                 {categories.map((cat) => (
@@ -136,97 +168,61 @@ export function Header({ categories }: { categories: NavCategory[] }) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link
-              href={`${ROUTES.products}?type=rental`}
-              className="text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-primary"
-            >
-              {t("rentals")}
-            </Link>
-            <Link
-              href={ROUTES.about}
-              className="text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-primary"
-            >
-              {t("about")}
-            </Link>
+            <NavLink href={`${ROUTES.products}?type=rental`}>{t("rentals")}</NavLink>
+            <NavLink href={ROUTES.about}>{t("about")}</NavLink>
           </nav>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {/* Mobile search and cart shortcuts */}
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden h-8 w-8"
+              className={cn("md:hidden h-8 w-8", ICON_BTN)}
               onClick={() => setSearchOpen(true)}
               aria-label={t("search")}
             >
-              <Search className="h-4 w-4" strokeWidth={1.5} />
+              <Search className="h-4 w-4" strokeWidth={1.7} />
             </Button>
             {IS_ONLINE && (
-              <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8" asChild aria-label={t("shoppingBag")}>
+              <Button variant="ghost" size="icon" className={cn("lg:hidden h-8 w-8", ICON_BTN)} asChild aria-label={t("shoppingBag")}>
                 <Link href={ROUTES.cart} className="relative">
-                  <ShoppingBag className="h-4 w-4" strokeWidth={1.5} />
-                  {itemCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -right-1 -top-1 h-4 w-4 rounded-full p-0 text-[9px] flex items-center justify-center"
-                    >
-                      {itemCount}
-                    </Badge>
-                  )}
+                  <ShoppingBag className="h-4 w-4" strokeWidth={1.7} />
+                  {itemCount > 0 && <span className={COUNT_BADGE}>{itemCount}</span>}
                 </Link>
               </Button>
             )}
             {/* Desktop-only actions */}
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-1.5">
               <LanguageSwitcher />
               <ThemeToggle />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSearchOpen(true)}
-                aria-label={t("search")}
-              >
-                <Search className="h-5 w-5" strokeWidth={1.5} />
+              <Button variant="ghost" size="icon" className={ICON_BTN} onClick={() => setSearchOpen(true)} aria-label={t("search")}>
+                <Search className="h-5 w-5" strokeWidth={1.7} />
               </Button>
 
-              <Button variant="ghost" size="icon" asChild aria-label={t("wishlist")}>
+              <Button variant="ghost" size="icon" className={ICON_BTN} asChild aria-label={t("wishlist")}>
                 <Link href={ROUTES.wishlist} className="relative">
-                  <Heart className="h-5 w-5" strokeWidth={1.5} />
-                  {wishlistItems.length > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
-                    >
-                      {wishlistItems.length}
-                    </Badge>
-                  )}
+                  <Heart className="h-5 w-5" strokeWidth={1.7} />
+                  {wishlistItems.length > 0 && <span className={COUNT_BADGE}>{wishlistItems.length}</span>}
                 </Link>
               </Button>
 
               {IS_ONLINE && (
-                <Button variant="ghost" size="icon" asChild aria-label={t("shoppingBag")}>
+                <Button variant="ghost" size="icon" className={ICON_BTN} asChild aria-label={t("shoppingBag")}>
                   <Link href={ROUTES.cart} className="relative">
-                    <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
-                    {itemCount > 0 && (
-                      <Badge
-                        variant="destructive"
-                        className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
-                      >
-                        {itemCount}
-                      </Badge>
-                    )}
+                    <ShoppingBag className="h-5 w-5" strokeWidth={1.7} />
+                    {itemCount > 0 && <span className={COUNT_BADGE}>{itemCount}</span>}
                   </Link>
                 </Button>
               )}
 
               {isLoading ? (
-                <div className="h-9 w-9 animate-pulse rounded-md bg-muted" />
+                <div className="bfg-skeleton h-9 w-9 rounded-full" />
               ) : user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" aria-label={t("myAccount")}>
-                      <User className="h-5 w-5" strokeWidth={1.5} />
+                    <Button variant="ghost" size="icon" className={ICON_BTN} aria-label={t("myAccount")}>
+                      <User className="h-5 w-5" strokeWidth={1.7} />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
@@ -280,7 +276,7 @@ export function Header({ categories }: { categories: NavCategory[] }) {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button variant="ghost" size="sm" asChild>
+                <Button variant="gold-ghost" size="bfg-sm" asChild>
                   <Link href={pathname === "/" ? ROUTES.login : `${ROUTES.login}?redirect=${encodeURIComponent(pathname)}`}>{t("signIn")}</Link>
                 </Button>
               )}
@@ -300,7 +296,8 @@ export function Header({ categories }: { categories: NavCategory[] }) {
             {locales.map((loc) => (
               <Button
                 key={loc}
-                variant={loc === locale ? "default" : "outline"}
+                variant={loc === locale ? "gold" : "gold-outline"}
+                size="bfg-md"
                 onClick={() => switchLocale(loc)}
                 className="w-full"
               >

@@ -6,7 +6,8 @@ import { getCategoryName } from "@/lib/i18n-helpers";
 import type { NavCategory } from "@/lib/queries";
 import { createClient } from "@/lib/supabase/client";
 import { FeedbackDialog } from "@/components/feedback/feedback-form";
-import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import { Logo } from "@/components/brand/logo";
+import { Clock, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import Image from "next/image";
 import { Link, useRouter, usePathname } from "@/i18n/routing";
 import { useLocale, useTranslations } from "next-intl";
@@ -33,17 +34,22 @@ export function Footer({ categories }: { categories: NavCategory[] }) {
       router.refresh();
     }
   }
+  const linkCls = "text-sm text-[var(--text-on-dark)]/75 hover:text-gold-300 transition-colors";
+  const headingCls = "text-xs uppercase tracking-[0.18em] font-medium mb-4 text-gold-300 font-brand";
+
   return (
-    <footer className="hidden lg:block border-t">
+    <footer className="hidden lg:block text-[var(--text-on-dark)]" style={{ background: "var(--grad-ink)" }}>
       {/* Newsletter / Community section */}
-      <div className="container mx-auto px-4 py-16 text-center border-b">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
-          {t("stayInTouch")}
-        </p>
-        <h3 className="text-2xl md:text-3xl mb-3">
+      <div className="container mx-auto px-4 py-16 text-center border-b border-white/10">
+        <span className="bfg-ornament mb-3 justify-center">
+          <span className="text-xs uppercase tracking-[0.22em] font-brand text-gold-300">
+            {t("stayInTouch")}
+          </span>
+        </span>
+        <h3 className="font-display text-3xl md:text-4xl mb-3 text-[var(--text-on-dark)]">
           {t("joinWorld")}
         </h3>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
+        <p className="text-sm text-[var(--text-on-dark)]/70 max-w-md mx-auto">
           {t("joinDescription")}
         </p>
       </div>
@@ -53,29 +59,21 @@ export function Footer({ categories }: { categories: NavCategory[] }) {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div>
-            <Link
-              href="/"
-              className="flex items-center gap-2 font-brand text-lg tracking-wide text-primary"
-            >
-              {tCommon("appName")}
+            <Link href="/" aria-label={tCommon("appName")}>
+              <Logo layout="horizontal" size="sm" onDark />
             </Link>
-            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+            <p className="mt-4 text-sm text-[var(--text-on-dark)]/70 leading-relaxed">
               {t("brandDescription")}
             </p>
           </div>
 
           {/* Categories */}
           <div>
-            <h3 className="text-xs uppercase tracking-[0.15em] font-medium mb-4">
-              {t("categories")}
-            </h3>
+            <h3 className={headingCls}>{t("categories")}</h3>
             <ul className="space-y-2.5">
               {categories.map((cat) => (
                 <li key={cat.slug}>
-                  <Link
-                    href={`${ROUTES.products}?category=${cat.slug}`}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
+                  <Link href={`${ROUTES.products}?category=${cat.slug}`} className={linkCls}>
                     {getCategoryName(cat, locale)}
                   </Link>
                 </li>
@@ -85,66 +83,44 @@ export function Footer({ categories }: { categories: NavCategory[] }) {
 
           {/* Customer Care */}
           <div>
-            <h3 className="text-xs uppercase tracking-[0.15em] font-medium mb-4">
-              {t("customerCare")}
-            </h3>
+            <h3 className={headingCls}>{t("customerCare")}</h3>
             <ul className="space-y-2.5">
               {IS_ONLINE && (
                 <li>
-                  <Link
-                    href={ROUTES.accountOrders}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
+                  <Link href={ROUTES.accountOrders} className={linkCls}>
                     {t("trackOrder")}
                   </Link>
                 </li>
               )}
               {IS_ONLINE && (
                 <li>
-                  <Link
-                    href={ROUTES.cart}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
+                  <Link href={ROUTES.cart} className={linkCls}>
                     {t("shoppingBag")}
                   </Link>
                 </li>
               )}
               <li>
-                <Link
-                  href={ROUTES.wishlist}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
+                <Link href={ROUTES.wishlist} className={linkCls}>
                   {t("wishlist")}
                 </Link>
               </li>
               <li>
-                <Link
-                  href={ROUTES.about}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
+                <Link href={ROUTES.about} className={linkCls}>
                   {t("aboutUs")}
                 </Link>
               </li>
               <li>
                 <FeedbackDialog>
-                  <button className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    {t("feedback")}
-                  </button>
+                  <button className={linkCls}>{t("feedback")}</button>
                 </FeedbackDialog>
               </li>
               <li>
-                <Link
-                  href={ROUTES.termsAndConditions}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
+                <Link href={ROUTES.termsAndConditions} className={linkCls}>
                   {t("termsAndConditions")}
                 </Link>
               </li>
               <li>
-                <Link
-                  href={ROUTES.privacyPolicy}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
+                <Link href={ROUTES.privacyPolicy} className={linkCls}>
                   {t("privacyPolicy")}
                 </Link>
               </li>
@@ -153,24 +129,16 @@ export function Footer({ categories }: { categories: NavCategory[] }) {
 
           {/* Account */}
           <div>
-            <h3 className="text-xs uppercase tracking-[0.15em] font-medium mb-4">
-              {t("myAccount")}
-            </h3>
+            <h3 className={headingCls}>{t("myAccount")}</h3>
             <ul className="space-y-2.5">
               <li>
-                <Link
-                  href={ROUTES.account}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
+                <Link href={ROUTES.account} className={linkCls}>
                   {t("profile")}
                 </Link>
               </li>
               {IS_ONLINE && (
                 <li>
-                  <Link
-                    href={ROUTES.accountAddresses}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
+                  <Link href={ROUTES.accountAddresses} className={linkCls}>
                     {t("addresses")}
                   </Link>
                 </li>
@@ -179,7 +147,7 @@ export function Footer({ categories }: { categories: NavCategory[] }) {
                 <Link
                   href={isLoggedIn ? "#" : (pathname === "/" ? ROUTES.login : `${ROUTES.login}?redirect=${encodeURIComponent(pathname)}`)}
                   onClick={isLoggedIn ? (e: React.MouseEvent) => { e.preventDefault(); handleSignOut(); } : undefined}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className={linkCls}
                 >
                   {isLoggedIn ? tCommon("nav.signOut") : tCommon("nav.signIn")}
                 </Link>
@@ -189,12 +157,10 @@ export function Footer({ categories }: { categories: NavCategory[] }) {
 
           {/* Visit Our Store */}
           <div>
-            <h3 className="text-xs uppercase tracking-[0.15em] font-medium mb-4">
-              {t("visitOurStore")}
-            </h3>
+            <h3 className={headingCls}>{t("visitOurStore")}</h3>
             <ul className="space-y-2.5">
-              <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+              <li className="flex items-start gap-2 text-sm text-[var(--text-on-dark)]/75">
+                <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-gold-300" />
                 <span>
                   {[
                     BUSINESS_INFO.address.street,
@@ -208,42 +174,49 @@ export function Footer({ categories }: { categories: NavCategory[] }) {
                 </span>
               </li>
               {BUSINESS_INFO.phone && (
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Phone className="h-4 w-4 shrink-0" />
-                  <a
-                    href={`tel:${BUSINESS_INFO.phone}`}
-                    className="hover:text-primary transition-colors"
-                  >
+                <li className="flex items-center gap-2 text-sm text-[var(--text-on-dark)]/75">
+                  <Phone className="h-4 w-4 shrink-0 text-gold-300" />
+                  <a href={`tel:${BUSINESS_INFO.phone}`} className="hover:text-gold-300 transition-colors">
                     {BUSINESS_INFO.phone}
                   </a>
                 </li>
               )}
               {BUSINESS_INFO.email && (
-                <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Mail className="h-4 w-4 shrink-0" />
-                  <a
-                    href={`mailto:${BUSINESS_INFO.email}`}
-                    className="hover:text-primary transition-colors"
-                  >
+                <li className="flex items-center gap-2 text-sm text-[var(--text-on-dark)]/75">
+                  <Mail className="h-4 w-4 shrink-0 text-gold-300" />
+                  <a href={`mailto:${BUSINESS_INFO.email}`} className="hover:text-gold-300 transition-colors">
                     {BUSINESS_INFO.email}
                   </a>
                 </li>
               )}
-              <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4 shrink-0" />
+              {BUSINESS_INFO.whatsapp && (
+                <li className="flex items-center gap-2 text-sm text-[var(--text-on-dark)]/75">
+                  <MessageCircle className="h-4 w-4 shrink-0 text-gold-300" />
+                  <a
+                    href={`https://wa.me/91${BUSINESS_INFO.whatsapp}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-gold-300 transition-colors"
+                  >
+                    {t("whatsapp")}
+                  </a>
+                </li>
+              )}
+              <li className="flex items-center gap-2 text-sm text-[var(--text-on-dark)]/75">
+                <Clock className="h-4 w-4 shrink-0 text-gold-300" />
                 <span>Mon–Sat: {BUSINESS_INFO.hours.weekdays}</span>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-12 border-t pt-6 text-center text-sm gap-3 flex flex-col sm:flex-row sm:justify-between items-center text-muted-foreground tracking-wide">
+        <div className="mt-12 border-t border-white/10 pt-6 text-center text-sm gap-3 flex flex-col sm:flex-row sm:justify-between items-center text-[var(--text-on-dark)]/60 tracking-wide">
           <p>&copy; {new Date().getFullYear()} {tCommon("appName")}. {t("allRightsReserved")}</p>
           <a
             href="https://darisi.in"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-0.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+            className="flex items-center gap-0.5 text-[var(--text-on-dark)]/50 hover:text-[var(--text-on-dark)]/80 transition-colors"
           >
             {locale === "en" && t("poweredBy")}
             <Image src="/logos/darisi.svg" alt="DARISI" width={25} height={25} className="rounded-lg" />

@@ -116,7 +116,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold md:text-3xl">Dashboard</h1>
+      <h1 className="font-display text-3xl text-text-primary md:text-4xl">Dashboard</h1>
 
       {/* Stats cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -144,7 +144,7 @@ export default async function AdminDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Assistant Retrieval Health</CardTitle>
+          <CardTitle className="font-display text-xl text-text-primary">Assistant Retrieval Health</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -178,7 +178,7 @@ export default async function AdminDashboardPage() {
       {/* Revenue chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Revenue (Last 30 Days)</CardTitle>
+          <CardTitle className="font-display text-xl text-text-primary">Revenue (Last 30 Days)</CardTitle>
         </CardHeader>
         <CardContent>
           <RevenueChart data={chartData} />
@@ -188,7 +188,7 @@ export default async function AdminDashboardPage() {
       {/* Recent orders */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
+          <CardTitle className="font-display text-xl text-text-primary">Recent Orders</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -205,7 +205,7 @@ export default async function AdminDashboardPage() {
               {recentOrders && recentOrders.length > 0 ? (
                 recentOrders.map((order) => (
                   <TableRow key={order.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium tabular-nums text-text-gold">
                       {order.order_number}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { locales } from "@/i18n/config";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ const localeLabels: Record<string, string> = {
 
 export function LanguageSwitcher() {
   const locale = useLocale();
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const router = useRouter();
 
@@ -29,7 +30,7 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Change language">
+        <Button variant="ghost" size="icon" aria-label={t("changeLanguage")}>
           <Languages className="h-5 w-5" strokeWidth={1.5} />
         </Button>
       </DropdownMenuTrigger>

@@ -190,12 +190,12 @@ export function AddressForm({ address, onSubmit, onCancel }: AddressFormProps) {
         </div>
 
         <div className="flex gap-2">
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" variant="gold" size="bfg-md" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {address ? t("update") : t("add")}
           </Button>
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="gold-ghost" size="bfg-md" onClick={onCancel}>
               {t("cancel")}
             </Button>
           )}

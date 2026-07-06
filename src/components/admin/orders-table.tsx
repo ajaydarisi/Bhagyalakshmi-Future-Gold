@@ -14,11 +14,12 @@ import {
 } from "@/components/ui/select";
 import { DataTable, SortableHeader } from "@/components/admin/data-table";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
+import { RentalStatusBadge } from "@/components/admin/rental-status-badge";
 import { formatPrice, formatDate } from "@/lib/formatters";
 import { ORDER_STATUSES } from "@/lib/constants";
 import type { Order } from "@/types/order";
 
-type OrderWithEmail = Order & { customer_email: string };
+type OrderWithEmail = Order & { customer_email: string; rental_overdue: boolean };
 
 const columns: ColumnDef<OrderWithEmail>[] = [
   {
@@ -93,6 +94,25 @@ const columns: ColumnDef<OrderWithEmail>[] = [
     },
   },
   {
+    accessorKey: "order_type",
+    header: "Type",
+    cell: ({ row }) =>
+      row.original.order_type === "sale" ? (
+        <span className="text-sm text-muted-foreground">Sale</span>
+      ) : (
+        <RentalStatusBadge
+          rentalStatus={row.original.rental_status}
+          isOverdue={row.original.rental_overdue}
+        />
+      ),
+    filterFn: (row, _columnId, filterValue) => {
+      if (!filterValue || filterValue === "all") return true;
+      if (filterValue === "sale") return row.original.order_type === "sale";
+      // "rental" covers rental and mixed orders
+      return row.original.order_type !== "sale";
+    },
+  },
+  {
     accessorKey: "total",
     header: ({ column }) => (
       <SortableHeader column={column}>Total</SortableHeader>
@@ -123,7 +143,15 @@ function OrderMobileCard({ order }: { order: OrderWithEmail }) {
     >
       <div className="flex items-center justify-between">
         <span className="font-medium">{order.order_number}</span>
-        <OrderStatusBadge status={order.status} />
+        <span className="flex items-center gap-1.5">
+          {order.order_type !== "sale" && (
+            <RentalStatusBadge
+              rentalStatus={order.rental_status}
+              isOverdue={order.rental_overdue}
+            />
+          )}
+          <OrderStatusBadge status={order.status} />
+        </span>
       </div>
       <div className="mt-1 flex items-center justify-between text-sm">
         <span className="min-w-0 truncate text-muted-foreground">
@@ -149,11 +177,16 @@ function OrdersToolbar({
     (table.getColumn("customer_email")?.getFilterValue() as string) ?? "";
   const statusFilter =
     (table.getColumn("status")?.getFilterValue() as string) ?? "all";
+  const typeFilter =
+    (table.getColumn("order_type")?.getFilterValue() as string) ?? "all";
   const dateFilter =
     (table.getColumn("created_at")?.getFilterValue() as string) ?? "all";
 
   const isFiltered =
-    customerFilter || statusFilter !== "all" || dateFilter !== "all";
+    customerFilter ||
+    statusFilter !== "all" ||
+    typeFilter !== "all" ||
+    dateFilter !== "all";
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -185,6 +218,22 @@ function OrdersToolbar({
               {s.label}
             </SelectItem>
           ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={typeFilter}
+        onValueChange={(value) =>
+          table.getColumn("order_type")?.setFilterValue(value)
+        }
+      >
+        <SelectTrigger className="w-36">
+          <SelectValue placeholder="All Types" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Types</SelectItem>
+          <SelectItem value="sale">Sale</SelectItem>
+          <SelectItem value="rental">Rental</SelectItem>
         </SelectContent>
       </Select>
 

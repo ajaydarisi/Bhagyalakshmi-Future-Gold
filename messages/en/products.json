@@ -30,6 +30,7 @@
   "detail": {
     "forSale": "For Sale",
     "forRent": "For Rent",
+    "buyNow": "Buy Now",
     "rentalDetails": "Rental Details",
     "rentalPrice": "Rental Price (per day):",
     "perDay": "/day",
@@ -48,7 +49,10 @@
     "notifyError": "Something went wrong. Please try again.",
     "relatedProducts": "You May Also Like",
     "notFoundMeta": "Product Not Found",
-    "metaDescription": "Shop {name} at Bhagyalakshmi Future Gold Commerce",
+    "enquireOnWhatsapp": "Enquire on WhatsApp",
+    "metaGenericCategory": "fashion jewellery",
+    "metaDescriptionSale": "Buy {name} ({category}) at {brand}, {city} for {price}. Quality-checked fashion jewellery with free shipping above ₹999.",
+    "metaDescriptionRental": "Rent {name} ({category}) for weddings & festive occasions at {brand}, {city} — {price} per day. Book now on WhatsApp.",
     "rentalSetNote": "This is a complete set and is available for rent only as a whole. Individual items from the set cannot be rented separately.",
     "setNumber": "Set {number}"
   },
@@ -69,7 +73,10 @@
   },
   "card": {
     "noImage": "No Image",
-    "soldOut": "Sold Out"
+    "soldOut": "Sold Out",
+    "rentNow": "Rent Now",
+    "decreaseQuantity": "Decrease quantity",
+    "increaseQuantity": "Increase quantity"
   },
   "search": {
     "placeholder": "Search for jewellery...",
@@ -91,5 +98,6 @@
     "shared": "Shared successfully",
     "copiedToClipboard": "Link copied to clipboard",
     "shareFailed": "Could not share. Please try again."
-  }
+  },
+  "rentalUnavailable": "This item is not available for the selected dates — please choose a different period"
 }

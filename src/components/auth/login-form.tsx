@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter as useNextRouter } from "next/navigation";
 import { useRouter } from "@/i18n/routing";
 import { Link } from "@/i18n/routing";
 import { useForm } from "react-hook-form";
@@ -38,8 +38,16 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const nextRouter = useNextRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/";
+  // The middleware sets `redirect` to the full original pathname (already
+  // locale-prefixed for store routes, bare for unlocalized routes like
+  // /admin). Only allow same-origin relative paths.
+  const rawRedirect = searchParams.get("redirect");
+  const redirectTo =
+    rawRedirect?.startsWith("/") && !rawRedirect.startsWith("//")
+      ? rawRedirect
+      : null;
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -66,14 +74,20 @@ export function LoginForm() {
 
     trackEvent("login", { method: "email" });
     toast.success(t("successToast"));
-    router.push(redirectTo);
+    if (redirectTo) {
+      // Use the plain router: the i18n router would prepend the locale
+      // again (e.g. /admin -> /en/admin) and hit a 404.
+      nextRouter.push(redirectTo);
+    } else {
+      router.push("/");
+    }
     router.refresh();
   }
 
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">{t("title")}</CardTitle>
+        <CardTitle className="font-display text-3xl text-text-primary">{t("title")}</CardTitle>
         <CardDescription>
           {t("subtitle")}
         </CardDescription>
@@ -107,7 +121,7 @@ export function LoginForm() {
                     <FormLabel>{t("password")}</FormLabel>
                     <Link
                       href="/forgot-password"
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      className="text-sm text-text-secondary hover:text-text-gold transition-colors"
                     >
                       {t("forgotPassword")}
                     </Link>
@@ -134,7 +148,7 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" variant="gold" size="bfg-md" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("submit")}
             </Button>
@@ -154,7 +168,7 @@ export function LoginForm() {
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">
           {t("noAccount")}{" "}
-          <Link href="/signup" className="font-medium text-primary hover:underline">
+          <Link href="/signup" className="font-medium text-text-gold hover:underline">
             {t("signUp")}
           </Link>
         </p>

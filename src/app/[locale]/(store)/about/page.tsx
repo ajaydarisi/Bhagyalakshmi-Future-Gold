@@ -132,15 +132,15 @@ export default async function AboutPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       {/* Hero Banner */}
-      <section id="store-info" className="bg-accent/30 py-20 scroll-mt-24">
+      <section id="store-info" className="bg-[var(--bg-page-warm)] py-20 scroll-mt-24">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
+          <p className="bfg-eyebrow mb-2 block">
             {t("label")}
           </p>
-          <h1 className="text-3xl md:text-5xl leading-tight max-w-2xl mx-auto">
-            {t("tagline")}
+          <h1 className="font-display text-4xl md:text-5xl leading-tight max-w-2xl mx-auto">
+            <span className="bfg-foil">{t("tagline")}</span>
           </h1>
-          <p className="mt-4 text-muted-foreground font-sans max-w-lg mx-auto">
+          <p className="mt-4 text-text-secondary max-w-lg mx-auto">
             {t("mission")}
           </p>
         </div>
@@ -150,7 +150,7 @@ export default async function AboutPage() {
       <section id="our-story" className="container mx-auto px-4 py-20 scroll-mt-24">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
+            <p className="bfg-eyebrow mb-2 block">
               {t("storyLabel")}
             </p>
             <h2 className="text-3xl md:text-4xl leading-snug">
@@ -162,24 +162,24 @@ export default async function AboutPage() {
             <p className="mt-4 text-muted-foreground leading-relaxed max-w-md font-sans">
               {t("storyLong")}
             </p>
-            <Button variant="outline" className="mt-6" asChild>
+            <Button variant="gold-outline" className="mt-6" asChild>
               <Link href={ROUTES.products}>{t("shopCollection")}</Link>
             </Button>
           </div>
           <div className="relative aspect-4/5 overflow-hidden bg-muted">
             <ShopImage
               src={SHOP_IMAGES.storefront}
-              alt="Bhagyalakshmi Future Gold store in Chirala"
+              alt={t("imageAlt.store")}
             />
           </div>
         </div>
       </section>
 
       {/* Quality & Warranty */}
-      <section id="quality-promise" className="bg-accent/30 py-20 scroll-mt-24">
+      <section id="quality-promise" className="bg-[var(--bg-page-warm)] py-20 scroll-mt-24">
         <div className="container mx-auto px-4 max-w-3xl text-center">
-          <Shield className="h-8 w-8 mx-auto mb-4 text-primary" />
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
+          <Shield className="h-8 w-8 mx-auto mb-4 text-gold-500" />
+          <p className="bfg-eyebrow mb-2 block">
             {t("promiseLabel")}
           </p>
           <h2 className="text-3xl md:text-4xl mb-6">
@@ -197,18 +197,18 @@ export default async function AboutPage() {
       {/* Shop Gallery */}
       <section className="container mx-auto px-4 py-20">
         <div className="mb-12 text-center">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
+          <p className="bfg-eyebrow mb-2 block">
             {t("spaceLabel")}
           </p>
           <h2 className="text-3xl md:text-4xl">{t("spaceTitle")}</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
           {[
-            { src: SHOP_IMAGES.storefront, alt: "Bhagyalakshmi Future Gold storefront" },
-            { src: SHOP_IMAGES.interior, alt: "Inside Bhagyalakshmi Future Gold shop" },
+            { src: SHOP_IMAGES.storefront, alt: t("imageAlt.storefront") },
+            { src: SHOP_IMAGES.interior, alt: t("imageAlt.interior") },
             {
               src: SHOP_IMAGES.display,
-              alt: "Jewellery display at Bhagyalakshmi Future Gold",
+              alt: t("imageAlt.display"),
             },
           ].map((img) => (
             <div
@@ -222,10 +222,10 @@ export default async function AboutPage() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="bg-accent/30 py-20 scroll-mt-24">
+      <section id="faq" className="bg-[var(--bg-page-warm)] py-20 scroll-mt-24">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="mb-12 text-center">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
+            <p className="bfg-eyebrow mb-2 block">
               {t("faqLabel")}
             </p>
             <h2 className="text-3xl md:text-4xl">{t("faqTitle")}</h2>
@@ -255,14 +255,14 @@ export default async function AboutPage() {
         <div className="container mx-auto px-4 py-20">
           <div className="grid md:grid-cols-2 gap-12">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
+              <p className="bfg-eyebrow mb-2 block">
                 {t("findUsLabel")}
               </p>
               <h2 className="text-3xl md:text-4xl mb-8">{t("findUsTitle")}</h2>
 
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                  <MapPin className="h-5 w-5 mt-0.5 shrink-0 text-gold-500" />
                   <div>
                     <p className="text-sm font-medium mb-1">{t("address")}</p>
                     <p className="text-sm text-muted-foreground font-sans">
@@ -273,12 +273,12 @@ export default async function AboutPage() {
 
                 {BUSINESS_INFO.phone && (
                   <div className="flex items-start gap-3">
-                    <Phone className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                    <Phone className="h-5 w-5 mt-0.5 shrink-0 text-gold-500" />
                     <div>
                       <p className="text-sm font-medium mb-1">{t("phone")}</p>
                       <a
                         href={`tel:${BUSINESS_INFO.phone}`}
-                        className="text-sm text-muted-foreground font-sans hover:text-primary transition-colors"
+                        className="text-sm text-muted-foreground font-sans hover:text-gold-500 transition-colors"
                       >
                         {BUSINESS_INFO.phone}
                       </a>
@@ -288,12 +288,12 @@ export default async function AboutPage() {
 
                 {BUSINESS_INFO.email && (
                   <div className="flex items-start gap-3">
-                    <Mail className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                    <Mail className="h-5 w-5 mt-0.5 shrink-0 text-gold-500" />
                     <div>
                       <p className="text-sm font-medium mb-1">{t("email")}</p>
                       <a
                         href={`mailto:${BUSINESS_INFO.email}`}
-                        className="text-sm text-muted-foreground font-sans hover:text-primary transition-colors"
+                        className="text-sm text-muted-foreground font-sans hover:text-gold-500 transition-colors"
                       >
                         {BUSINESS_INFO.email}
                       </a>
@@ -302,7 +302,7 @@ export default async function AboutPage() {
                 )}
 
                 <div className="flex items-start gap-3">
-                  <Clock className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+                  <Clock className="h-5 w-5 mt-0.5 shrink-0 text-gold-500" />
                   <div>
                     <p className="text-sm font-medium mb-1">{t("businessHours")}</p>
                     <p className="text-sm text-muted-foreground font-sans">
@@ -316,7 +316,7 @@ export default async function AboutPage() {
               </div>
 
               {BUSINESS_INFO.map.linkUrl && (
-                <Button variant="outline" className="mt-8" asChild>
+                <Button variant="gold-outline" className="mt-8" asChild>
                   <ExternalLink
                     href={BUSINESS_INFO.map.linkUrl}
                     geoUri={`geo:0,0?q=${encodeURIComponent(`${BUSINESS_INFO.name}, ${BUSINESS_INFO.address.street}, ${BUSINESS_INFO.address.city}, ${BUSINESS_INFO.address.state} ${BUSINESS_INFO.address.pincode}`)}`}
@@ -341,7 +341,7 @@ export default async function AboutPage() {
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                   sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                  title="Bhagyalakshmi Future Gold location on Google Maps"
+                  title={t("mapTitle")}
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
@@ -360,7 +360,7 @@ export default async function AboutPage() {
           {/* Proprietor */}
           {BUSINESS_INFO.proprietor.name && (
             <div className="mt-16 pt-12 border-t text-center">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">
+              <p className="bfg-eyebrow mb-2 block">
                 {BUSINESS_INFO.proprietor.title}
               </p>
               <p className="text-xl">{BUSINESS_INFO.proprietor.name}</p>

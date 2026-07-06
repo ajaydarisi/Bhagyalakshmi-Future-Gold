@@ -1,11 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { formatPrice, formatDate, formatDateTime } from "@/lib/formatters";
+import { isRentalOverdue } from "@/lib/rental-availability";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { getTranslations } from "next-intl/server";
@@ -26,9 +27,7 @@ export default async function OrderDetailPage({
 }: OrderDetailPageProps) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser(supabase);
 
   if (!user) redirect(`/login?redirect=/account/orders/${id}`);
 
@@ -63,6 +62,16 @@ export default async function OrderDetailPage({
   const currentStatusIndex = STATUS_FLOW.indexOf(order.status);
   const isCancelled = order.status === "cancelled" || order.status === "refunded";
 
+  const isRentalOrder = order.order_type !== "sale";
+  const latestRentalEnd = (order.order_items as { is_rental: boolean; rental_end: string | null }[])
+    .filter((i) => i.is_rental && i.rental_end)
+    .map((i) => i.rental_end as string)
+    .sort()
+    .pop();
+  const rentalStatusKey = isRentalOverdue(order.rental_status, latestRentalEnd)
+    ? "overdue"
+    : order.rental_status;
+
   // Build a map of status -> timestamp from history
   const statusTimestamps: Record<string, string> = {};
   if (statusHistory) {
@@ -78,12 +87,20 @@ export default async function OrderDetailPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">
+          <h2 className="font-display text-2xl text-text-primary">
             {t("title", { orderNumber: order.order_number })}
           </h2>
           <p className="text-sm text-muted-foreground">
             {t("placedOn", { date: formatDate(order.created_at) })}
           </p>
+          {isRentalOrder && rentalStatusKey && (
+            <p className="mt-1 text-sm text-text-gold">
+              {t(`rentalStatuses.${rentalStatusKey}`)}
+              {latestRentalEnd &&
+                rentalStatusKey !== "returned" &&
+                ` · ${t("returnBy", { date: formatDate(latestRentalEnd) })}`}
+            </p>
+          )}
         </div>
         <OrderStatusBadge status={order.status} />
       </div>
@@ -108,7 +125,7 @@ export default async function OrderDetailPage({
                         <div
                           className={cn(
                             "h-0.5 flex-1",
-                            isCompleted ? "bg-primary" : "bg-muted"
+                            isCompleted ? "bg-gold-500" : "bg-muted"
                           )}
                         />
                       )}
@@ -116,7 +133,7 @@ export default async function OrderDetailPage({
                         className={cn(
                           "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2",
                           isCompleted
-                            ? "border-primary bg-primary text-primary-foreground"
+                            ? "border-gold-500 bg-gold-500 text-[var(--text-on-gold)]"
                             : "border-muted bg-background"
                         )}
                       >
@@ -131,7 +148,7 @@ export default async function OrderDetailPage({
                           className={cn(
                             "h-0.5 flex-1",
                             index < currentStatusIndex
-                              ? "bg-primary"
+                              ? "bg-gold-500"
                               : "bg-muted"
                           )}
                         />
@@ -141,7 +158,7 @@ export default async function OrderDetailPage({
                       className={cn(
                         "mt-2 text-xs",
                         isCurrent
-                          ? "font-medium text-primary"
+                          ? "font-medium text-text-gold"
                           : "text-muted-foreground"
                       )}
                     >
@@ -171,7 +188,7 @@ export default async function OrderDetailPage({
                         className={cn(
                           "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border-2",
                           isCompleted
-                            ? "border-primary bg-primary text-primary-foreground"
+                            ? "border-gold-500 bg-gold-500 text-[var(--text-on-gold)]"
                             : "border-muted bg-background"
                         )}
                       >
@@ -186,7 +203,7 @@ export default async function OrderDetailPage({
                           className={cn(
                             "w-0.5 flex-1 min-h-6",
                             isCompleted && index < currentStatusIndex
-                              ? "bg-primary"
+                              ? "bg-gold-500"
                               : "bg-muted"
                           )}
                         />
@@ -197,7 +214,7 @@ export default async function OrderDetailPage({
                         className={cn(
                           "text-sm",
                           isCurrent
-                            ? "font-medium text-primary"
+                            ? "font-medium text-text-gold"
                             : "text-muted-foreground"
                         )}
                       >
@@ -220,7 +237,7 @@ export default async function OrderDetailPage({
       {/* Items */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("items")}</CardTitle>
+          <CardTitle className="font-display text-xl text-text-primary">{t("items")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="divide-y">
@@ -232,6 +249,9 @@ export default async function OrderDetailPage({
               quantity: number;
               unit_price: number;
               total_price: number;
+              is_rental: boolean;
+              rental_start: string | null;
+              rental_end: string | null;
             }>).map(
               (item) => (
                 <div key={item.id} className="flex gap-4 py-3">
@@ -251,6 +271,15 @@ export default async function OrderDetailPage({
                     <p className="text-sm text-muted-foreground">
                       {t("qty", { quantity: item.quantity, price: formatPrice(item.unit_price) })}
                     </p>
+                    {item.is_rental && item.rental_start && item.rental_end && (
+                      <p className="text-xs text-text-gold">
+                        {t("rentalPeriod", {
+                          start: formatDate(item.rental_start),
+                          end: formatDate(item.rental_end),
+                        })}{" "}
+                        · {t("returnBy", { date: formatDate(item.rental_end) })}
+                      </p>
+                    )}
                   </div>
                   <p className="font-medium">
                     {formatPrice(item.total_price)}
@@ -268,7 +297,7 @@ export default async function OrderDetailPage({
               <span>{formatPrice(order.subtotal)}</span>
             </div>
             {order.discount_amount > 0 && (
-              <div className="flex justify-between text-green-600">
+              <div className="flex justify-between text-[var(--bfg-success)]">
                 <span>{t("discount")}</span>
                 <span>-{formatPrice(order.discount_amount)}</span>
               </div>
@@ -293,7 +322,7 @@ export default async function OrderDetailPage({
       {/* Shipping Address */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("shippingAddress")}</CardTitle>
+          <CardTitle className="font-display text-xl text-text-primary">{t("shippingAddress")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm">

@@ -3,10 +3,12 @@
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
+import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { useCart } from "@/hooks/use-cart";
-import { formatPrice } from "@/lib/formatters";
+import { formatDate, formatPrice } from "@/lib/formatters";
+import { getCartLineUnitPrice, getRentalDays } from "@/lib/product-pricing";
 import { ROUTES } from "@/lib/constants";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CartItem as CartItemType } from "@/types/cart";
 import { hapticNotification, hapticSelection } from "@/lib/haptics";
@@ -18,8 +20,10 @@ interface CartItemProps {
 export function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem } = useCart();
   const t = useTranslations("products.card");
+  const tCart = useTranslations("cart");
   const { product, quantity } = item;
-  const price = product.discount_price || product.price;
+  const price = getCartLineUnitPrice(product, item.rental_start, item.rental_end);
+  const hasRentalPeriod = Boolean(item.rental_start && item.rental_end);
 
   return (
     <div className="flex gap-4 py-4">
@@ -61,28 +65,26 @@ export function CartItem({ item }: CartItemProps) {
         {product.material && (
           <p className="text-xs text-muted-foreground">{product.material}</p>
         )}
+        {hasRentalPeriod && (
+          <p className="text-xs text-text-gold">
+            {tCart("rentalPeriod", {
+              start: formatDate(item.rental_start!),
+              end: formatDate(item.rental_end!),
+              days: getRentalDays(item.rental_start!, item.rental_end!),
+            })}
+          </p>
+        )}
         <div className="mt-auto flex items-center justify-between">
-          <div className="flex items-center rounded-md border">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-none"
-              onClick={() => { hapticSelection(); updateQuantity(product.id, quantity - 1); }}
-              disabled={quantity <= 1}
-            >
-              <Minus className="h-3 w-3" />
-            </Button>
-            <span className="w-8 text-center text-sm">{quantity}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-none"
-              onClick={() => { hapticSelection(); updateQuantity(product.id, quantity + 1); }}
-              disabled={quantity >= product.stock}
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
-          </div>
+          <QuantityStepper
+            size="sm"
+            value={quantity}
+            min={1}
+            max={Math.max(1, product.stock)}
+            onChange={(v) => {
+              hapticSelection();
+              updateQuantity(product.id, v);
+            }}
+          />
           <span className="font-medium">{formatPrice(price * quantity)}</span>
         </div>
       </div>

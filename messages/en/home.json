@@ -6,11 +6,45 @@
     "subtitle": "Exclusive Marriage Rental Sets Collection — Now Available at Special Discounted Prices",
     "description": "Discover premium wedding rental sets curated specially for South Indian celebrations. Look royal, spend smart, and make your big moments unforgettable.",
     "shopCollection": "Explore Collection",
-    "rentalSets": "View Discounts"
+    "rentalSets": "View Discounts",
+    "eyebrow": "Handcrafted in Chirala",
+    "titleA": "Adorn every",
+    "titleB": "occasion",
+    "sub": "Quality-checked fashion jewellery — temple gold, kundan, antique & uncut stone. Inspected by hand before it reaches you.",
+    "ctaShop": "Shop the collection",
+    "ctaVisit": "Visit our store",
+    "statReviews": "1,200+ reviews",
+    "statDesigns": "designs in store",
+    "statChecked": "hand-checked",
+    "chipTitle": "Temple Gold Edit",
+    "chipSub": "New bridal arrivals"
   },
   "categories": {
     "label": "Explore",
-    "title": "Shop by Category"
+    "title": "Shop by Category",
+    "styles": "{count} styles"
+  },
+  "story": {
+    "eyebrow": "Our promise",
+    "title": "Every piece, checked by hand",
+    "body": "Based in Chirala, we personally inspect each item for finish, durability and design accuracy before it ever reaches you — in store or online.",
+    "promise1": "Personally inspected for finish & durability",
+    "promise2": "Fixed, fair pricing — no haggling",
+    "promise3": "Warranty on select pieces"
+  },
+  "trustLabels": {
+    "shipping": "Free shipping over ₹999",
+    "quality": "Hand quality-checked",
+    "rentals": "Rentals available",
+    "secure": "Secure payments",
+    "visit": "Visit our Chirala store",
+    "custom": "Custom orders welcome"
+  },
+  "newsletter": {
+    "title": "Join the BFG circle",
+    "subtitle": "First look at new arrivals and festive offers.",
+    "emailPlaceholder": "you@email.com",
+    "join": "Join"
   },
   "brandStory": {
     "label": "Our Story",
@@ -19,9 +53,10 @@
     "cta": "Our Story"
   },
   "featured": {
-    "label": "Curated for You",
-    "title": "Featured Pieces",
-    "viewAll": "View All"
+    "label": "Handpicked",
+    "title": "The Bridal Edit",
+    "sub": "Temple jewellery and bridal sets our customers love most.",
+    "viewAll": "View all jewellery"
   },
   "wishlistCta": {
     "label": "Pro Tip",
@@ -63,7 +98,14 @@
     }
   },
   "visitUs": {
-    "label": "Find Us",
-    "title": "Visit Our Store"
+    "label": "Visit us",
+    "title": "See the collection in Chirala",
+    "whatsapp": "Chat on WhatsApp"
+  },
+  "imageAlt": {
+    "heroBridal": "South Indian bridal jewellery",
+    "storefront": "Our Chirala storefront",
+    "interior": "Inside the store",
+    "display": "Jewellery display"
   }
 }
