@@ -3,7 +3,8 @@ import { ProductDetailContent } from "@/components/products/product-detail-conte
 import { RelatedProductsContent } from "@/components/products/related-products-content";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { ProductGridSkeleton } from "@/components/shared/loading-skeleton";
-import { APP_NAME, ROUTES } from "@/lib/constants";
+import { APP_NAME, BUSINESS_INFO, ROUTES } from "@/lib/constants";
+import { formatPrice } from "@/lib/formatters";
 import { getCategoryName, getProductDescription, getProductName } from "@/lib/i18n-helpers";
 import {
   getOfflineProductBySlug,
@@ -95,9 +96,27 @@ export async function generateMetadata({
   const displayName = getProductName(product, locale);
   const displayDesc = getProductDescription(product, locale);
 
+  // Product-specific fallback when a product has no hand-written description,
+  // so each page gets a distinct, keyword-rich meta description (category + price).
+  const category = product.category
+    ? getCategoryName(product.category, locale)
+    : t("metaGenericCategory");
+  const priceAmount = product.is_rental
+    ? product.rental_discount_price ?? product.rental_price
+    : product.discount_price ?? product.price;
+  const description =
+    displayDesc ||
+    t(product.is_rental ? "metaDescriptionRental" : "metaDescriptionSale", {
+      name: displayName,
+      category,
+      price: priceAmount != null ? formatPrice(priceAmount) : "",
+      brand: APP_NAME,
+      city: BUSINESS_INFO.address.city,
+    });
+
   return {
     title: displayName,
-    description: displayDesc || t("metaDescription", { name: displayName }),
+    description,
     alternates: {
       canonical: `${SITE_URL}/products/${slug}`,
       languages: {
@@ -107,7 +126,7 @@ export async function generateMetadata({
     },
     openGraph: {
       title: displayName,
-      description: displayDesc || undefined,
+      description,
       type: "website",
       images: product.images[0]
         ? [{ url: product.images[0], alt: displayName }]

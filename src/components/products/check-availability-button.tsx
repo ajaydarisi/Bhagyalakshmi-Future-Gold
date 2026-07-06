@@ -20,6 +20,10 @@ interface CheckAvailabilityButtonProps {
   size?: "default" | "sm";
   isRental?: boolean;
   maxRentalDays?: number | null;
+  /** Override the button label (e.g. "Enquire on WhatsApp" in online mode). */
+  label?: string;
+  /** "solid" = filled green (offline default); "outline" = secondary enquiry CTA. */
+  variant?: "solid" | "outline";
 }
 
 export function CheckAvailabilityButton({
@@ -28,6 +32,8 @@ export function CheckAvailabilityButton({
   size = "default",
   isRental,
   maxRentalDays,
+  label,
+  variant = "solid",
 }: CheckAvailabilityButtonProps) {
   const t = useTranslations("products");
   const tw = useTranslations("wishlist");
@@ -77,12 +83,16 @@ export function CheckAvailabilityButton({
   return (
     <>
       <Button
-        className="flex-1 bg-[#006d28] hover:bg-[#1da851] text-white font-semibold"
+        className={
+          variant === "outline"
+            ? "w-full border border-[#006d28] bg-transparent text-[#006d28] hover:bg-[#006d28]/10 font-semibold"
+            : "flex-1 bg-[#006d28] hover:bg-[#1da851] text-white font-semibold"
+        }
         size={size === "sm" ? "sm" : "lg"}
         onClick={handleClick}
       >
         <MessageCircle className={size === "sm" ? "mr-1 h-3 w-3" : "mr-2 h-4 w-4"} />
-        {tw("checkAvailability")}
+        {label ?? tw("checkAvailability")}
       </Button>
 
       {isRental && (

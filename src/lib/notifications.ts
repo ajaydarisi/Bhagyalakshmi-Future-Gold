@@ -188,6 +188,39 @@ export async function sendProductNotification(
     },
   };
 
+  // Push to a specific set of users (their active device tokens), deactivating
+  // any tokens Firebase reports as stale. Shared by the wishlist (price_drop)
+  // and stock-alert (back_in_stock) paths.
+  async function deliverToUsers(userIds: string[]) {
+    const uniqueIds = [...new Set(userIds)];
+    if (uniqueIds.length === 0) return { sentCount: 0, failedCount: 0 };
+
+    const { data: tokens } = await supabase
+      .from("device_tokens")
+      .select("token")
+      .in("user_id", uniqueIds)
+      .eq("is_active", true);
+
+    if (!tokens?.length) return { sentCount: 0, failedCount: 0 };
+
+    const response = await messaging.sendEachForMulticast({
+      tokens: tokens.map((t) => t.token),
+      ...notificationPayload,
+    });
+
+    response.responses.forEach((resp, idx) => {
+      if (resp.error?.code === "messaging/registration-token-not-registered") {
+        supabase
+          .from("device_tokens")
+          .update({ is_active: false })
+          .eq("token", tokens[idx].token)
+          .then(() => {});
+      }
+    });
+
+    return { sentCount: response.successCount, failedCount: response.failureCount };
+  }
+
   try {
     let sentCount = 0;
     let failedCount = 0;
@@ -202,37 +235,29 @@ export async function sendProductNotification(
 
       if (!wishlistUsers?.length) return { success: true };
 
-      const userIds = [...new Set(wishlistUsers.map((w) => w.user_id))];
-
-      const { data: tokens } = await supabase
-        .from("device_tokens")
-        .select("token")
-        .in("user_id", userIds)
-        .eq("is_active", true);
-
-      if (!tokens?.length) return { success: true };
-
-      const response = await messaging.sendEachForMulticast({
-        tokens: tokens.map((t) => t.token),
-        ...notificationPayload,
-      });
-
-      sentCount = response.successCount;
-      failedCount = response.failureCount;
       targetType = "wishlist";
+      ({ sentCount, failedCount } = await deliverToUsers(
+        wishlistUsers.map((w) => w.user_id)
+      ));
+    } else if (type === "back_in_stock") {
+      // Only users who subscribed to this product via the notify-stock button.
+      const { data: alertUsers } = await supabase
+        .from("stock_alerts")
+        .select("user_id")
+        .eq("product_id", productId);
 
-      // Deactivate stale tokens
-      response.responses.forEach((resp, idx) => {
-        if (resp.error?.code === "messaging/registration-token-not-registered") {
-          supabase
-            .from("device_tokens")
-            .update({ is_active: false })
-            .eq("token", tokens[idx].token)
-            .then(() => {});
-        }
-      });
+      if (!alertUsers?.length) return { success: true };
+
+      targetType = "stock_alert";
+      ({ sentCount, failedCount } = await deliverToUsers(
+        alertUsers.map((a) => a.user_id)
+      ));
+
+      // The "back in stock" event is now spent — clear the subscriptions so a
+      // future restock doesn't re-notify people who already got this one.
+      await supabase.from("stock_alerts").delete().eq("product_id", productId);
     } else {
-      // Broadcast to all users for new_product, back_in_stock
+      // Broadcast to all users for new_product
       await messaging.send({
         topic: "all_users",
         ...notificationPayload,

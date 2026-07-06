@@ -10,8 +10,12 @@ import {
 import {
   maxConcurrentBooked,
   isRentalOverdue,
+  countsAsBooked,
+  PENDING_HOLD_MINUTES,
   type BookedRange,
 } from "../src/lib/rental-availability";
+import { getRentalDateConstraints } from "../src/lib/offline-store-ui";
+import { format } from "date-fns";
 
 // --- Pricing per duration -------------------------------------------------
 const rental = {
@@ -85,11 +89,54 @@ assert.equal(
   "same-day bookings stack"
 );
 
+// --- Soft-hold counting (own pending order must not self-block) -------------
+const now = Date.now();
+const fresh = new Date(now - 60_000).toISOString(); // 1 min ago, inside window
+const stale = new Date(now - (PENDING_HOLD_MINUTES + 1) * 60_000).toISOString();
+
+assert.equal(
+  countsAsBooked({ status: "paid", created_at: stale, user_id: "u1" }, now, "u1"),
+  true,
+  "confirmed orders always count, even for the caller"
+);
+assert.equal(
+  countsAsBooked({ status: "pending", created_at: fresh, user_id: "u2" }, now, "u1"),
+  true,
+  "another buyer's fresh pending order holds inventory"
+);
+assert.equal(
+  countsAsBooked({ status: "pending", created_at: fresh, user_id: "u1" }, now, "u1"),
+  false,
+  "caller's own pending order is excluded so a retry isn't self-blocked"
+);
+assert.equal(
+  countsAsBooked({ status: "pending", created_at: stale, user_id: "u2" }, now, "u1"),
+  false,
+  "an abandoned pending hold lapses after the window"
+);
+
 // --- Derived overdue --------------------------------------------------------
 assert.equal(isRentalOverdue("active", "2026-07-01", "2026-07-03"), true, "active past due");
 assert.equal(isRentalOverdue("active", "2026-07-05", "2026-07-03"), false, "active not yet due");
 assert.equal(isRentalOverdue("returned", "2026-07-01", "2026-07-03"), false, "returned never overdue");
 assert.equal(isRentalOverdue("booked", "2026-07-01", "2026-07-03"), false, "booked never overdue");
 assert.equal(isRentalOverdue("active", null, "2026-07-03"), false, "no end date, no overdue");
+
+// --- Picker bound matches the checkout limit (no off-by-one) ----------------
+// The rental dialog's last selectable end date must yield exactly max_rental_days
+// inclusive days, otherwise the calendar offers a period checkout then rejects.
+for (const maxDays of [1, 3, 5, 30]) {
+  const start = new Date("2026-07-10T00:00:00");
+  const { endDateMax } = getRentalDateConstraints({
+    startDate: start,
+    maxRentalDays: maxDays,
+  });
+  assert.ok(endDateMax, "endDateMax present when start + maxRentalDays set");
+  assert.equal(
+    getRentalDays(format(start, "yyyy-MM-dd"), format(endDateMax!, "yyyy-MM-dd")),
+    maxDays,
+    `picker's last end date yields exactly ${maxDays} inclusive day(s)`
+  );
+}
 
 console.log("all rental logic assertions passed");

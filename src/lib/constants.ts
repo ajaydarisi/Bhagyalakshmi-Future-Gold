@@ -55,6 +55,31 @@ export const ORDER_STATUSES = [
   { value: "refunded", label: "Refunded", color: "bg-gray-100 text-gray-800" },
 ] as const;
 
+// Allowed order status transitions. Guards the admin status updater so an order
+// can't jump to an unrelated state (e.g. delivered on an unpaid order, which
+// would auto-activate a rental) or move backward and re-fire push notifications.
+// cancelled/refunded are terminal — no outgoing transitions — which also means
+// a paid order enters a stock-releasing state exactly once, so the cancel/refund
+// stock restore can run without extra idempotency tracking.
+export const ORDER_STATUS_TRANSITIONS: Record<string, readonly string[]> = {
+  pending: ["paid", "cancelled"],
+  paid: ["processing", "shipped", "delivered", "cancelled", "refunded"],
+  processing: ["shipped", "delivered", "cancelled", "refunded"],
+  shipped: ["delivered", "cancelled", "refunded"],
+  delivered: ["refunded"],
+  cancelled: [],
+  refunded: [],
+};
+
+// Statuses in which sale stock has already been decremented (see verifyPayment /
+// webhook). Transitioning out of one of these into cancelled/refunded restores it.
+export const STOCK_HOLDING_STATUSES = [
+  "paid",
+  "processing",
+  "shipped",
+  "delivered",
+] as const;
+
 // Rental lifecycle for non-sale orders. "overdue" is derived (active + past
 // latest rental_end), never stored in the DB.
 export const RENTAL_STATUSES = [

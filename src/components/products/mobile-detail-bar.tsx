@@ -75,6 +75,14 @@ export function MobileDetailBar({ product, productName }: MobileDetailBarProps) 
               {tDetail("buyNow")}
             </Button>
           )}
+          <CheckAvailabilityButton
+            productName={productName}
+            productSlug={product.slug}
+            isRental={product.is_rental}
+            maxRentalDays={product.max_rental_days}
+            label={tDetail("enquireOnWhatsapp")}
+            variant="outline"
+          />
         </div>
       ) : (
         <div className="flex items-center gap-3">

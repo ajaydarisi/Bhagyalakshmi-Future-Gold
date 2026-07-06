@@ -21,7 +21,7 @@ interface RawBookedRow {
   rental_start: string | null;
   rental_end: string | null;
   quantity: number;
-  orders: { status: string; created_at: string };
+  orders: { status: string; created_at: string; user_id: string | null };
 }
 
 /**
@@ -34,15 +34,23 @@ interface RawBookedRow {
  * that read availability in the same instant (before either inserts its pending
  * order) can still both pass; closing that requires DB-level serialization
  * (advisory lock / reservation row inside a single transaction).
+ *
+ * `excludePendingUserId` drops that user's OWN pending orders from the soft
+ * holds — a buyer who dismisses the Razorpay modal and retries (each Pay Now
+ * mints a new pending order) must not be blocked by their own in-flight
+ * reservation on a single-capacity rental. Confirmed orders are never dropped.
  */
 export async function getBookedRanges(
   admin: ReturnType<typeof createAdminClient>,
   productId: string,
-  fromDate?: string
+  fromDate?: string,
+  excludePendingUserId?: string
 ): Promise<BookedRange[]> {
   let query = admin
     .from("order_items")
-    .select("rental_start, rental_end, quantity, orders!inner(status, created_at)")
+    .select(
+      "rental_start, rental_end, quantity, orders!inner(status, created_at, user_id)"
+    )
     .eq("product_id", productId)
     .eq("is_rental", true)
     .in("orders.status", [...BOOKING_STATUSES, "pending"]);
@@ -53,20 +61,32 @@ export async function getBookedRanges(
   const { data, error } = await query;
   if (error) throw error;
 
-  const holdCutoff = Date.now() - PENDING_HOLD_MINUTES * 60_000;
+  const now = Date.now();
 
   return ((data ?? []) as unknown as RawBookedRow[])
     .filter((r) => r.rental_start && r.rental_end)
-    .filter((r) =>
-      r.orders.status === "pending"
-        ? new Date(r.orders.created_at).getTime() > holdCutoff
-        : true
-    )
+    .filter((r) => countsAsBooked(r.orders, now, excludePendingUserId))
     .map((r) => ({
       rental_start: r.rental_start as string,
       rental_end: r.rental_end as string,
       quantity: r.quantity,
     }));
+}
+
+/**
+ * Whether a booked order_items row counts toward availability. Confirmed
+ * orders always count; a pending order is a soft hold that counts only while
+ * inside PENDING_HOLD_MINUTES and only if it isn't the caller's own in-flight
+ * order (excludePendingUserId). Pure, so the checkout branch is testable.
+ */
+export function countsAsBooked(
+  order: { status: string; created_at: string; user_id: string | null },
+  now: number,
+  excludePendingUserId?: string
+): boolean {
+  if (order.status !== "pending") return true;
+  if (excludePendingUserId && order.user_id === excludePendingUserId) return false;
+  return new Date(order.created_at).getTime() > now - PENDING_HOLD_MINUTES * 60_000;
 }
 
 /**

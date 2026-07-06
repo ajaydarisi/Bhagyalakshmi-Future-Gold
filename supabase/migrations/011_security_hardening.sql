@@ -18,6 +18,8 @@
 
 -- SECURITY INVOKER (default) so current_user reflects the actual caller role
 -- that PostgREST set (authenticated/anon), not the function owner.
+-- Empty search_path (the function touches no schema objects, only NEW/OLD and
+-- current_user) — pins it against search_path manipulation.
 create or replace function public.prevent_role_change()
 returns trigger as $$
 begin
@@ -27,7 +29,7 @@ begin
   end if;
   return new;
 end;
-$$ language plpgsql;
+$$ language plpgsql set search_path = '';
 
 drop trigger if exists profiles_prevent_role_change on public.profiles;
 create trigger profiles_prevent_role_change

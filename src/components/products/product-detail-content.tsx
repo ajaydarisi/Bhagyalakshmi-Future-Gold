@@ -134,9 +134,19 @@ export function ProductDetailContent({ initialProduct }: ProductDetailContentPro
         )}
 
         {/* Inline action — desktop/tablet. Phones use the sticky bottom bar. */}
-        <div className="hidden md:block">
+        <div className="hidden space-y-2 md:block">
           {displayState.showCartAction ? (
-            <AddToCartButton product={p} />
+            <>
+              <AddToCartButton product={p} />
+              <CheckAvailabilityButton
+                productName={displayName}
+                productSlug={p.slug}
+                isRental={p.is_rental}
+                maxRentalDays={p.max_rental_days}
+                label={t("enquireOnWhatsapp")}
+                variant="outline"
+              />
+            </>
           ) : (
             <CheckAvailabilityButton
               productName={displayName}

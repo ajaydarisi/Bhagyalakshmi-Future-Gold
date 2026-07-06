@@ -7,7 +7,7 @@ import type { NavCategory } from "@/lib/queries";
 import { createClient } from "@/lib/supabase/client";
 import { FeedbackDialog } from "@/components/feedback/feedback-form";
 import { Logo } from "@/components/brand/logo";
-import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import { Clock, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import Image from "next/image";
 import { Link, useRouter, usePathname } from "@/i18n/routing";
 import { useLocale, useTranslations } from "next-intl";
@@ -186,6 +186,19 @@ export function Footer({ categories }: { categories: NavCategory[] }) {
                   <Mail className="h-4 w-4 shrink-0 text-gold-300" />
                   <a href={`mailto:${BUSINESS_INFO.email}`} className="hover:text-gold-300 transition-colors">
                     {BUSINESS_INFO.email}
+                  </a>
+                </li>
+              )}
+              {BUSINESS_INFO.whatsapp && (
+                <li className="flex items-center gap-2 text-sm text-[var(--text-on-dark)]/75">
+                  <MessageCircle className="h-4 w-4 shrink-0 text-gold-300" />
+                  <a
+                    href={`https://wa.me/91${BUSINESS_INFO.whatsapp}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-gold-300 transition-colors"
+                  >
+                    {t("whatsapp")}
                   </a>
                 </li>
               )}

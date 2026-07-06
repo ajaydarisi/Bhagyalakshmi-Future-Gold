@@ -14,7 +14,7 @@ import type { ProductWithCategory } from "@/types/product";
 import type { CatalogSearchResponse } from "@/types/search";
 
 export const PRODUCT_LIST_FIELDS =
-  "id, name, name_telugu, slug, price, discount_price, images, tags, stock, is_sale, is_rental, rental_price, rental_discount_price, material, set_number, category:categories(name, name_telugu, slug)";
+  "id, name, name_telugu, slug, price, discount_price, images, tags, stock, is_sale, is_rental, rental_price, rental_discount_price, max_rental_days, material, set_number, category:categories(name, name_telugu, slug)";
 
 export interface FetchProductsParams {
   categoryIds: string[];

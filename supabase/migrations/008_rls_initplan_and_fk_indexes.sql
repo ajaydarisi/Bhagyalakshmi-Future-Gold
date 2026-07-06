@@ -71,7 +71,8 @@ alter policy "Users can delete their own stock alerts" on public.stock_alerts
 
 create index if not exists idx_cart_items_product on public.cart_items (product_id);
 create index if not exists idx_wishlist_items_product on public.wishlist_items (product_id);
-create index if not exists idx_feedback_user on public.feedback (user_id);
+-- feedback (user_id) index lives in 009, alongside its CREATE TABLE — the table
+-- does not exist yet at this migration, so indexing it here fails on a fresh apply.
 create index if not exists idx_notifications_created_by on public.notifications (created_by);
 create index if not exists idx_order_status_history_changed_by on public.order_status_history (changed_by);
 create index if not exists idx_orders_coupon on public.orders (coupon_id);

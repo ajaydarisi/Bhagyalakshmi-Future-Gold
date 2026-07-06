@@ -377,6 +377,25 @@ $$ language plpgsql security definer set search_path = public;
 revoke all on function public.decrement_product_stock(jsonb) from public, anon, authenticated;
 revoke all on function public.increment_coupon_usage(uuid) from public, anon, authenticated;
 
+-- Restore stock when a paid order is cancelled/refunded (inverse of
+-- decrement_product_stock; sale lines only). No `stock >=` guard — adding back
+-- can't go negative. See migration 012_restore_product_stock.sql.
+create or replace function public.increment_product_stock(items jsonb)
+returns void as $$
+declare
+  item jsonb;
+begin
+  for item in select * from jsonb_array_elements(items)
+  loop
+    update public.products
+    set stock = stock + (item->>'quantity')::int
+    where id = (item->>'product_id')::uuid;
+  end loop;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+revoke all on function public.increment_product_stock(jsonb) from public, anon, authenticated;
+
 -- ============================================
 -- PUSH NOTIFICATIONS
 -- ============================================

@@ -58,7 +58,15 @@ export async function createOrder(
 
   if (!address) throw new Error("Address not found");
 
-  // Validate stock and rental periods
+  // Validate stock and rental periods.
+  // ponytail: stock and coupon usage are validated here at order creation but
+  // only committed at payment (decrement_product_stock / increment_coupon_usage).
+  // Two concurrent last-unit checkouts can both pass this check, so a single-unit
+  // oversell — or a coupon discount granted past max_uses — is possible. The RPCs
+  // cap the counters (stock never goes negative, used_count never exceeds
+  // max_uses), so the residual is a paid order without its decrement/one extra
+  // discounted order. Full fix: reserve stock + coupon usage at order creation in
+  // one transaction. Tracked as accepted debt.
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   for (const item of cartItems) {
@@ -88,8 +96,15 @@ export async function createOrder(
       }
 
       // Availability: units booked by confirmed orders on any overlapping day
-      // must leave room for this line. Pending orders don't hold inventory.
-      const ranges = await getBookedRanges(admin, product.id, item.rental_start);
+      // must leave room for this line. Other buyers' recent pending orders act
+      // as soft holds, but the caller's own pending orders are excluded so a
+      // retried checkout isn't blocked by its own abandoned attempt.
+      const ranges = await getBookedRanges(
+        admin,
+        product.id,
+        item.rental_start,
+        user.id
+      );
       const peak = maxConcurrentBooked(ranges, item.rental_start, item.rental_end);
       if (peak + item.quantity > product.stock) {
         throw new Error(
