@@ -293,10 +293,19 @@ export type ProductWithCategory = Product & { category: Category | null };
 ## Environment Variables
 
 ### Public (NEXT_PUBLIC_*)
-`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `RAZORPAY_KEY_ID`, `STORE_MODE`, `CONFETTI_ENABLED`, `SHOW_APP_BANNER`, `APK_URL`, `GOOGLE_CLIENT_ID`
+`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `RAZORPAY_KEY_ID`, `STORE_MODE`, `CONFETTI_ENABLED`, `SHOW_APP_BANNER`, `SITE_URL`, `PLAY_STORE_URL`, `GOOGLE_CLIENT_ID`
+
+- `SITE_URL` — canonical origin for SEO metadata, `robots.ts`, `sitemap.ts`, and OG/share previews (falls back to `https://bfg.darisi.in`).
+- `PLAY_STORE_URL` — Play Store link for the install-app banner (replaces the former `APK_URL`; banner hides when unset).
 
 ### Private
-`SUPABASE_SERVICE_ROLE_KEY`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RESEND_API_KEY`, `GEMINI_API_KEY`, `DEEPL_AUTH_KEY`, `FIREBASE_*` (project number, ID, storage bucket, app ID, API key, service account key), `DEV_SERVER_URL`
+`SUPABASE_SERVICE_ROLE_KEY`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RESEND_API_KEY`, `GEMINI_API_KEY`, `DEEPL_AUTH_KEY`, `FIREBASE_SERVICE_ACCOUNT_KEY`, `DEV_SERVER_URL`
+
+- `FIREBASE_SERVICE_ACCOUNT_KEY` is the only Firebase value read from the environment (server-side admin SDK). The client push config ships via native `google-services.json` / `GoogleService-Info.plist` at build time, not env vars.
+- `DEV_SERVER_URL` — LAN IP for Capacitor live-reload dev only (`capacitor.config.ts`); never set in production.
+
+### Test-only
+`NEXT_PUBLIC_E2E_TEST_MODE` — set to `1` by the Playwright config to enable offline-store fixtures; unset in dev/prod.
 
 ## Scripts
 
