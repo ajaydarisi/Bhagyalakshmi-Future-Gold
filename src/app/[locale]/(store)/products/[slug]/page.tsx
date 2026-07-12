@@ -180,18 +180,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ...(typedProduct.images[0] && { image: typedProduct.images[0] }),
     sku: typedProduct.id,
     brand: { "@type": "Brand", name: APP_NAME },
-    ...(typedProduct.is_sale && {
-      offers: {
-        "@type": "Offer",
-        price: typedProduct.discount_price || typedProduct.price,
-        priceCurrency: "INR",
-        availability:
-          typedProduct.stock > 0
-            ? "https://schema.org/InStock"
-            : "https://schema.org/OutOfStock",
-        seller: { "@type": "Organization", name: APP_NAME },
-      },
-    }),
+    // Google requires offers/review/aggregateRating on Product; rental items
+    // (is_rental) are priced per day, sale items use discount ?? base price.
+    offers: {
+      "@type": "Offer",
+      price: typedProduct.is_rental
+        ? typedProduct.rental_discount_price ?? typedProduct.rental_price
+        : typedProduct.discount_price ?? typedProduct.price,
+      priceCurrency: "INR",
+      availability:
+        typedProduct.stock > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      seller: { "@type": "Organization", name: APP_NAME },
+    },
     ...(typedProduct.category && {
       category: getCategoryName(typedProduct.category, "en"),
     }),
