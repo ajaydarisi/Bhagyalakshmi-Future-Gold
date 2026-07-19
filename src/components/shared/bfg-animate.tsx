@@ -19,6 +19,14 @@ const HOLD = 1300; // ms — covers the longest stagger + duration
 
 type Played = Element & { __bfgPlayed?: boolean };
 
+// Wait for the main thread to go idle (i.e. hydration work has drained) before
+// mutating className — doing it synchronously on insertion races React/Next's
+// hydration of that DOM and trips a "hydration mismatch" (recoverable, but noisy).
+const onIdle =
+  typeof window !== "undefined" && typeof window.requestIdleCallback === "function"
+    ? (fn: () => void) => window.requestIdleCallback(fn, { timeout: 2000 })
+    : (fn: () => void) => setTimeout(fn, 200);
+
 export function BfgAnimate() {
   useEffect(() => {
     const timers = new Set<ReturnType<typeof setTimeout>>();
@@ -26,12 +34,14 @@ export function BfgAnimate() {
     const play = (el: Played) => {
       if (!el || el.nodeType !== 1 || el.__bfgPlayed) return;
       el.__bfgPlayed = true;
-      el.classList.add("bfg-play");
-      const t = setTimeout(() => {
-        el.classList.remove("bfg-play");
-        timers.delete(t);
-      }, HOLD);
-      timers.add(t);
+      onIdle(() => {
+        el.classList.add("bfg-play");
+        const t = setTimeout(() => {
+          el.classList.remove("bfg-play");
+          timers.delete(t);
+        }, HOLD);
+        timers.add(t);
+      });
     };
 
     const scan = (node: Node) => {

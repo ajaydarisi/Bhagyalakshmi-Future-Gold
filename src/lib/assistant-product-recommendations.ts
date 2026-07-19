@@ -1,3 +1,4 @@
+import { buildAssistantSearchFilters } from "@/lib/assistant";
 import { ASSISTANT_PRODUCT_RECOMMENDATION_LIMIT } from "@/lib/assistant-config";
 import type {
   AssistantPageContext,
@@ -10,10 +11,14 @@ function hasProductCitation(reply: AssistantReply) {
   return reply.citations.some((citation) => citation.sourceType === "product");
 }
 
+// Misrouting here is asymmetric: the store-info path still retrieves products
+// (the LLM can answer product asks), but the product path caps public docs at 3
+// and its fallback prints catalog matches. So website/about words bias to
+// store-info.
 export function isPolicyOrStoreInfoRequest(query: string) {
-  return /\b(return|refund|exchange|policy|policies|shipping|delivery|store info|store information|hours|timings|location|address|contact|phone|whatsapp|payment|cod|cash on delivery|privacy|terms|faq|warranty|cancel|cancellation)\b/i.test(
+  return /\b(return|refund|exchange|policy|policies|shipping|delivery|store info|store information|hours|timings|location|address|contact|phone|whatsapp|payment|cod|cash on delivery|privacy|terms|faq|warranty|cancel|cancellation|owner|owners|proprietor|founder|who (runs|owns|made|built|created)|about (the |this |your )?(store|shop|site|website|company|business)|site ?map|pages|website|web site)\b/i.test(
     query
-  ) || /(రిటర్న్|రిఫండ్|ఎక్స్చేంజ్|పాలసీ|పాలసీలు|షిప్పింగ్|డెలివరీ|స్టోర్ సమాచారం|స్టోర్|సమయాలు|చిరునామా|కాంటాక్ట్|ఫోన్|వాట్సాప్|చెల్లింపు|ప్రైవసీ|నిబంధనలు|క్యాన్సిల్)/.test(
+  ) || /(రిటర్న్|రిఫండ్|ఎక్స్చేంజ్|పాలసీ|పాలసీలు|షిప్పింగ్|డెలివరీ|స్టోర్ సమాచారం|స్టోర్|సమయాలు|చిరునామా|కాంటాక్ట్|ఫోన్|వాట్సాప్|చెల్లింపు|ప్రైవసీ|నిబంధనలు|క్యాన్సిల్|ఓనర్|యజమాని|వ్యవస్థాపక|ఎవరిది|ఎవరు నడుపు|వెబ్సైట్|సైట్|పేజీ)/.test(
     query
   );
 }
@@ -110,6 +115,23 @@ export function selectAssistantRecommendedProducts(args: {
     return [] as AssistantProductMatch[];
   }
 
+  // A stated budget must bind the product cards too — recommending items the
+  // user just said they can't afford (including the current page's product)
+  // contradicts the written answer.
+  const maxPrice = buildAssistantSearchFilters(args.latestUserMessage)?.maxPrice ?? null;
+  const isWithinBudget = (product: AssistantProductMatch) => {
+    if (maxPrice === null) {
+      return true;
+    }
+
+    const price =
+      product.isRental && !product.isSale
+        ? product.rentalPrice
+        : product.salePrice ?? product.rentalPrice;
+
+    return typeof price === "number" && price <= maxPrice;
+  };
+
   const candidates = args.retrievedContext.reduce<
     Array<{
       sourceKey: string;
@@ -118,7 +140,7 @@ export function selectAssistantRecommendedProducts(args: {
     }>
   >((items, item) => {
     const product = buildAssistantProductMatch(item);
-    if (!product) {
+    if (!product || !isWithinBudget(product)) {
       return items;
     }
 

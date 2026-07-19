@@ -176,11 +176,17 @@ function buildStoreOverviewDocument(locale: SupportedPublicLocale) {
       ? `${APP_NAME} స్టోర్ అవలోకనం`
       : `${APP_NAME} Store Overview`;
 
+  const owner =
+    locale === "te"
+      ? `యజమాని (ఓనర్ / ప్రొప్రయిటర్): దరిసి భాగ్యలక్ష్మి (${BUSINESS_INFO.proprietor.name}). ${APP_NAME} స్టోర్ మరియు ఈ వెబ్సైట్‌ను ఆమె నిర్వహిస్తారు.`
+      : `Owner (Proprietor): ${BUSINESS_INFO.proprietor.name}. The ${APP_NAME} store and this website are owned and run by ${BUSINESS_INFO.proprietor.name}.`;
+
   const content = [
     `${about.label}: ${about.tagline}`,
     about.mission,
     about.storyShort,
     about.qualityProcess,
+    owner,
     `${about.address}: ${address}`,
     `${about.phone}: ${BUSINESS_INFO.phone}`,
     `${about.email}: ${BUSINESS_INFO.email}`,
@@ -200,6 +206,56 @@ function buildStoreOverviewDocument(locale: SupportedPublicLocale) {
       page: ROUTES.about,
       sectionKey: "store-info",
       summaryKind: "overview",
+    },
+  });
+}
+
+function buildSiteGuideDocument(locale: SupportedPublicLocale) {
+  const title =
+    locale === "te"
+      ? `${APP_NAME} వెబ్సైట్ గైడ్ మరియు సైట్‌మ్యాప్`
+      : `${APP_NAME} website guide and sitemap`;
+
+  const content =
+    locale === "te"
+      ? [
+          `ఈ వెబ్సైట్ (${APP_NAME}) లోని ముఖ్యమైన పేజీలు:`,
+          `హోమ్ (${ROUTES.home}): ఫీచర్డ్ జ్యువెలరీ మరియు కొత్త డిజైన్లు.`,
+          `ఉత్పత్తులు (${ROUTES.products}): వర్గం, ధర, మెటీరియల్ ఫిల్టర్లతో పూర్తి కాటలాగ్. ప్రతి ఉత్పత్తికి సొంత వివరాల పేజీ ఉంటుంది.`,
+          `సెర్చ్ (${ROUTES.search}): ఉత్పత్తులను వెతకవచ్చు.`,
+          `కార్ట్ (${ROUTES.cart}) మరియు చెక్అవుట్ (${ROUTES.checkout}): ఎంచుకున్న వస్తువులను చూసి Razorpay ద్వారా ఆన్‌లైన్‌లో సురక్షితంగా చెల్లించవచ్చు.`,
+          `విష్‌లిస్ట్ (${ROUTES.wishlist}): నచ్చిన ఉత్పత్తులను సేవ్ చేసుకోవచ్చు.`,
+          `అకౌంట్ (${ROUTES.account}): ప్రొఫైల్, సేవ్ చేసిన చిరునామాలు, మరియు ఆర్డర్ హిస్టరీ (${ROUTES.accountOrders}).`,
+          `మా గురించి (${ROUTES.about}): స్టోర్ కథ, యజమాని వివరాలు, FAQ, మరియు వ్యాపార సమాచారం.`,
+          `స్టోర్ సందర్శన (${ROUTES.visit}): చీరాలలోని స్టోర్ లొకేషన్, మ్యాప్, మరియు పని వేళలు.`,
+          `చట్టపరమైనవి: నిబంధనలు (${ROUTES.termsAndConditions}) మరియు ప్రైవసీ పాలసీ (${ROUTES.privacyPolicy}).`,
+          `లాగిన్ (${ROUTES.login}) మరియు సైన్అప్ (${ROUTES.signup}) తో అకౌంట్ ప్రారంభించవచ్చు.`,
+        ].join("\n")
+      : [
+          `Main pages on this ${APP_NAME} website:`,
+          `Home (${ROUTES.home}): featured jewellery and new arrivals.`,
+          `Products (${ROUTES.products}): the full catalog with category, price, and material filters. Every product has its own detail page.`,
+          `Search (${ROUTES.search}): search across the catalog.`,
+          `Cart (${ROUTES.cart}) and Checkout (${ROUTES.checkout}): review selected items and pay securely online via Razorpay.`,
+          `Wishlist (${ROUTES.wishlist}): save favourite products.`,
+          `Account (${ROUTES.account}): profile, saved addresses, and order history (${ROUTES.accountOrders}).`,
+          `About (${ROUTES.about}): the store story, owner details, FAQ, and business information.`,
+          `Visit (${ROUTES.visit}): store location in Chirala with map and opening hours.`,
+          `Legal: terms and conditions (${ROUTES.termsAndConditions}) and privacy policy (${ROUTES.privacyPolicy}).`,
+          `Login (${ROUTES.login}) and signup (${ROUTES.signup}) to create an account.`,
+        ].join("\n");
+
+  return createRetrievalDocument({
+    sourceType: "store_info",
+    sourceKey: `store_info:${locale}:site-guide`,
+    locale,
+    title,
+    content,
+    metadata: {
+      href: ROUTES.home,
+      page: ROUTES.home,
+      sectionKey: "site-guide",
+      summaryKind: "site-guide",
     },
   });
 }
@@ -541,6 +597,7 @@ export function buildPublicRetrievalDocuments(
 ) {
   return locales.flatMap((locale) => [
     buildStoreOverviewDocument(locale),
+    buildSiteGuideDocument(locale),
     buildMaterialsSummaryDocument(locale, products),
     buildCatalogCoverageDocument(locale, products),
     buildShoppingOptionsDocument(locale, products),

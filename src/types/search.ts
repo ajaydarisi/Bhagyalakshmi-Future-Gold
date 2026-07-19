@@ -108,6 +108,49 @@ export interface AssistantHandoff {
   url: string;
 }
 
+export type AssistantNavigationKind =
+  | "page"
+  | "product_filters"
+  | "product_detail"
+  | "order_detail"
+  | "checkout_confirmation";
+
+export type AssistantNavigationDestination =
+  | "home"
+  | "products"
+  | "search"
+  | "cart"
+  | "checkout"
+  | "wishlist"
+  | "account"
+  | "orders"
+  | "addresses"
+  | "about"
+  | "visit"
+  | "terms"
+  | "privacy"
+  | "login"
+  | "signup"
+  | "forgot_password"
+  | "product_detail"
+  | "order_detail"
+  | "checkout_confirmation";
+
+export interface AssistantNavigation {
+  kind: AssistantNavigationKind;
+  destination: AssistantNavigationDestination;
+  /** A validated, locale-neutral internal href. */
+  href: string;
+}
+
+/** A server-resolved, client-validated route offered when a target is ambiguous. */
+export interface AssistantNavigationOption {
+  id: string;
+  label: string;
+  description?: string | null;
+  navigation: AssistantNavigation;
+}
+
 export interface AssistantProductMatch {
   id: string;
   slug: string;
@@ -132,4 +175,6 @@ export interface AssistantReply {
   followUpSuggestions: AssistantFollowUpSuggestion[];
   fallbackReason: AssistantFallbackReason | null;
   recommendedProducts?: AssistantProductMatch[];
+  navigation?: AssistantNavigation | null;
+  navigationOptions?: AssistantNavigationOption[];
 }

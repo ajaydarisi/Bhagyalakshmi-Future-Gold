@@ -1,4 +1,4 @@
-import { generateJson } from "@/lib/ai/gemini";
+import { generateJson, streamJson } from "@/lib/ai/gemini";
 import {
   ASSISTANT_CONTEXT_LIMIT,
   ASSISTANT_MAX_ASSISTANT_MESSAGE_CHARS,
@@ -55,6 +55,10 @@ const searchGroundedReplySchema: z.ZodType<SearchGroundedReplyModel> = z.object(
   followUpPrompt: z.string().nullable().optional(),
 });
 
+// Field order matters: Gemini's schema-constrained streaming emits properties
+// in schema order. The answer must come FIRST — it is the part we stream, and
+// forcing the model to commit to citations before composing anything (with
+// thinking disabled) makes it bail out with empty output.
 const assistantGroundedReplySchema: z.ZodType<AssistantGroundedReplyModel> = z.object({
   answer: z.string().optional(),
   citations: z
@@ -74,6 +78,11 @@ const assistantGroundedReplySchema: z.ZodType<AssistantGroundedReplyModel> = z.o
     )
     .optional(),
 });
+
+export interface AssistantReplyStreamCallbacks {
+  onAnswerDelta: (delta: string) => void;
+  onAnswerReset: () => void;
+}
 
 function sanitizePromptText(value: string | null | undefined, maxLength: number) {
   if (!value) {
@@ -352,7 +361,9 @@ function buildPrompt(args: {
   pageContext?: AssistantPageContext | null;
 }) {
   const localeInstruction =
-    args.locale === "te" ? "Reply in Telugu." : "Reply in English.";
+    args.locale === "te"
+      ? "Reply only in Telugu, using Telugu script for the answer. Natural shop English words like gold, design, rental, order, gram, and delivery are allowed when Telugu speakers would normally use them."
+      : "Reply only in English.";
   const hasProductContext = args.retrievedContext.some(
     (item) => item.sourceType === "product"
   );
@@ -475,6 +486,8 @@ export async function generateAssistantGroundedReply(args: {
   locale: string;
   retrievedContext: RetrievedContextItem[];
   pageContext?: AssistantPageContext | null;
+  signal?: AbortSignal;
+  stream?: AssistantReplyStreamCallbacks;
 }): Promise<{
   reply: AssistantReply | null;
   meta: GroundedReplyGenerationMeta;
@@ -494,10 +507,79 @@ export async function generateAssistantGroundedReply(args: {
     ...args,
     responseMode: "assistant_reply",
   });
-  const { parsed, meta } = await generateJsonWithRetry(
-    prompt,
-    assistantGroundedReplySchema
+  const availableSourceKeys = new Set(
+    args.retrievedContext.map((item) => item.sourceKey),
   );
+  let emittedAnswer = "";
+
+  const emitPartialAnswer = (partial: unknown) => {
+    if (!args.stream || !partial || typeof partial !== "object") return;
+    const candidate = partial as AssistantGroundedReplyModel;
+    // Citations now arrive AFTER the answer (schema order), so deltas cannot
+    // wait for them. If the final reply is rejected (no valid citations), the
+    // route retracts streamed text via answer_reset before the fallback.
+    if (typeof candidate.answer !== "string") return;
+
+    const nextAnswer = candidate.answer
+      .replace(/^\s+/, "")
+      .slice(0, ASSISTANT_MAX_ASSISTANT_MESSAGE_CHARS);
+    if (!nextAnswer) return;
+    if (!nextAnswer.startsWith(emittedAnswer)) {
+      args.stream.onAnswerReset();
+      emittedAnswer = "";
+    }
+    const delta = nextAnswer.slice(emittedAnswer.length);
+    if (delta) {
+      emittedAnswer = nextAnswer;
+      args.stream.onAnswerDelta(delta);
+    }
+  };
+
+  let parsed: AssistantGroundedReplyModel | null = null;
+  let meta: GroundedReplyGenerationMeta = {
+    jsonRetryCount: 0,
+    jsonRetryFailed: false,
+    droppedFollowUpSuggestions: 0,
+  };
+
+  if (args.stream) {
+    try {
+      parsed = await streamJson({
+        prompt,
+        schema: assistantGroundedReplySchema,
+        signal: args.signal,
+        onPartial: emitPartialAnswer,
+      });
+      emitPartialAnswer(parsed);
+    } catch {
+      if (args.signal?.aborted) {
+        return { reply: null, meta: { ...meta, jsonRetryFailed: true } };
+      }
+      if (emittedAnswer) {
+        args.stream.onAnswerReset();
+        emittedAnswer = "";
+      }
+      try {
+        parsed = await streamJson({
+          prompt,
+          schema: assistantGroundedReplySchema,
+          signal: args.signal,
+          onPartial: emitPartialAnswer,
+        });
+        emitPartialAnswer(parsed);
+        meta = { ...meta, jsonRetryCount: 1 };
+      } catch {
+        meta = { ...meta, jsonRetryCount: 1, jsonRetryFailed: true };
+      }
+    }
+  } else {
+    const generated = await generateJsonWithRetry(
+      prompt,
+      assistantGroundedReplySchema,
+    );
+    parsed = generated.parsed;
+    meta = generated.meta;
+  }
 
   if (!parsed) {
     return {
@@ -526,7 +608,7 @@ export async function generateAssistantGroundedReply(args: {
   const { items: followUpSuggestions, droppedCount } =
     validateAssistantFollowUpSuggestions(
       parsed.followUpSuggestions,
-      new Set(args.retrievedContext.map((item) => item.sourceKey))
+      availableSourceKeys,
     );
 
   return {

@@ -2,6 +2,7 @@
 bfg-design-system
 # dependencies
 /node_modules
+/public/vad/
 /.pnp
 .pnp.*
 .yarn/*

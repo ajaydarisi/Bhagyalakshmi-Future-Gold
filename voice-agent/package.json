@@ -1,0 +1,38 @@
+{
+  "name": "voice-agent",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "make-sample": "tsx scripts/make-sample.ts",
+    "test:stt": "tsx scripts/test-stt.ts",
+    "test:tts": "tsx scripts/test-tts.ts",
+    "test:loop": "tsx scripts/test-loop.ts",
+    "typecheck": "tsc --noEmit",
+    "test:convo": "tsx scripts/test-conversation.ts",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "start:dev": "tsx src/main.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "test:client": "tsx scripts/test-client.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.28",
+    "@nestjs/core": "^11.1.28",
+    "@nestjs/platform-express": "^11.1.28",
+    "@nestjs/platform-ws": "^11.1.28",
+    "@nestjs/websockets": "^11.1.28",
+    "dotenv": "^17.2.3",
+    "jsonwebtoken": "^9.0.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}

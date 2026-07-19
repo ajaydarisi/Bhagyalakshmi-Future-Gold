@@ -2,7 +2,7 @@ import { Link } from "@/i18n/routing";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -28,10 +28,15 @@ export default async function ConfirmationPage({
   if (!orderId) redirect(ROUTES.home);
 
   const supabase = await createClient();
+  const user = await getAuthUser(supabase);
+  if (!user) {
+    redirect(`${ROUTES.login}?redirect=${encodeURIComponent(`${ROUTES.checkoutConfirmation}?order_id=${orderId}`)}`);
+  }
   const { data: order } = await supabase
     .from("orders")
     .select("*, order_items:order_items(*)")
     .eq("id", orderId)
+    .eq("user_id", user.id)
     .single();
 
   if (!order) redirect(ROUTES.home);

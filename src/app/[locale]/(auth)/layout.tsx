@@ -3,9 +3,6 @@ import { APP_NAME } from "@/lib/constants";
 import { Logo } from "@/components/brand/logo";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { CartProvider } from "@/components/cart/cart-provider";
-import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
-import { QueryProvider } from "@/components/providers/query-provider";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 
@@ -17,10 +14,7 @@ export default async function AuthLayout({
   const tBrand = await getTranslations("constants.brandStory");
 
   return (
-    <QueryProvider>
-      <CartProvider>
-        <WishlistProvider>
-          <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="grid min-h-screen lg:grid-cols-2">
             {/* Brand panel (desktop only) */}
             <div
               className="relative hidden flex-col justify-between overflow-hidden p-12 text-[var(--text-on-dark)] lg:flex"
@@ -66,9 +60,6 @@ export default async function AuthLayout({
               </Link>
               <div className="w-full max-w-md">{children}</div>
             </div>
-          </div>
-        </WishlistProvider>
-      </CartProvider>
-    </QueryProvider>
+    </div>
   );
 }

@@ -3,6 +3,7 @@
 import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
 import { AssistantProductCard } from "@/components/assistant/assistant-product-card";
+import { MessageResponse } from "@/components/ai-elements/message";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/hooks/use-cart";
+import { useVoiceSession } from "@/hooks/use-voice-session";
 import {
   ASSISTANT_MAX_ASSISTANT_MESSAGE_CHARS,
   ASSISTANT_MAX_USER_MESSAGE_CHARS,
@@ -21,10 +23,20 @@ import {
   ASSISTANT_STORAGE_MAX_CHARS,
   ASSISTANT_STORAGE_MAX_ENTRIES,
 } from "@/lib/assistant-config";
+import { detectAssistantLanguage } from "@/lib/assistant-language";
+import {
+  sanitizeAssistantNavigation,
+  sanitizeAssistantNavigationOptions,
+} from "@/lib/assistant-navigation";
+import { readAssistantStream } from "@/lib/assistant-stream";
+import { isCurrentAssistantRequest } from "@/lib/assistant-request-state";
 import { trackEvent } from "@/lib/gtag";
-import { Link, usePathname } from "@/i18n/routing";
+import { cn } from "@/lib/utils";
+import { SentenceStream } from "@/lib/voice/sentence-stream";
+import { Link, usePathname, useRouter } from "@/i18n/routing";
 import type {
   AssistantHandoff,
+  AssistantNavigationOption,
   AssistantPageContext,
   AssistantProductMatch,
   AssistantReply,
@@ -32,7 +44,17 @@ import type {
   CatalogMessage,
   Citation,
 } from "@/types/search";
-import { Bot, Loader2, MessageCircle, Send, Sparkles, User } from "lucide-react";
+import {
+  Bot,
+  Loader2,
+  MessageCircle,
+  Mic,
+  MicOff,
+  Send,
+  Sparkles,
+  Square,
+  User,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import {
@@ -40,17 +62,29 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type KeyboardEvent,
 } from "react";
+
+const subscribeToHydration = () => () => {};
+
+function useHydrated() {
+  return useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
+}
 
 interface AssistantConversationEntry {
   id: string;
   role: "user" | "assistant";
   content: string;
-  status?: "pending" | "ready" | "failed";
+  status?: "pending" | "streaming" | "ready" | "failed";
   citations?: Citation[];
   recommendedProducts?: AssistantProductMatch[];
   followUpSuggestions?: AssistantFollowUpSuggestion[];
+  navigationOptions?: AssistantNavigationOption[];
   handoff?: AssistantHandoff | null;
   errorMessage?: string | null;
 }
@@ -60,8 +94,32 @@ interface StoredAssistantConversation {
   conversation: AssistantConversationEntry[];
 }
 
+interface ActiveAssistantRequest {
+  controller: AbortController;
+  requestId: string;
+  source: "text" | "voice";
+  userEntryId: string;
+  assistantEntryId: string;
+  utteranceId?: number;
+  cancelledByTurn: boolean;
+}
+
+interface AssistantStreamHandlers {
+  onDelta?: (delta: string) => void;
+  onReset?: () => void;
+}
+
+interface PendingNavigationOptions {
+  options: AssistantNavigationOption[];
+  language: "en" | "te";
+  expiresAt: number;
+  timeoutId: number;
+}
+
 const ASSISTANT_STORAGE_KEY = "bfg-storefront-assistant-session";
 const ASSISTANT_STORAGE_VERSION = 3;
+const ASSISTANT_CLIENT_TIMEOUT_MS = 28_000;
+const ASSISTANT_NAVIGATION_OPTION_TIMEOUT_MS = 60_000;
 
 function generateEntryId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -371,29 +429,60 @@ function normalizeRecommendedProducts(reply: AssistantReply) {
   return sanitizeRecommendedProducts(reply.recommendedProducts) ?? [];
 }
 
+function normalizeNavigationOptions(reply: AssistantReply) {
+  return sanitizeAssistantNavigationOptions(reply.navigationOptions);
+}
+
 export function StorefrontAssistant() {
+  const hydrated = useHydrated();
   const locale = useLocale();
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const t = useTranslations("assistant");
+  const voiceT = useTranslations("voice");
   const { items: cartItems, itemCount } = useCart();
+  const {
+    uiState: voiceState,
+    errorCode: voiceErrorCode,
+    muted: voiceMuted,
+    toggleMute: toggleVoiceMute,
+    start: startVoice,
+    stop: stopVoice,
+    interrupt: interruptVoice,
+    startSpeaking: startVoiceSpeaking,
+    appendSpeech: appendVoiceSpeech,
+    finishSpeaking: finishVoiceSpeaking,
+    resetSpeaking: resetVoiceSpeaking,
+  } = useVoiceSession({
+    mode: "assistant",
+    language: "auto",
+    onTranscript: handleVoiceTranscript,
+    onTurnCancelled: handleVoiceTurnCancelled,
+  });
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [conversation, setConversation] = useState<AssistantConversationEntry[]>(
     () => loadStoredConversation()
   );
   const [isSending, setIsSending] = useState(false);
+  const [pendingNavigationOptions, setPendingNavigationOptions] =
+    useState<PendingNavigationOptions | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const conversationRef = useRef(conversation);
   const isSendingRef = useRef(false);
+  const activeAssistantRequestRef = useRef<ActiveAssistantRequest | null>(null);
+  const trackedVoiceErrorRef = useRef<string | null>(null);
+  const pendingNavigationOptionsRef = useRef<PendingNavigationOptions | null>(null);
+  const voiceEnabled = Boolean(process.env.NEXT_PUBLIC_VOICE_WS_URL);
+  const voiceActive =
+    voiceState === "connecting" ||
+    voiceState === "listening" ||
+    voiceState === "thinking" ||
+    voiceState === "speaking";
+  const showVoiceActivity =
+    voiceEnabled && voiceState !== "idle";
 
-  const shouldHide =
-    pathname.startsWith("/account") ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/signup") ||
-    pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/reset-password");
   const starterPrompts = useMemo(
     () => [
       t("starterPrompts.discovery"),
@@ -414,14 +503,21 @@ export function StorefrontAssistant() {
   }, [isSending]);
 
   useEffect(() => {
+    const code = voiceState === "mic_denied" ? "mic_denied" : voiceErrorCode;
+    if (!code) {
+      trackedVoiceErrorRef.current = null;
+      return;
+    }
+    if (trackedVoiceErrorRef.current === code) return;
+    trackedVoiceErrorRef.current = code;
+    trackEvent("assistant_voice_error", { code, pathname, locale });
+  }, [locale, pathname, voiceErrorCode, voiceState]);
+
+  useEffect(() => {
     if (open) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [conversation, isSending, open]);
-
-  if (shouldHide) {
-    return null;
-  }
 
   function buildPageContext(): AssistantPageContext {
     const productMarker = document.querySelector<HTMLElement>(
@@ -469,6 +565,81 @@ export function StorefrontAssistant() {
     });
   }
 
+  function clearPendingNavigationOptions() {
+    const pending = pendingNavigationOptionsRef.current;
+    if (pending) {
+      window.clearTimeout(pending.timeoutId);
+    }
+    pendingNavigationOptionsRef.current = null;
+    setPendingNavigationOptions(null);
+  }
+
+  function setPendingNavigationChoices(
+    options: AssistantNavigationOption[],
+    language: "en" | "te",
+  ) {
+    clearPendingNavigationOptions();
+    if (options.length === 0) return;
+
+    const pending: PendingNavigationOptions = {
+      options,
+      language,
+      expiresAt: Date.now() + ASSISTANT_NAVIGATION_OPTION_TIMEOUT_MS,
+      timeoutId: window.setTimeout(() => {
+        if (pendingNavigationOptionsRef.current === pending) {
+          clearPendingNavigationOptions();
+        }
+      }, ASSISTANT_NAVIGATION_OPTION_TIMEOUT_MS),
+    };
+    pendingNavigationOptionsRef.current = pending;
+    setPendingNavigationOptions(pending);
+  }
+
+  function resolvePendingNavigationOption(message: string) {
+    const pending = pendingNavigationOptionsRef.current;
+    if (!pending) return null;
+    if (pending.expiresAt <= Date.now()) {
+      clearPendingNavigationOptions();
+      return null;
+    }
+
+    const normalized = message.trim().toLowerCase();
+    const ordinalPatterns = [
+      /^(?:1|one|first|మొదటి|ఒకటి|modati)(?:\s+(?:one|option|product|order|ది))?$/i,
+      /^(?:2|two|second|రెండో|రెండు|rendo)(?:\s+(?:one|option|product|order|ది))?$/i,
+      /^(?:3|three|third|మూడో|మూడు|mudo)(?:\s+(?:one|option|product|order|ది))?$/i,
+    ];
+    const ordinalIndex = ordinalPatterns.findIndex((pattern) => pattern.test(normalized));
+    if (ordinalIndex >= 0 && pending.options[ordinalIndex]) {
+      return pending.options[ordinalIndex];
+    }
+
+    return pending.options.find((option) => option.label.toLowerCase() === normalized) ?? null;
+  }
+
+  function cancelVoiceAssistantRequest(utteranceId?: number) {
+    clearPendingNavigationOptions();
+    const active = activeAssistantRequestRef.current;
+    if (
+      !active ||
+      active.source !== "voice" ||
+      (utteranceId !== undefined && active.utteranceId !== utteranceId)
+    ) {
+      return;
+    }
+
+    active.cancelledByTurn = true;
+    active.controller.abort();
+    activeAssistantRequestRef.current = null;
+    isSendingRef.current = false;
+    setIsSending(false);
+    updateConversation((current) =>
+      current.filter(
+        (entry) => entry.id !== active.userEntryId && entry.id !== active.assistantEntryId
+      )
+    );
+  }
+
   async function openHandoff(url: string) {
     trackEvent("assistant_handoff_click", { pathname, locale });
 
@@ -480,15 +651,111 @@ export function StorefrontAssistant() {
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  async function sendMessage(rawMessage?: string) {
+  function navigateAssistantNavigation(
+    navigationValue: unknown,
+    source: "text" | "voice",
+  ) {
+    const navigation = sanitizeAssistantNavigation(navigationValue);
+    if (!navigation) {
+      return false;
+    }
+
+    clearPendingNavigationOptions();
+
+    trackEvent("assistant_navigation", {
+      pathname,
+      locale,
+      destination: navigation.destination,
+      navigation_kind: navigation.kind,
+      source,
+    });
+    // Do not call handleOpenChange(false): it deliberately stops the active
+    // voice session, while a voice navigation acknowledgement must keep playing.
+    setOpen(false);
+    router.push(navigation.href);
+    return true;
+  }
+
+  function navigateAssistantReply(reply: AssistantReply, source: "text" | "voice") {
+    return navigateAssistantNavigation(reply.navigation, source);
+  }
+
+  function selectNavigationOption(
+    option: AssistantNavigationOption,
+    source: "text" | "voice",
+    selectedMessage?: string,
+  ) {
+    const pending = pendingNavigationOptionsRef.current;
+    if (
+      !pending ||
+      pending.expiresAt <= Date.now() ||
+      !pending.options.some((candidate) => candidate.id === option.id)
+    ) {
+      clearPendingNavigationOptions();
+      return null;
+    }
+
+    const acknowledgementLocale = pending.language;
+    const acknowledgement =
+      acknowledgementLocale === "te"
+        ? "మీరు ఎంచుకున్న ఎంపికను తెరుస్తున్నాను."
+        : "Opening your selected option.";
+
+    if (selectedMessage) {
+      updateConversation((current) => [
+        ...current,
+        {
+          id: generateEntryId(),
+          role: "user",
+          content: selectedMessage,
+          status: "ready",
+        },
+        {
+          id: generateEntryId(),
+          role: "assistant",
+          content: acknowledgement,
+          status: "ready",
+        },
+      ]);
+    }
+
+    return navigateAssistantNavigation(option.navigation, source)
+      ? acknowledgement
+      : null;
+  }
+
+  async function sendMessage(
+    rawMessage?: string,
+    source: "text" | "voice" = "text",
+    utteranceId?: number,
+    streamHandlers: AssistantStreamHandlers = {},
+  ): Promise<string | null> {
     const nextInput = sanitizeEntryText(
       rawMessage ?? input,
       ASSISTANT_MAX_USER_MESSAGE_CHARS
     );
-    if (!nextInput || isSendingRef.current) {
-      return;
+    if (!nextInput) {
+      return null;
     }
 
+    const selectedNavigationOption = resolvePendingNavigationOption(nextInput);
+    if (selectedNavigationOption) {
+      setInput("");
+      return selectNavigationOption(selectedNavigationOption, source, nextInput);
+    }
+    clearPendingNavigationOptions();
+
+    if (isSendingRef.current) {
+      if (source === "voice" && activeAssistantRequestRef.current?.source === "voice") {
+        cancelVoiceAssistantRequest(activeAssistantRequestRef.current.utteranceId);
+      } else {
+        return null;
+      }
+    }
+
+    if (source === "text" && voiceActive) {
+      stopVoice();
+    }
     isSendingRef.current = true;
     setIsSending(true);
 
@@ -509,6 +776,25 @@ export function StorefrontAssistant() {
     const nextConversation = [...conversationRef.current, userEntry];
     const requestMessages = buildRequestMessages(nextConversation);
     const pendingConversation = [...nextConversation, assistantEntry];
+    const request: ActiveAssistantRequest = {
+      controller: new AbortController(),
+      requestId: generateEntryId(),
+      source,
+      userEntryId,
+      assistantEntryId,
+      utteranceId,
+      cancelledByTurn: false,
+    };
+    activeAssistantRequestRef.current = request;
+    let timeout = 0;
+    const armTimeout = () => {
+      window.clearTimeout(timeout);
+      timeout = window.setTimeout(
+        () => request.controller.abort(),
+        ASSISTANT_CLIENT_TIMEOUT_MS,
+      );
+    };
+    armTimeout();
 
     conversationRef.current = pendingConversation;
     setConversation(pendingConversation);
@@ -519,28 +805,82 @@ export function StorefrontAssistant() {
     try {
       const response = await fetch("/api/assistant/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Accept: "application/x-ndjson",
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
+          // The API receives the selected storefront locale as its fallback;
+          // response language is derived independently from the customer query.
           locale,
+          source,
           messages: requestMessages,
           pageContext: buildPageContext(),
         }),
+        signal: request.controller.signal,
       });
+
+      if (activeAssistantRequestRef.current?.requestId !== request.requestId) {
+        return null;
+      }
 
       if (!response.ok) {
         throw new Error("Assistant request failed");
       }
 
-      const data = (await response.json()) as {
-        reply: AssistantReply | null;
-        handoff: AssistantHandoff | null;
-      };
+      const data = await readAssistantStream(response, {
+        onAnswerDelta(delta) {
+          if (activeAssistantRequestRef.current?.requestId !== request.requestId) return;
+          armTimeout();
+          streamHandlers.onDelta?.(delta);
+          updateConversation((current) =>
+            current.map((entry) =>
+              entry.id === assistantEntryId
+                ? {
+                    ...entry,
+                    content: `${entry.content}${delta}`.slice(
+                      0,
+                      ASSISTANT_MAX_ASSISTANT_MESSAGE_CHARS,
+                    ),
+                    status: "streaming",
+                  }
+                : entry,
+            ),
+          );
+        },
+        onAnswerReset() {
+          if (activeAssistantRequestRef.current?.requestId !== request.requestId) return;
+          armTimeout();
+          streamHandlers.onReset?.();
+          updateConversation((current) =>
+            current.map((entry) =>
+              entry.id === assistantEntryId
+                ? { ...entry, content: "", status: "pending" }
+                : entry,
+            ),
+          );
+        },
+      });
+
+      // A barge-in can cancel this request after the reader has received its
+      // final event but before this continuation runs. Do not let that stale
+      // answer reach handleVoiceTranscript(), which would otherwise resume
+      // speech for the previous utterance during the next turn.
+      if (!isCurrentAssistantRequest({
+        activeRequestId: activeAssistantRequestRef.current?.requestId,
+        requestId: request.requestId,
+        wasCancelled: request.cancelledByTurn,
+      })) {
+        return null;
+      }
 
       const reply = data.reply;
       if (!reply) {
         throw new Error("Assistant reply missing");
       }
       const recommendedProducts = normalizeRecommendedProducts(reply);
+      const navigationOptions = normalizeNavigationOptions(reply);
+      const responseLanguage = detectAssistantLanguage(nextInput, locale);
       if (recommendedProducts.length > 0) {
         trackEvent("assistant_product_impression", {
           pathname,
@@ -562,29 +902,48 @@ export function StorefrontAssistant() {
                     ? recommendedProducts
                     : undefined,
                 followUpSuggestions: normalizeFollowUpSuggestions(reply),
+                navigationOptions:
+                  navigationOptions.length > 0 ? navigationOptions : undefined,
                 handoff: data.handoff,
                 errorMessage: null,
               }
             : entry
         )
       );
+      if (navigationOptions.length > 0) {
+        setPendingNavigationChoices(navigationOptions, responseLanguage);
+      }
+      navigateAssistantReply(reply, source);
+      return reply.answer;
     } catch {
+      if (
+        request.cancelledByTurn ||
+        activeAssistantRequestRef.current?.requestId !== request.requestId
+      ) {
+        return null;
+      }
+      const errorText = t("error");
       updateConversation((current) =>
         current.map((entry) =>
           entry.id === assistantEntryId
             ? {
                 ...entry,
-                content: t("error"),
+                content: errorText,
                 status: "failed",
-                errorMessage: t("error"),
+                errorMessage: errorText,
                 handoff: null,
               }
             : entry
         )
       );
+      return null;
     } finally {
-      isSendingRef.current = false;
-      setIsSending(false);
+      window.clearTimeout(timeout);
+      if (activeAssistantRequestRef.current?.requestId === request.requestId) {
+        activeAssistantRequestRef.current = null;
+        isSendingRef.current = false;
+        setIsSending(false);
+      }
     }
   }
 
@@ -592,6 +951,7 @@ export function StorefrontAssistant() {
     if (isSendingRef.current) {
       return;
     }
+    clearPendingNavigationOptions();
 
     const currentConversation = conversationRef.current;
     const entryIndex = currentConversation.findIndex((entry) => entry.id === entryId);
@@ -627,7 +987,10 @@ export function StorefrontAssistant() {
     try {
       const response = await fetch("/api/assistant/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Accept: "application/x-ndjson",
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           locale,
           messages: buildRequestMessages(messagesBeforeRetry),
@@ -639,10 +1002,33 @@ export function StorefrontAssistant() {
         throw new Error("Assistant request failed");
       }
 
-      const data = (await response.json()) as {
-        reply: AssistantReply | null;
-        handoff: AssistantHandoff | null;
-      };
+      const data = await readAssistantStream(response, {
+        onAnswerDelta(delta) {
+          updateConversation((current) =>
+            current.map((item) =>
+              item.id === entryId
+                ? {
+                    ...item,
+                    content: `${item.content}${delta}`.slice(
+                      0,
+                      ASSISTANT_MAX_ASSISTANT_MESSAGE_CHARS,
+                    ),
+                    status: "streaming",
+                  }
+                : item,
+            ),
+          );
+        },
+        onAnswerReset() {
+          updateConversation((current) =>
+            current.map((item) =>
+              item.id === entryId
+                ? { ...item, content: "", status: "pending" }
+                : item,
+            ),
+          );
+        },
+      });
 
       if (!data.reply) {
         throw new Error("Assistant reply missing");
@@ -650,6 +1036,13 @@ export function StorefrontAssistant() {
 
       const reply = data.reply;
       const recommendedProducts = normalizeRecommendedProducts(reply);
+      const navigationOptions = normalizeNavigationOptions(reply);
+      const retryLanguage = detectAssistantLanguage(
+        [...messagesBeforeRetry]
+          .reverse()
+          .find((message) => message.role === "user")?.content ?? locale,
+        locale,
+      );
       if (recommendedProducts.length > 0) {
         trackEvent("assistant_product_impression", {
           pathname,
@@ -671,12 +1064,18 @@ export function StorefrontAssistant() {
                     ? recommendedProducts
                     : undefined,
                 followUpSuggestions: normalizeFollowUpSuggestions(reply),
+                navigationOptions:
+                  navigationOptions.length > 0 ? navigationOptions : undefined,
                 handoff: data.handoff,
                 errorMessage: null,
               }
             : item
         )
       );
+      if (navigationOptions.length > 0) {
+        setPendingNavigationChoices(navigationOptions, retryLanguage);
+      }
+      navigateAssistantReply(reply, "text");
     } catch {
       updateConversation((current) =>
         current.map((item) =>
@@ -707,7 +1106,98 @@ export function StorefrontAssistant() {
     if (nextOpen && !open) {
       trackEvent("assistant_open", { pathname, locale });
     }
+    if (!nextOpen && voiceActive) {
+      stopVoice();
+    }
+    if (!nextOpen) {
+      clearPendingNavigationOptions();
+    }
     setOpen(nextOpen);
+  }
+
+  function handleVoiceToggle() {
+    if (voiceActive) {
+      stopVoice();
+      trackEvent("assistant_voice_stop", { pathname, locale });
+      return;
+    }
+    if (isSendingRef.current) {
+      return;
+    }
+
+    if (!open) {
+      trackEvent("assistant_open", { pathname, locale });
+    }
+    setOpen(true);
+    trackEvent("assistant_voice_start", { pathname, locale });
+    void startVoice();
+  }
+
+  async function handleVoiceTranscript(transcript: string, utteranceId: number) {
+    trackEvent("assistant_voice_transcript", { pathname, locale });
+    const responseLocale = detectAssistantLanguage(transcript, locale);
+    const speech = new SentenceStream();
+    let speechStarted = false;
+    const ensureSpeechStarted = () => {
+      if (!speechStarted) {
+        speechStarted = startVoiceSpeaking(utteranceId, responseLocale);
+      }
+      return speechStarted;
+    };
+    const answer = await sendMessage(transcript, "voice", utteranceId, {
+      onDelta(delta) {
+        if (!ensureSpeechStarted()) return;
+        for (const sentence of speech.push(delta)) {
+          appendVoiceSpeech(sentence, utteranceId);
+        }
+      },
+      onReset() {
+        speech.reset();
+        if (speechStarted) resetVoiceSpeaking(utteranceId);
+      },
+    });
+    if (answer && ensureSpeechStarted()) {
+      for (const sentence of speech.finish()) {
+        appendVoiceSpeech(sentence, utteranceId);
+      }
+      finishVoiceSpeaking(utteranceId);
+    } else if (speechStarted) {
+      finishVoiceSpeaking(utteranceId);
+    }
+  }
+
+  function handleVoiceTurnCancelled(utteranceId: number) {
+    cancelVoiceAssistantRequest(utteranceId);
+  }
+
+  function getVoiceErrorMessage() {
+    if (voiceState === "mic_denied") {
+      return voiceT("micDenied");
+    }
+    if (voiceErrorCode === "busy") {
+      return voiceT("busy");
+    }
+    if (voiceErrorCode === "no_mic") {
+      return voiceT("audioError");
+    }
+    if (voiceErrorCode === "no_speech") {
+      return voiceT("noSpeech");
+    }
+    if (voiceErrorCode === "assistant_timeout") {
+      return voiceT("responseTimeout");
+    }
+    if (
+      voiceErrorCode === "tts_failed" ||
+      voiceErrorCode === "audio_backpressure" ||
+      voiceErrorCode === "audio_playback_failed" ||
+      voiceErrorCode === "audio_unavailable"
+    ) {
+      return voiceT("audioUnavailable");
+    }
+    if (voiceErrorCode === "not_supported") {
+      return voiceT("notSupported");
+    }
+    return voiceT("connectionError");
   }
 
   function handleCitationClick(citation: Citation) {
@@ -738,18 +1228,48 @@ export function StorefrontAssistant() {
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-gold-400/60"
         />
-        <Button
-          type="button"
-          variant="gold"
-          size="bfg-md"
-          aria-label={t("launcherLabel")}
-          data-testid="assistant-launcher"
-          className="bfg-gold-shimmer group cursor-pointer rounded-full shadow-[var(--shadow-gold)] hover:shadow-[0_10px_32px_rgb(var(--gold-rgb)/0.5)]"
-          onClick={() => handleOpenChange(true)}
-        >
-          <Sparkles className="size-5 motion-safe:animate-[bfg-twinkle_2.2s_ease-in-out_infinite] group-hover:rotate-12 transition-transform" />
-          <span className="hidden sm:inline">{t("launcherLabel")}</span>
-        </Button>
+        <div className="flex overflow-hidden rounded-full shadow-[var(--shadow-gold)] hover:shadow-[0_10px_32px_rgb(var(--gold-rgb)/0.5)]">
+          <Button
+            type="button"
+            variant="gold"
+            size="bfg-md"
+            aria-label={t("launcherLabel")}
+            data-testid="assistant-launcher"
+            disabled={!hydrated}
+            className={cn(
+              "bfg-gold-shimmer group cursor-pointer shadow-none hover:shadow-none",
+              voiceEnabled ? "rounded-r-none pr-3" : "rounded-full",
+            )}
+            onClick={() => handleOpenChange(true)}
+          >
+            <Sparkles className="size-5 motion-safe:animate-[bfg-twinkle_2.2s_ease-in-out_infinite] transition-transform group-hover:rotate-12" />
+            <span className="hidden sm:inline">{t("launcherLabel")}</span>
+          </Button>
+          {voiceEnabled && (
+            <Button
+              type="button"
+              variant={voiceActive ? "destructive" : "gold"}
+              size="icon"
+              aria-label={voiceActive ? voiceT("stop") : voiceT("start")}
+              aria-pressed={voiceActive}
+              disabled={!hydrated || (isSending && !voiceActive)}
+              data-testid="assistant-voice-launcher"
+              className={cn(
+                "h-11 w-11 rounded-l-none rounded-r-full border-l border-black/15 shadow-none hover:shadow-none",
+                voiceActive && "animate-pulse",
+              )}
+              onClick={handleVoiceToggle}
+            >
+              {voiceState === "connecting" ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : voiceActive ? (
+                <MicOff className="size-5" />
+              ) : (
+                <Mic className="size-5" />
+              )}
+            </Button>
+          )}
+        </div>
       </div>
 
       <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -799,7 +1319,8 @@ export function StorefrontAssistant() {
                 {conversation.map((entry) => (
                   <div
                     key={entry.id}
-                    className={`flex gap-3 ${
+                    data-assistant-message={entry.role}
+                    className={`flex min-w-0 gap-3 ${
                       entry.role === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
@@ -810,7 +1331,8 @@ export function StorefrontAssistant() {
                     )}
 
                     <div
-                      className={`max-w-[85%] space-y-3 rounded-2xl px-4 py-3 text-sm ${
+                      data-assistant-message-content
+                      className={`min-w-0 max-w-[85%] space-y-3 rounded-2xl px-4 py-3 text-sm ${
                         entry.role === "user"
                           ? "bg-gold-500 text-white"
                           : entry.status === "failed"
@@ -823,6 +1345,15 @@ export function StorefrontAssistant() {
                           <Loader2 className="size-4 animate-spin" />
                           {t("sending")}
                         </span>
+                      ) : entry.role === "assistant" ? (
+                        <div data-assistant-response className="min-w-0">
+                          <MessageResponse
+                            className="h-auto min-w-0 w-full whitespace-normal break-words leading-relaxed"
+                            isAnimating={entry.status === "streaming"}
+                          >
+                            {entry.content}
+                          </MessageResponse>
+                        </div>
                       ) : (
                         <p className="whitespace-pre-wrap leading-relaxed">
                           {entry.content}
@@ -847,6 +1378,52 @@ export function StorefrontAssistant() {
                                   }
                                 />
                               ))}
+                            </div>
+                          </div>
+                        )}
+
+                      {entry.status !== "failed" &&
+                        entry.navigationOptions &&
+                        entry.navigationOptions.length > 0 &&
+                        pendingNavigationOptions &&
+                        entry.navigationOptions.some((option) =>
+                          pendingNavigationOptions.options.some(
+                            (pendingOption) => pendingOption.id === option.id,
+                          ),
+                        ) && (
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                              {t("navigationOptions")}
+                            </p>
+                            <div className="grid gap-2">
+                              {entry.navigationOptions.map((option, index) => {
+                                const isActive = pendingNavigationOptions.options.some(
+                                  (pendingOption) => pendingOption.id === option.id,
+                                );
+                                if (!isActive) return null;
+
+                                return (
+                                  <Button
+                                    key={`${entry.id}-${option.id}`}
+                                    type="button"
+                                    variant="gold-outline"
+                                    data-assistant-navigation-option={index + 1}
+                                    className="h-auto justify-start whitespace-normal py-3 text-left normal-case tracking-normal"
+                                    onClick={() => {
+                                      selectNavigationOption(option, "text");
+                                    }}
+                                  >
+                                    <span className="flex min-w-0 flex-col items-start gap-0.5">
+                                      <span>{`${index + 1}. ${option.label}`}</span>
+                                      {option.description ? (
+                                        <span className="text-xs font-normal text-muted-foreground">
+                                          {option.description}
+                                        </span>
+                                      ) : null}
+                                    </span>
+                                  </Button>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -955,6 +1532,88 @@ export function StorefrontAssistant() {
                   </div>
                 ))}
 
+                {showVoiceActivity && (
+                  <div
+                    role={
+                      voiceState === "error" ||
+                      voiceState === "mic_denied" ||
+                      Boolean(voiceErrorCode)
+                        ? "alert"
+                        : "status"
+                    }
+                    className={cn(
+                      "space-y-3 rounded-2xl border bg-accent/20 p-4",
+                      (voiceState === "error" ||
+                        voiceState === "mic_denied" ||
+                        Boolean(voiceErrorCode)) &&
+                        "border-destructive/30 bg-destructive/5",
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="inline-flex items-center gap-2 text-sm font-medium">
+                        <Mic className="size-4" />
+                        {voiceT("title")}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {voiceState === "connecting" && voiceT("connecting")}
+                        {voiceState === "listening" && voiceT("listening")}
+                        {voiceState === "thinking" && voiceT("thinking")}
+                        {voiceState === "speaking" && voiceT("speaking")}
+                      </span>
+                    </div>
+
+                    {voiceState === "listening" && !voiceMuted && (
+                      <p className="text-xs text-muted-foreground">
+                        {voiceT("liveHint")}
+                      </p>
+                    )}
+
+                    {voiceMuted && (
+                      <p className="text-xs text-muted-foreground">
+                        {voiceT("mutedHint")}
+                      </p>
+                    )}
+
+                    {(voiceState === "error" ||
+                      voiceState === "mic_denied" ||
+                      Boolean(voiceErrorCode)) && (
+                      <p className="text-sm text-destructive">{getVoiceErrorMessage()}</p>
+                    )}
+
+                    {(voiceState === "listening" ||
+                      voiceState === "thinking" ||
+                      voiceState === "speaking") && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          aria-pressed={voiceMuted}
+                          onClick={toggleVoiceMute}
+                        >
+                          {voiceMuted ? (
+                            <Mic className="size-3" />
+                          ) : (
+                            <MicOff className="size-3" />
+                          )}
+                          {voiceMuted ? voiceT("unmute") : voiceT("mute")}
+                        </Button>
+                        {voiceState === "speaking" && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={interruptVoice}
+                          >
+                            <Square className="size-3" />
+                            {voiceT("interrupt")}
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div ref={bottomRef} />
               </div>
             </ScrollArea>
@@ -972,22 +1631,43 @@ export function StorefrontAssistant() {
 
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs text-muted-foreground">{t("disclaimer")}</p>
-                  <Button
-                    type="button"
-                    variant="gold"
-                    size="bfg-md"
-                    onClick={() => {
-                      void sendMessage();
-                    }}
-                    disabled={isSending || !input.trim()}
-                  >
-                    {isSending ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <Send className="size-4" />
+                  <div className="flex shrink-0 items-center gap-2">
+                    {voiceEnabled && (
+                      <Button
+                        type="button"
+                        variant={voiceActive ? "destructive" : "gold-outline"}
+                        size="icon"
+                        aria-label={voiceActive ? voiceT("stop") : voiceT("start")}
+                        aria-pressed={voiceActive}
+                        disabled={isSending && !voiceActive}
+                        onClick={handleVoiceToggle}
+                      >
+                        {voiceState === "connecting" ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : voiceActive ? (
+                          <MicOff className="size-4" />
+                        ) : (
+                          <Mic className="size-4" />
+                        )}
+                      </Button>
                     )}
-                    {t("send")}
-                  </Button>
+                    <Button
+                      type="button"
+                      variant="gold"
+                      size="bfg-md"
+                      onClick={() => {
+                        void sendMessage();
+                      }}
+                      disabled={isSending || !input.trim()}
+                    >
+                      {isSending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Send className="size-4" />
+                      )}
+                      {t("send")}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

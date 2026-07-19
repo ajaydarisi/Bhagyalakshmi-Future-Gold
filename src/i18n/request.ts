@@ -23,6 +23,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
       feedback: (await import(`../../messages/${locale}/feedback.json`)).default,
       legal: (await import(`../../messages/${locale}/legal.json`)).default,
       assistant: (await import(`../../messages/${locale}/assistant.json`)).default,
+      voice: (await import(`../../messages/${locale}/voice.json`)).default,
     },
   };
 });

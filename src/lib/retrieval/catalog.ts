@@ -747,6 +747,35 @@ export function resolvePublicRetrievalLocales(locale: string) {
   return locale === "te" ? ["te", "en"] : ["en"];
 }
 
+/** Direct fetch of specific public documents (no search ranking involved) —
+ *  used to guarantee baseline store context regardless of retrieval quality. */
+export async function getPublicRetrievalDocumentsByKeys(
+  sourceKeys: string[]
+): Promise<RetrievedContextItem[]> {
+  if (sourceKeys.length === 0) {
+    return [];
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("catalog_retrieval_documents")
+    .select("*")
+    .in("source_key", sourceKeys)
+    .neq("index_status", "pending");
+
+  if (error) {
+    console.error(
+      "[getPublicRetrievalDocumentsByKeys] Failed to fetch seed documents:",
+      error.message
+    );
+    return [];
+  }
+
+  return ((data ?? []) as CatalogRetrievalDocumentRow[]).map((row) =>
+    mapCatalogRowToContextItem(row, 0)
+  );
+}
+
 function getLocalePriority(candidateLocale: string, preferredLocale: string) {
   if (candidateLocale === preferredLocale) {
     return 2;
