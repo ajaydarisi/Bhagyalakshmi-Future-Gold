@@ -36,6 +36,7 @@ import { SentenceStream } from "@/lib/voice/sentence-stream";
 import { Link, usePathname, useRouter } from "@/i18n/routing";
 import type {
   AssistantHandoff,
+  AssistantNavigationResolution,
   AssistantNavigationOption,
   AssistantPageContext,
   AssistantProductMatch,
@@ -112,6 +113,7 @@ interface AssistantStreamHandlers {
 interface PendingNavigationOptions {
   options: AssistantNavigationOption[];
   language: "en" | "te";
+  navigationResolution?: Exclude<AssistantNavigationResolution, "miss">;
   expiresAt: number;
   timeoutId: number;
 }
@@ -433,6 +435,15 @@ function normalizeNavigationOptions(reply: AssistantReply) {
   return sanitizeAssistantNavigationOptions(reply.navigationOptions);
 }
 
+function normalizeNavigationResolution(
+  value: unknown,
+): AssistantNavigationResolution | undefined {
+  return typeof value === "string" &&
+    ["deterministic", "dynamic", "grounded", "llm", "miss"].includes(value)
+    ? (value as AssistantNavigationResolution)
+    : undefined;
+}
+
 export function StorefrontAssistant() {
   const hydrated = useHydrated();
   const locale = useLocale();
@@ -577,6 +588,7 @@ export function StorefrontAssistant() {
   function setPendingNavigationChoices(
     options: AssistantNavigationOption[],
     language: "en" | "te",
+    navigationResolution?: Exclude<AssistantNavigationResolution, "miss">,
   ) {
     clearPendingNavigationOptions();
     if (options.length === 0) return;
@@ -584,6 +596,7 @@ export function StorefrontAssistant() {
     const pending: PendingNavigationOptions = {
       options,
       language,
+      navigationResolution,
       expiresAt: Date.now() + ASSISTANT_NAVIGATION_OPTION_TIMEOUT_MS,
       timeoutId: window.setTimeout(() => {
         if (pendingNavigationOptionsRef.current === pending) {
@@ -654,6 +667,7 @@ export function StorefrontAssistant() {
   function navigateAssistantNavigation(
     navigationValue: unknown,
     source: "text" | "voice",
+    navigationResolution?: Exclude<AssistantNavigationResolution, "miss">,
   ) {
     const navigation = sanitizeAssistantNavigation(navigationValue);
     if (!navigation) {
@@ -662,12 +676,17 @@ export function StorefrontAssistant() {
 
     clearPendingNavigationOptions();
 
+    // Begin fetching the destination before the acknowledgement is rendered
+    // or spoken. A prefetch failure must never block the validated transition.
+    router.prefetch(navigation.href);
+
     trackEvent("assistant_navigation", {
       pathname,
       locale,
       destination: navigation.destination,
       navigation_kind: navigation.kind,
       source,
+      resolver: navigationResolution ?? "legacy",
     });
     // Do not call handleOpenChange(false): it deliberately stops the active
     // voice session, while a voice navigation acknowledgement must keep playing.
@@ -677,7 +696,14 @@ export function StorefrontAssistant() {
   }
 
   function navigateAssistantReply(reply: AssistantReply, source: "text" | "voice") {
-    return navigateAssistantNavigation(reply.navigation, source);
+    const navigationResolution = normalizeNavigationResolution(
+      reply.navigationResolution,
+    );
+    return navigateAssistantNavigation(
+      reply.navigation,
+      source,
+      navigationResolution === "miss" ? undefined : navigationResolution,
+    );
   }
 
   function selectNavigationOption(
@@ -719,7 +745,11 @@ export function StorefrontAssistant() {
       ]);
     }
 
-    return navigateAssistantNavigation(option.navigation, source)
+    return navigateAssistantNavigation(
+      option.navigation,
+      source,
+      pending.navigationResolution,
+    )
       ? acknowledgement
       : null;
   }
@@ -880,6 +910,9 @@ export function StorefrontAssistant() {
       }
       const recommendedProducts = normalizeRecommendedProducts(reply);
       const navigationOptions = normalizeNavigationOptions(reply);
+      const navigationResolution = normalizeNavigationResolution(
+        reply.navigationResolution,
+      );
       const responseLanguage = detectAssistantLanguage(nextInput, locale);
       if (recommendedProducts.length > 0) {
         trackEvent("assistant_product_impression", {
@@ -911,7 +944,30 @@ export function StorefrontAssistant() {
         )
       );
       if (navigationOptions.length > 0) {
-        setPendingNavigationChoices(navigationOptions, responseLanguage);
+        for (const option of navigationOptions) {
+          const navigation = sanitizeAssistantNavigation(option.navigation);
+          if (navigation) {
+            router.prefetch(navigation.href);
+          }
+        }
+        setPendingNavigationChoices(
+          navigationOptions,
+          responseLanguage,
+          navigationResolution === "miss" ? undefined : navigationResolution,
+        );
+      } else if (navigationResolution === "miss") {
+        trackEvent("assistant_navigation", {
+          pathname,
+          locale,
+          destination: "none",
+          navigation_kind: "none",
+          source,
+          resolver: "miss",
+        });
+      }
+      const navigation = sanitizeAssistantNavigation(reply.navigation);
+      if (navigation) {
+        router.prefetch(navigation.href);
       }
       navigateAssistantReply(reply, source);
       return reply.answer;
@@ -1037,6 +1093,9 @@ export function StorefrontAssistant() {
       const reply = data.reply;
       const recommendedProducts = normalizeRecommendedProducts(reply);
       const navigationOptions = normalizeNavigationOptions(reply);
+      const navigationResolution = normalizeNavigationResolution(
+        reply.navigationResolution,
+      );
       const retryLanguage = detectAssistantLanguage(
         [...messagesBeforeRetry]
           .reverse()
@@ -1073,7 +1132,30 @@ export function StorefrontAssistant() {
         )
       );
       if (navigationOptions.length > 0) {
-        setPendingNavigationChoices(navigationOptions, retryLanguage);
+        for (const option of navigationOptions) {
+          const navigation = sanitizeAssistantNavigation(option.navigation);
+          if (navigation) {
+            router.prefetch(navigation.href);
+          }
+        }
+        setPendingNavigationChoices(
+          navigationOptions,
+          retryLanguage,
+          navigationResolution === "miss" ? undefined : navigationResolution,
+        );
+      } else if (navigationResolution === "miss") {
+        trackEvent("assistant_navigation", {
+          pathname,
+          locale,
+          destination: "none",
+          navigation_kind: "none",
+          source: "text",
+          resolver: "miss",
+        });
+      }
+      const navigation = sanitizeAssistantNavigation(reply.navigation);
+      if (navigation) {
+        router.prefetch(navigation.href);
       }
       navigateAssistantReply(reply, "text");
     } catch {

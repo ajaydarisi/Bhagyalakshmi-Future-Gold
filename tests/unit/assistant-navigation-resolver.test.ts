@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   resolveAssistantDynamicNavigation,
   type AssistantDynamicNavigationDependencies,
@@ -169,5 +169,23 @@ describe("dynamic assistant navigation resolver", () => {
         },
       ],
     });
+  });
+
+  it("drops invalid dynamic entity values rather than bypassing manifest serialization", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    await expect(
+      resolveAssistantDynamicNavigation(
+        { query: "Open product invalid", locale: "en" },
+        dependencies({
+          findExactProductMatches: async () => [{ ...PRODUCT, slug: "not a valid slug" }],
+        }),
+      ),
+    ).resolves.toBeNull();
+
+    expect(consoleError).toHaveBeenCalledWith(
+      "[assistant.navigation] Failed to resolve dynamic target",
+      expect.any(Error),
+    );
   });
 });

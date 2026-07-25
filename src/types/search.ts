@@ -151,6 +151,15 @@ export interface AssistantNavigationOption {
   navigation: AssistantNavigation;
 }
 
+/** How a navigation-shaped request was resolved. This is telemetry only; the
+ * navigation object itself is always independently sanitized on the client. */
+export type AssistantNavigationResolution =
+  | "deterministic"
+  | "dynamic"
+  | "grounded"
+  | "llm"
+  | "miss";
+
 export interface AssistantProductMatch {
   id: string;
   slug: string;
@@ -177,4 +186,6 @@ export interface AssistantReply {
   recommendedProducts?: AssistantProductMatch[];
   navigation?: AssistantNavigation | null;
   navigationOptions?: AssistantNavigationOption[];
+  /** Present only for a navigation-shaped request, including a safe miss. */
+  navigationResolution?: AssistantNavigationResolution;
 }

@@ -57,6 +57,7 @@
     },
     "chooseProduct": "I found a few matching products. Choose one to open.",
     "chooseOrder": "I found a few matching orders. Choose one to open.",
+    "chooseDestination": "I found a few possible destinations. Choose one to open.",
     "chooseOption": "Say or select first, second, or third:",
     "noOrders": "I could not find a matching order. Opening your orders."
   }

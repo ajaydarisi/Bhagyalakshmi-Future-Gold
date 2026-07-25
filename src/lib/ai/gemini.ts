@@ -87,7 +87,7 @@ export async function embedText(
 
 export async function generateJson<T>(
   prompt: string,
-  options: { signal?: AbortSignal } = {}
+  options: { signal?: AbortSignal; responseJsonSchema?: unknown } = {}
 ): Promise<T> {
   const ai = getClient();
   const response = await ai.models.generateContent({
@@ -95,6 +95,12 @@ export async function generateJson<T>(
     contents: prompt,
     config: {
       responseMimeType: "application/json",
+      // Keep the JSON shape constrained at the provider boundary when a
+      // caller has a schema. Callers still validate the parsed value locally:
+      // model output remains untrusted input.
+      ...(options.responseJsonSchema
+        ? { responseJsonSchema: options.responseJsonSchema }
+        : {}),
       abortSignal: options.signal,
       // Grounded extraction/summarization, not multi-step reasoning — thinking
       // only adds dead air before the first token.

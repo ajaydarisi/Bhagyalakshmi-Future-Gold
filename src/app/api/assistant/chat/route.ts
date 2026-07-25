@@ -38,7 +38,14 @@ import {
   hasTeluguScript,
 } from "@/lib/assistant-language";
 import { resolveAssistantNavigation } from "@/lib/assistant-navigation";
+import {
+  resolveAssistantGroundedNavigation,
+} from "@/lib/assistant-navigation-grounding";
 import { resolveAssistantDynamicNavigation } from "@/lib/assistant-navigation-resolver";
+import {
+  isAssistantLlmNavigationRequest,
+  resolveAssistantLlmNavigation,
+} from "@/lib/assistant-llm-navigation";
 import { generateJson } from "@/lib/ai/gemini";
 import { generateAssistantGroundedReply } from "@/lib/retrieval/answer";
 import {
@@ -51,6 +58,7 @@ import type {
   AssistantHandoff,
   AssistantPageContext,
   AssistantReply,
+  AssistantNavigationResolution,
   CatalogMessage,
   CatalogSourceType,
   Citation,
@@ -66,6 +74,7 @@ const MAX_PAGE_CONTEXT_ITEM_CHARS = 140;
 const MAX_PAGE_CONTEXT_CATEGORY_COUNT = 6;
 const MAX_PAGE_CONTEXT_CART_ITEMS = 5;
 const ASSISTANT_PUBLIC_DOC_ENSURE_TTL_MS = 5 * 60 * 1000;
+const ASSISTANT_LLM_NAVIGATION_TIMEOUT_MS = 3_000;
 
 type AssistantRateLimitEntry = {
   count: number;
@@ -424,6 +433,70 @@ function withAssistantRecommendedProducts(args: {
     pageContext: args.pageContext,
     retrievedContext: args.retrievedItems,
   });
+}
+
+function withAssistantNavigationResolution(
+  reply: AssistantReply,
+  navigationResolution: AssistantNavigationResolution | undefined,
+) {
+  return navigationResolution
+    ? { ...reply, navigationResolution }
+    : reply;
+}
+
+/** Bound the optional navigation fallback independently of the assistant's
+ * answer-generation timeout. A slow model must degrade to retrieval rather
+ * than holding up an otherwise usable chat or voice turn. */
+async function resolveAssistantLlmNavigationWithTimeout(
+  args: Parameters<typeof resolveAssistantLlmNavigation>[0],
+) {
+  if (args.signal?.aborted) {
+    return resolveAssistantLlmNavigation(args);
+  }
+
+  const controller = new AbortController();
+  type LlmNavigationResolution = Awaited<
+    ReturnType<typeof resolveAssistantLlmNavigation>
+  >;
+
+  // Do not rely on a provider honoring AbortSignal: it is a cancellation hint,
+  // not a guaranteed deadline. The result race preserves the fallback's hard
+  // latency budget even if an SDK or a mocked dependency settles late.
+  let resolveAborted!: (result: LlmNavigationResolution) => void;
+  let settledAsAborted = false;
+  const abortedResult = new Promise<LlmNavigationResolution>((resolve) => {
+    resolveAborted = resolve;
+  });
+  const settleAsAborted = () => {
+    if (settledAsAborted) return;
+    settledAsAborted = true;
+    controller.abort();
+    resolveAborted({ type: "miss", source: "llm", reason: "aborted" });
+  };
+  const abortFromRequest = () => settleAsAborted();
+  const timeout = setTimeout(
+    settleAsAborted,
+    ASSISTANT_LLM_NAVIGATION_TIMEOUT_MS,
+  );
+  args.signal?.addEventListener("abort", abortFromRequest, { once: true });
+  if (args.signal?.aborted) {
+    settleAsAborted();
+  }
+
+  try {
+    const resolution = resolveAssistantLlmNavigation({
+      ...args,
+      signal: controller.signal,
+    });
+    // `Promise.race` observes rejection, and this explicit handler also keeps
+    // a late provider rejection consumed after the deadline result wins.
+    void resolution.catch(() => undefined);
+
+    return await Promise.race([resolution, abortedResult]);
+  } finally {
+    clearTimeout(timeout);
+    args.signal?.removeEventListener("abort", abortFromRequest);
+  }
 }
 
 function mapItemToCitation(item: RetrievedContextItem): Citation {
@@ -825,9 +898,9 @@ async function handleAssistantChat(
         ? dynamicNavigation.navigation
         : resolveAssistantNavigation(languageSourceMessage);
 
-    // Navigation is a deterministic command and intentionally bypasses voice
-    // refinement, RAG, and generation. This ensures a model can never create
-    // or alter an arbitrary URL.
+    // Deterministic navigation stays the no-model fast path. Any later model
+    // fallback selects only a manifest route ID and typed parameters; it can
+    // never create or alter an arbitrary URL.
     if (dynamicNavigation?.type === "options" || navigation) {
       const reply =
         dynamicNavigation?.type === "options"
@@ -835,15 +908,21 @@ async function handleAssistantChat(
               locale: responseLocale,
               type: dynamicNavigation.optionType,
               options: dynamicNavigation.options,
+              navigationResolution: "dynamic",
             })
           : dynamicNavigation?.type === "navigation" && dynamicNavigation.noMatchingOrder
             ? buildAssistantOrderFallbackReply({
                 locale: responseLocale,
                 navigation: navigation!,
+                navigationResolution: "dynamic",
               })
             : buildAssistantNavigationReply({
                 locale: responseLocale,
                 navigation: navigation!,
+                navigationResolution:
+                  dynamicNavigation?.type === "navigation"
+                    ? "dynamic"
+                    : "deterministic",
               });
 
       console.info("[assistant.chat]", JSON.stringify({
@@ -860,6 +939,40 @@ async function handleAssistantChat(
       return NextResponse.json({ reply, handoff: null });
     }
 
+    const shouldTryLlmNavigation = isAssistantLlmNavigationRequest(
+      languageSourceMessage,
+    );
+    let llmNavigationMissReason: string | null = null;
+    if (shouldTryLlmNavigation) {
+      const llmNavigation = await resolveAssistantLlmNavigationWithTimeout({
+        query: languageSourceMessage,
+        locale: responseLocale,
+        signal,
+      });
+
+      if (llmNavigation.type === "navigation") {
+        const reply = buildAssistantNavigationReply({
+          locale: responseLocale,
+          navigation: llmNavigation.navigation,
+          navigationResolution: "llm",
+        });
+
+        console.info("[assistant.chat]", JSON.stringify({
+          locale: responseLocale,
+          responseLocale,
+          retrievalLocale: responseLocale,
+          navigation: llmNavigation.navigation.destination,
+          navigationResolution: "llm",
+          routeId: llmNavigation.routeId,
+          latencyMs: Date.now() - startedAt,
+        }));
+
+        return NextResponse.json({ reply, handoff: null });
+      }
+
+      llmNavigationMissReason = llmNavigation.reason;
+    }
+
     if (payload.source === "voice") {
       const refined = await refineAssistantVoicePrompt(latestUserMessage, signal);
       if (refined !== latestUserMessage) {
@@ -874,6 +987,10 @@ async function handleAssistantChat(
     }
 
     const retrievalLocale = responseLocale;
+    const navigationMissResolution: AssistantNavigationResolution | undefined =
+      shouldTryLlmNavigation ? "miss" : undefined;
+    const withNavigationMiss = (reply: AssistantReply) =>
+      withAssistantNavigationResolution(reply, navigationMissResolution);
 
     const handoff = buildAssistantHandoff(latestUserMessage, responseLocale);
     const intentReply = buildAssistantIntentReply(latestUserMessage, responseLocale);
@@ -887,17 +1004,19 @@ async function handleAssistantChat(
 
     if (intentReply) {
       return NextResponse.json({
-        reply: intentReply,
+        reply: withNavigationMiss(intentReply),
         handoff: null,
       });
     }
 
     if (isUnsupportedAssistantRequest(latestUserMessage)) {
       return NextResponse.json({
-        reply: buildAssistantFallbackReply({
-          locale: responseLocale,
-          reason: "unsupported_scope",
-        }),
+        reply: withNavigationMiss(
+          buildAssistantFallbackReply({
+            locale: responseLocale,
+            reason: "unsupported_scope",
+          }),
+        ),
         handoff,
       });
     }
@@ -920,6 +1039,66 @@ async function handleAssistantChat(
       preferPriceAscending,
       productType: productFilters?.type,
     });
+
+    if (shouldTryLlmNavigation) {
+      const groundedNavigation = resolveAssistantGroundedNavigation({
+        query: languageSourceMessage,
+        locale: responseLocale,
+        retrievedContext: firstItems,
+        pageContext,
+      });
+
+      if (groundedNavigation?.type === "navigation") {
+        const reply = buildAssistantNavigationReply({
+          locale: responseLocale,
+          navigation: groundedNavigation.navigation,
+          navigationResolution: "grounded",
+        });
+
+        console.info("[assistant.chat]", JSON.stringify({
+          locale: responseLocale,
+          responseLocale,
+          retrievalLocale,
+          navigation: groundedNavigation.navigation.destination,
+          navigationResolution: "grounded",
+          groundedCandidateType: groundedNavigation.candidate.type,
+          llmNavigationMissReason,
+          retrievalCount: firstItems.length,
+          latencyMs: Date.now() - startedAt,
+        }));
+
+        return NextResponse.json({ reply, handoff: null });
+      }
+
+      if (groundedNavigation?.type === "options") {
+        const optionType = groundedNavigation.candidates.every(
+          (candidate) => candidate.type === "product",
+        )
+          ? "product"
+          : "destination";
+        const reply = buildAssistantNavigationOptionsReply({
+          locale: responseLocale,
+          type: optionType,
+          options: groundedNavigation.options,
+          navigationResolution: "grounded",
+        });
+
+        console.info("[assistant.chat]", JSON.stringify({
+          locale: responseLocale,
+          responseLocale,
+          retrievalLocale,
+          navigation: "grounded_options",
+          navigationResolution: "grounded",
+          groundedCandidateCount: groundedNavigation.candidates.length,
+          llmNavigationMissReason,
+          retrievalCount: firstItems.length,
+          latencyMs: Date.now() - startedAt,
+        }));
+
+        return NextResponse.json({ reply, handoff: null });
+      }
+    }
+
     const firstAttempt = await generateAssistantGroundedReply({
       messages,
       locale: responseLocale,
@@ -954,7 +1133,7 @@ async function handleAssistantChat(
       }));
 
       return NextResponse.json({
-        reply,
+        reply: withNavigationMiss(reply),
         handoff: null,
       });
     }
@@ -976,10 +1155,12 @@ async function handleAssistantChat(
       }));
 
       return NextResponse.json({
-        reply: buildAssistantFallbackReply({
-          locale: responseLocale,
-          reason: "generation_error",
-        }),
+        reply: withNavigationMiss(
+          buildAssistantFallbackReply({
+            locale: responseLocale,
+            reason: "generation_error",
+          }),
+        ),
         handoff: null,
       });
     }
@@ -1062,7 +1243,7 @@ async function handleAssistantChat(
         }));
 
         return NextResponse.json({
-          reply,
+          reply: withNavigationMiss(reply),
           handoff: null,
         });
       }
@@ -1087,10 +1268,12 @@ async function handleAssistantChat(
         }));
 
         return NextResponse.json({
-          reply: buildAssistantFallbackReply({
-            locale: responseLocale,
-            reason: "generation_error",
-          }),
+          reply: withNavigationMiss(
+            buildAssistantFallbackReply({
+              locale: responseLocale,
+              reason: "generation_error",
+            }),
+          ),
           handoff: null,
         });
       }
@@ -1155,7 +1338,7 @@ async function handleAssistantChat(
       }));
 
       return NextResponse.json({
-        reply: noProductMatchReply,
+        reply: withNavigationMiss(noProductMatchReply),
         handoff: null,
       });
     }
@@ -1192,16 +1375,18 @@ async function handleAssistantChat(
       }));
 
       return NextResponse.json({
-        reply,
+        reply: withNavigationMiss(reply),
         handoff: null,
       });
     }
 
     return NextResponse.json({
-      reply: buildAssistantFallbackReply({
-        locale: responseLocale,
-        reason: "no_context",
-      }),
+      reply: withNavigationMiss(
+        buildAssistantFallbackReply({
+          locale: responseLocale,
+          reason: "no_context",
+        }),
+      ),
       handoff: null,
     });
   } catch (error) {

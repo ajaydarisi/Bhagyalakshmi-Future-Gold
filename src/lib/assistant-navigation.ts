@@ -2,30 +2,22 @@ import {
   buildAssistantProductSearchQuery,
   buildAssistantSearchFilters,
 } from "@/lib/assistant";
-import { ROUTES, SORT_OPTIONS } from "@/lib/constants";
+import {
+  isAssistantRouteNavigation,
+  serializeAssistantRoute,
+  type AssistantRouteId,
+} from "@/lib/assistant-route-manifest";
 import type {
   AssistantNavigation,
-  AssistantNavigationDestination,
   AssistantNavigationOption,
 } from "@/types/search";
 
-type StaticPageDestination = Extract<
-  AssistantNavigationDestination,
-  | "home"
-  | "search"
-  | "cart"
-  | "checkout"
-  | "wishlist"
-  | "account"
-  | "orders"
-  | "addresses"
-  | "about"
-  | "visit"
-  | "terms"
-  | "privacy"
-  | "login"
-  | "signup"
-  | "forgot_password"
+type StaticPageRouteId = Exclude<
+  AssistantRouteId,
+  | "products"
+  | "product_detail"
+  | "order_detail"
+  | "checkout_confirmation"
 >;
 
 export type AssistantDynamicNavigationIntent =
@@ -38,47 +30,8 @@ export type AssistantDynamicNavigationIntent =
       orderReference: string | null;
     };
 
-const PAGE_DESTINATIONS: Record<StaticPageDestination, string> = {
-  home: ROUTES.home,
-  search: ROUTES.search,
-  cart: ROUTES.cart,
-  checkout: ROUTES.checkout,
-  wishlist: ROUTES.wishlist,
-  account: ROUTES.account,
-  orders: ROUTES.accountOrders,
-  addresses: ROUTES.accountAddresses,
-  about: ROUTES.about,
-  visit: ROUTES.visit,
-  terms: ROUTES.termsAndConditions,
-  privacy: ROUTES.privacyPolicy,
-  login: ROUTES.login,
-  signup: ROUTES.signup,
-  forgot_password: ROUTES.forgotPassword,
-};
-
-const PRODUCT_QUERY_KEYS = new Set([
-  "q",
-  "type",
-  "minPrice",
-  "maxPrice",
-  "category",
-  "material",
-  "tag",
-  "sort",
-  "page",
-]);
-
-const PRODUCT_TYPES = new Set(["sale", "rental", "all"]);
-const PRODUCT_SORT_VALUES: Set<string> = new Set(
-  SORT_OPTIONS.map((option) => option.value),
-);
 const MAX_NAVIGATION_QUERY_LENGTH = 160;
-const MAX_NAVIGATION_PRICE = 10_000_000;
-const MAX_NAVIGATION_PAGE = 10_000;
 const MAX_NAVIGATION_OPTIONS = 3;
-const ORDER_UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const PRODUCT_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function normalizedQuery(query: string) {
   return query.trim().toLowerCase().replace(/\s+/g, " ");
@@ -233,7 +186,7 @@ export function resolveAssistantDynamicNavigationIntent(
   return null;
 }
 
-function resolvePageDestination(query: string): StaticPageDestination | null {
+function resolvePageDestination(query: string): StaticPageRouteId | null {
   if (hasAny(query, [/\b(terms?(?: and conditions)?|conditions of use)\b/i, /(?:నిబంధన|షరత)/])) {
     return "terms";
   }
@@ -297,20 +250,20 @@ function stripNavigationCommandPhrases(query: string) {
     .replace(/\b(?:pages?|catalog(?:ue)?s?|collections?)\b/gi, " ");
 }
 
-function buildProductsNavigation(query: string): AssistantNavigation {
+function buildProductsNavigation(query: string): AssistantNavigation | null {
   const filters = buildAssistantSearchFilters(query);
   const type = filters?.type || (filters?.maxPrice ? "rental" : undefined);
-  const params = new URLSearchParams();
+  const params: Record<string, string | number> = {};
 
-  if (type && type !== "all") params.set("type", type);
-  if (filters?.minPrice) params.set("minPrice", String(filters.minPrice));
-  if (filters?.maxPrice) params.set("maxPrice", String(filters.maxPrice));
-  if (filters?.tags?.length) params.set("tag", filters.tags.join(","));
-  if (filters?.materials?.length) params.set("material", filters.materials.join(","));
+  if (type && type !== "all") params.type = type;
+  if (filters?.minPrice) params.minPrice = filters.minPrice;
+  if (filters?.maxPrice) params.maxPrice = filters.maxPrice;
+  if (filters?.tags?.length) params.tag = filters.tags.join(",");
+  if (filters?.materials?.length) params.material = filters.materials.join(",");
   // Explicit cheapness cues only — a plain price cap ("under 1000") keeps the
   // default sort.
   if (/\b(cheap(?:est|er)?|lowest|least expensive|most affordable)\b/i.test(query) || /(చౌక|తక్కువ ధర)/.test(query)) {
-    params.set("sort", "price-asc");
+    params.sort = "price-asc";
   }
 
   const rawSearchQuery = buildAssistantProductSearchQuery({
@@ -321,15 +274,10 @@ function buildProductsNavigation(query: string): AssistantNavigation {
     .trim();
 
   if (searchQuery && !/^(jewellery|jewelry)$/i.test(searchQuery)) {
-    params.set("q", searchQuery);
+    params.q = searchQuery;
   }
 
-  const suffix = params.toString();
-  return {
-    kind: "product_filters",
-    destination: "products",
-    href: suffix ? `${ROUTES.products}?${suffix}` : ROUTES.products,
-  };
+  return serializeAssistantRoute("products", params);
 }
 
 /** Resolve static routes and catalogue filters. Dynamic detail lookups run server-side. */
@@ -352,134 +300,20 @@ export function resolveAssistantNavigation(query: string): AssistantNavigation |
 
   const pageDestination = resolvePageDestination(normalized);
   if (pageDestination) {
-    return {
-      kind: "page",
-      destination: pageDestination,
-      href: PAGE_DESTINATIONS[pageDestination],
-    };
+    return serializeAssistantRoute(pageDestination, {});
   }
 
   return isProductRequest ? buildProductsNavigation(query) : null;
-}
-
-function isPositiveBoundedInteger(value: string, maximum: number) {
-  if (!/^\d+$/.test(value)) return false;
-  const number = Number(value);
-  return Number.isSafeInteger(number) && number > 0 && number <= maximum;
 }
 
 function isBoundedText(value: string, maximum: number) {
   return value.length > 0 && value.length <= maximum && !/[\u0000-\u001F\u007F]/.test(value);
 }
 
-function hasValidProductNavigationParams(url: URL) {
-  const entries = [...url.searchParams.entries()];
-  if (
-    entries.some(([key]) => !PRODUCT_QUERY_KEYS.has(key)) ||
-    new Set(entries.map(([key]) => key)).size !== entries.length
-  ) {
-    return false;
-  }
-
-  const type = url.searchParams.get("type");
-  if (type && !PRODUCT_TYPES.has(type)) return false;
-
-  const minPrice = url.searchParams.get("minPrice");
-  const maxPrice = url.searchParams.get("maxPrice");
-  if (
-    (minPrice && !isPositiveBoundedInteger(minPrice, MAX_NAVIGATION_PRICE)) ||
-    (maxPrice && !isPositiveBoundedInteger(maxPrice, MAX_NAVIGATION_PRICE)) ||
-    (minPrice && maxPrice && Number(minPrice) > Number(maxPrice))
-  ) {
-    return false;
-  }
-
-  const page = url.searchParams.get("page");
-  if (page && !isPositiveBoundedInteger(page, MAX_NAVIGATION_PAGE)) return false;
-
-  const sort = url.searchParams.get("sort");
-  if (sort && !PRODUCT_SORT_VALUES.has(sort)) return false;
-
-  return ["q", "category", "material", "tag"].every((key) => {
-    const value = url.searchParams.get(key);
-    return value === null || isBoundedText(value, MAX_NAVIGATION_QUERY_LENGTH);
-  });
-}
-
 export function sanitizeAssistantNavigation(value: unknown): AssistantNavigation | null {
-  if (!value || typeof value !== "object") return null;
-
-  const candidate = value as Partial<AssistantNavigation>;
-  if (
-    !["page", "product_filters", "product_detail", "order_detail", "checkout_confirmation"].includes(
-      candidate.kind ?? "",
-    ) ||
-    typeof candidate.destination !== "string" ||
-    typeof candidate.href !== "string" ||
-    candidate.href.length === 0 ||
-    candidate.href.length > 600 ||
-    !candidate.href.startsWith("/") ||
-    candidate.href.startsWith("//") ||
-    candidate.href.includes("\\")
-  ) {
-    return null;
-  }
-
-  let url: URL;
-  try {
-    url = new URL(candidate.href, "https://assistant.local");
-  } catch {
-    return null;
-  }
-  if (url.origin !== "https://assistant.local" || url.pathname.includes("..") || url.hash) {
-    return null;
-  }
-
-  if (candidate.kind === "page") {
-    if (
-      !(candidate.destination in PAGE_DESTINATIONS) ||
-      PAGE_DESTINATIONS[candidate.destination as StaticPageDestination] !== candidate.href
-    ) {
-      return null;
-    }
-  } else if (
-    candidate.kind === "product_filters" &&
-    (candidate.destination !== "products" ||
-      url.pathname !== ROUTES.products ||
-      !hasValidProductNavigationParams(url))
-  ) {
-    return null;
-  } else if (
-    candidate.kind === "product_detail" &&
-    (candidate.destination !== "product_detail" ||
-      url.search ||
-      !PRODUCT_SLUG_PATTERN.test(url.pathname.slice(`${ROUTES.products}/`.length)) ||
-      candidate.href !== ROUTES.product(url.pathname.slice(`${ROUTES.products}/`.length)))
-  ) {
-    return null;
-  } else if (
-    candidate.kind === "order_detail" &&
-    (candidate.destination !== "order_detail" ||
-      url.search ||
-      !ORDER_UUID_PATTERN.test(url.pathname.slice(`${ROUTES.accountOrders}/`.length)) ||
-      candidate.href !== ROUTES.accountOrder(url.pathname.slice(`${ROUTES.accountOrders}/`.length)))
-  ) {
-    return null;
-  } else if (
-    candidate.kind === "checkout_confirmation" &&
-    (candidate.destination !== "checkout_confirmation" ||
-      url.pathname !== ROUTES.checkoutConfirmation ||
-      [...url.searchParams.keys()].length !== 1 ||
-      !ORDER_UUID_PATTERN.test(url.searchParams.get("order_id") ?? ""))
-  ) {
-    return null;
-  }
-
-  return {
-    kind: candidate.kind as AssistantNavigation["kind"],
-    destination: candidate.destination as AssistantNavigationDestination,
-    href: candidate.href,
-  };
+  return isAssistantRouteNavigation(value, { enforceStoreMode: true })
+    ? value
+    : null;
 }
 
 export function sanitizeAssistantNavigationOptions(

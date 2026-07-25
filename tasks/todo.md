@@ -1,5 +1,86 @@
 # Task Log
 
+## Offline store mode — suppress commerce flows — IN PROGRESS 2026-07-19
+
+Goal: when `NEXT_PUBLIC_STORE_MODE=OFFLINE`, keep the storefront catalog and
+WhatsApp availability experience while hiding and disabling cart, checkout,
+payment, order, and address flows.
+
+- [ ] Consolidate customer-commerce route availability and reuse it at every
+  UI/server boundary.
+- [ ] Prevent cart state and reusable commerce controls from initializing or
+  mutating in offline mode.
+- [ ] Keep direct offline commerce URLs redirected before their pages render;
+  preserve the customer profile, wishlist, and catalog/contact experience.
+- [ ] Ensure assistant, omnibox, retrieval, and external manifests cannot
+  advertise unavailable commerce routes in offline mode.
+- [ ] Add offline-mode regressions and run type, lint, unit, and build checks.
+
+### Constraints
+
+- Offline mode is catalog/contact-only; it uses WhatsApp availability actions.
+- Do not erase a shopper's persisted cart simply because the deployment mode
+  changes; keep it dormant until online mode is restored.
+- Keep normal online behavior unchanged.
+
+## Agentic storefront navigation — Phases 1–3 — COMPLETE 2026-07-19
+
+Goal: make natural-language navigation a safe primary affordance without
+removing conventional, crawlable, accessible storefront links.
+
+- [x] Define one typed, bilingual route manifest with parameter schemas,
+  serialization, availability metadata, and public-agent exports.
+- [x] Preserve deterministic navigation as the no-model fast path; add a
+  Gemini structured-output fallback only for unresolved navigation-shaped
+  requests, with manifest validation and the existing URL sanitizer as the
+  final trust boundary.
+- [x] Emit resolver-source telemetry (deterministic / dynamic / LLM / miss)
+  and prefetch accepted navigation targets before client-side transition.
+- [x] Ground products, categories, static pages, and policy sections through
+  bounded retrieval; retain safe ambiguity choices instead of guessing.
+- [x] Add an accessible customer omnibox that uses the same safe path while
+  keeping header, footer, and ordinary deep links intact.
+- [x] Publish an agent-readable llms.txt / route-manifest surface generated
+  from the same source of truth.
+- [x] Add focused tests, then run type checking, lint, unit tests, and a
+  production build with a supported Node runtime.
+
+### Constraints
+
+- The LLM selects a route ID and typed parameters; it never supplies a URL.
+- Every generated navigation object passes `sanitizeAssistantNavigation`.
+- User-owned and administrative routes remain subject to their existing auth
+  checks, and no external or arbitrary URLs are valid assistant destinations.
+- Existing static links remain available for SEO, accessibility, and degraded
+  operation.
+
+### Review — 2026-07-19
+
+- `assistant-route-manifest.ts` is the canonical typed route source for
+  deterministic parsing, database-backed entity resolution, LLM structured
+  output, retrieval grounding, the omnibox, `llms.txt`, and the read-only MCP
+  endpoint. A route serializes only after its route-specific Zod schema passes.
+- The Gemini fallback receives only route IDs and parameter schemas, never URL
+  templates. Its result must pass the manifest serializer and the existing
+  `sanitizeAssistantNavigation` transport boundary; entity and private order
+  routes cannot be selected by the model. Its 3-second budget is a hard
+  result race, so a provider that ignores cancellation still degrades to
+  retrieval rather than delaying a customer response.
+- Retrieval may only select from bounded catalog/static-document candidates;
+  it preserves ambiguity choices, rejects untrusted hrefs, and allows only
+  manifest-owned document anchors.
+- The persistent bilingual omnibox preserves conventional links, prefetches
+  safe results, and shares deterministic/API resolution with Ask AI. Resolver
+  source is attached to `assistant_navigation` telemetry.
+- External consumers receive public, non-entity routes only through
+  `/llms.txt`, `/.well-known/agent-navigation.json`, and a read-only
+  Streamable HTTP MCP endpoint at `/api/mcp`.
+- Verified with Node 22: TypeScript check, ESLint, `git diff --check`, 88
+  passing unit tests (including all new navigation tests), and a successful
+  production build. The full suite has one known, unrelated failure in
+  `offline-ui-helpers.test.ts`: its rental maximum expects 2026-03-15 while
+  the established inclusive-day implementation returns 2026-03-14.
+
 ## Ask AI navigation commands — COMPLETE 2026-07-18
 
 Goal: allow the Ask AI panel to route a customer to a public storefront page or

@@ -8,6 +8,19 @@ export const ASSISTANT_STREAM_CONTENT_TYPE =
   "application/x-ndjson; charset=utf-8";
 const MAX_STREAM_BYTES = 192 * 1024;
 const MAX_EVENT_BYTES = 96 * 1024;
+const NAVIGATION_RESOLUTIONS = new Set([
+  "deterministic",
+  "dynamic",
+  "grounded",
+  "llm",
+  "miss",
+]);
+
+function sanitizeNavigationResolution(value: unknown) {
+  return typeof value === "string" && NAVIGATION_RESOLUTIONS.has(value)
+    ? value as NonNullable<AssistantReply["navigationResolution"]>
+    : undefined;
+}
 
 export type AssistantStreamEvent =
   | { type: "start" }
@@ -48,9 +61,13 @@ function parseAssistantStreamEvent(value: unknown): AssistantStreamEvent | null 
     const reply = event.reply as AssistantReply;
     const navigation = sanitizeAssistantNavigation(reply.navigation);
     const navigationOptions = sanitizeAssistantNavigationOptions(reply.navigationOptions);
+    const navigationResolution = sanitizeNavigationResolution(
+      reply.navigationResolution,
+    );
     const replyWithoutNavigation = { ...reply };
     delete replyWithoutNavigation.navigation;
     delete replyWithoutNavigation.navigationOptions;
+    delete replyWithoutNavigation.navigationResolution;
     return {
       type: "result",
       // The final result is the only stream event that may carry navigation.
@@ -59,6 +76,7 @@ function parseAssistantStreamEvent(value: unknown): AssistantStreamEvent | null 
         ...replyWithoutNavigation,
         ...(navigation ? { navigation } : {}),
         ...(navigationOptions.length > 0 ? { navigationOptions } : {}),
+        ...(navigationResolution ? { navigationResolution } : {}),
       },
       handoff:
         event.handoff && typeof event.handoff === "object"

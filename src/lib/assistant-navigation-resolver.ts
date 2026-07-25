@@ -3,7 +3,10 @@ import {
   resolveAssistantDynamicNavigationIntent,
   type AssistantDynamicNavigationIntent,
 } from "@/lib/assistant-navigation";
-import { ROUTES } from "@/lib/constants";
+import {
+  serializeAssistantRoute,
+  type AssistantRouteId,
+} from "@/lib/assistant-route-manifest";
 import { retrieveCatalogContext } from "@/lib/retrieval/catalog";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
@@ -61,36 +64,29 @@ function uniqueById<T extends { id: string }>(items: T[]) {
   return [...new Map(items.map((item) => [item.id, item])).values()];
 }
 
+function manifestNavigation(routeId: AssistantRouteId, params: unknown): AssistantNavigation {
+  const navigation = serializeAssistantRoute(routeId, params);
+  if (!navigation) {
+    throw new Error(`Invalid assistant manifest navigation: ${routeId}`);
+  }
+
+  return navigation;
+}
+
 function productNavigation(slug: string): AssistantNavigation {
-  return {
-    kind: "product_detail",
-    destination: "product_detail",
-    href: ROUTES.product(slug),
-  };
+  return manifestNavigation("product_detail", { slug });
 }
 
 function ordersNavigation(): AssistantNavigation {
-  return {
-    kind: "page",
-    destination: "orders",
-    href: ROUTES.accountOrders,
-  };
+  return manifestNavigation("orders", {});
 }
 
 function orderNavigation(id: string): AssistantNavigation {
-  return {
-    kind: "order_detail",
-    destination: "order_detail",
-    href: ROUTES.accountOrder(id),
-  };
+  return manifestNavigation("order_detail", { id });
 }
 
 function confirmationNavigation(id: string): AssistantNavigation {
-  return {
-    kind: "checkout_confirmation",
-    destination: "checkout_confirmation",
-    href: `${ROUTES.checkoutConfirmation}?order_id=${encodeURIComponent(id)}`,
-  };
+  return manifestNavigation("checkout_confirmation", { orderId: id });
 }
 
 function productOptions(products: NavigationProduct[], locale: string) {
@@ -237,14 +233,9 @@ async function resolveProductNavigation(args: {
     };
   }
 
-  const searchParams = new URLSearchParams({ q: args.query });
   return {
     type: "navigation",
-    navigation: {
-      kind: "product_filters",
-      destination: "products",
-      href: `${ROUTES.products}?${searchParams.toString()}`,
-    },
+    navigation: manifestNavigation("products", { q: args.query }),
   };
 }
 

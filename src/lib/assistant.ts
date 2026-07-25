@@ -7,6 +7,7 @@ import type {
   AssistantHandoff,
   AssistantNavigation,
   AssistantNavigationOption,
+  AssistantNavigationResolution,
   AssistantPageContext,
   AssistantReply,
   CatalogMessage,
@@ -115,6 +116,7 @@ export function buildAssistantFallbackReply(args: {
 export function buildAssistantNavigationReply(args: {
   locale: string;
   navigation: AssistantNavigation;
+  navigationResolution?: Exclude<AssistantNavigationResolution, "miss">;
 }): AssistantReply {
   const t = getAssistantCopy(args.locale);
   const destination = t.navigation.destinations[
@@ -127,13 +129,17 @@ export function buildAssistantNavigationReply(args: {
     followUpSuggestions: [],
     fallbackReason: null,
     navigation: args.navigation,
+    ...(args.navigationResolution
+      ? { navigationResolution: args.navigationResolution }
+      : {}),
   };
 }
 
 export function buildAssistantNavigationOptionsReply(args: {
   locale: string;
-  type: "product" | "order";
+  type: "product" | "order" | "destination";
   options: AssistantNavigationOption[];
+  navigationResolution?: Exclude<AssistantNavigationResolution, "miss">;
 }): AssistantReply {
   const t = getAssistantCopy(args.locale);
   const choices = args.options
@@ -144,18 +150,24 @@ export function buildAssistantNavigationOptionsReply(args: {
     answer: `${
       args.type === "product"
         ? t.navigation.chooseProduct
-        : t.navigation.chooseOrder
+        : args.type === "order"
+          ? t.navigation.chooseOrder
+          : t.navigation.chooseDestination
     } ${t.navigation.chooseOption} ${choices}`,
     citations: [],
     followUpSuggestions: [],
     fallbackReason: null,
     navigationOptions: args.options,
+    ...(args.navigationResolution
+      ? { navigationResolution: args.navigationResolution }
+      : {}),
   };
 }
 
 export function buildAssistantOrderFallbackReply(args: {
   locale: string;
   navigation: AssistantNavigation;
+  navigationResolution?: Exclude<AssistantNavigationResolution, "miss">;
 }): AssistantReply {
   const t = getAssistantCopy(args.locale);
 
@@ -165,6 +177,9 @@ export function buildAssistantOrderFallbackReply(args: {
     followUpSuggestions: [],
     fallbackReason: null,
     navigation: args.navigation,
+    ...(args.navigationResolution
+      ? { navigationResolution: args.navigationResolution }
+      : {}),
   };
 }
 

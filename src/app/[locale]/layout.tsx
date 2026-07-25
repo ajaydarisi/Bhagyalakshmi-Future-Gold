@@ -3,6 +3,7 @@ import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { StorefrontAssistant } from "@/components/assistant/storefront-assistant";
+import { NavigationOmnibox } from "@/components/shared/navigation-omnibox";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/shared/theme-provider";
@@ -154,6 +155,7 @@ export default async function LocaleLayout({
                 <WishlistProvider>
                   <NavProgress />
                   {children}
+                  <NavigationOmnibox />
                   <StorefrontAssistant />
                 </WishlistProvider>
               </CartProvider>
