@@ -1,13 +1,39 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 900 256"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">DARISI</title>
+  <desc id="desc">DARISI wordmark constructed on a golden-ratio grid</desc>
   <!--
-    Golden Ratio "D" Favicon — Darisi (filled for small-size legibility)
-    Outer D: height=400, width=400/φ ≈ 247  →  ratio ≈ φ
-    Inner counter offset by stem width (72px) and padding (64px)
+    Let H = 256 and φ = 1.61803398875.
+    The DARISI glyphs occupy exactly 2φH × H (828.433402 × 256), followed
+    by a fixed contrast dot.
+    The D is the original Darisi path, uniformly scaled to an H/φ-wide
+    module. The remaining sequence is [H/5, H/φ², H/5, H/φ², H/5,
+    H/φ³, H/5, H/φ², H/5, H/φ³].
   -->
   <path
+    fill="#0F2724"
     fill-rule="evenodd"
     clip-rule="evenodd"
+    transform="translate(-74.454918 -30.837159) scale(0.620457651)"
     d="M 120 56 L 120 456 C 460 456 460 56 120 56 Z M 192 120 L 192 392 C 400 392 400 120 192 120 Z"
-    fill="#8B1E2D"
   />
+  <g
+    fill="none"
+    stroke="#0F2724"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="14.266391"
+  >
+    <!-- A, R, I, S, I: paths inset by half the stroke inside their φ cells. -->
+    <path d="M216.549897 199.975155L258.308351 56.024845 300.066804 199.975155M234.143196 146.674948H282.473505" />
+    <path d="M365.533196 199.975155V56.024845H405.866598C453.113608 56.024845 453.113608 127.183299 405.866598 127.183299H365.533196M405.866598 127.183299 449.050103 199.975155" />
+    <path d="M514.516495 56.024845H560.683505M537.6 56.024845V199.975155M514.516495 199.975155H560.683505" />
+    <path d="M700.900206 78.008351C693.750103 63.808351 680.150206 56.024845 664 56.024845 641.900103 56.024845 626.149897 69.908351 626.149897 90.958351 626.149897 111.508351 641.900103 121.508351 668.091649 131.308351 694.283196 141.108351 709.666804 152.458351 709.666804 173.258351 709.666804 190.408351 694.283196 199.975155 669.091649 199.975155 650.200103 199.975155 635.350103 192.008351 626.149897 181.458351" />
+    <path d="M775.133196 56.024845H821.300206M798.216701 56.024845V199.975155M775.133196 199.975155H821.300206" />
+  </g>
+  <circle cx="872.433402" cy="187.10835" r="20" fill="#914D30" />
 </svg>
