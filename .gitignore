@@ -33,10 +33,6 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
-# ...but the voice service's template must be committed: common/env.ts and
-# docs/voice-assistant-production.md both tell you to copy it, so an ignored
-# example makes the first-run error message a dead end. Contains no values.
-!voice-agent/.env.example
 
 # vercel
 .vercel

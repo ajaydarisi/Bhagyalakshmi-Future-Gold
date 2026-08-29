@@ -1,5 +1,6 @@
-// Mirror of voice-agent/src/common/protocol.ts — keep the two in sync by hand
-// (two repos-in-one; not worth a shared package for six message types).
+// Mirror of src/common/protocol.ts in github.com/ajaydarisi/bfg-voice-agent —
+// keep the two in sync by hand. Now genuinely two repos, so a change here that
+// is not mirrored there fails at runtime on the wire, not at build time.
 
 export type SessionState = "listening" | "thinking" | "speaking";
 

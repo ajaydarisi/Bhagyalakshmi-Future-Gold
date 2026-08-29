@@ -375,9 +375,10 @@ function buildPrompt(args: {
       : "Act like a helpful shopping assistant, but stay grounded strictly in the provided context.";
 
   // Voice turns are synthesized straight from this answer, so the shape of the
-  // text IS the shape of the speech. Rules mirror voice-agent/src/llm/
-  // system-prompt.ts, which governs the conversation-mode path — keep both in
-  // sync. The voice service also scrubs markdown at appendAssistantSpeech, but
+  // text IS the shape of the speech. Rules mirror src/llm/system-prompt.ts in
+  // github.com/ajaydarisi/bfg-voice-agent, which governs the conversation-mode
+  // path — keep both in sync across the two repos. The voice service also
+  // scrubs markdown at appendAssistantSpeech, but
   // it cannot fix reply length or "₹25,000"; only the prompt can.
   const spokenInstruction = args.spokenOutput
     ? [

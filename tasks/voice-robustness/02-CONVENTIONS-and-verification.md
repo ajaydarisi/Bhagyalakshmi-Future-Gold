@@ -2,16 +2,18 @@
 
 ## The two projects
 
-This repo contains **two applications**:
+The voice work spans **two repositories**:
 
-| | Path | Runtime | Deploy target |
+| | Location | Runtime | Deploy target |
 |---|---|---|---|
-| Storefront | repo root (`src/`) | Next.js 16 App Router, React 19, Node 22 | Vercel → `bfg.darisi.in` |
-| Voice service | `voice-agent/` | NestJS 11 + native `ws`, own `package.json`, own `Dockerfile` | Render → `bfg-voice-agent.onrender.com`, single instance, region singapore |
+| Storefront | this repo (`src/`) | Next.js 16 App Router, React 19, Node 22 | Vercel → `bfg.darisi.in` |
+| Voice service | [ajaydarisi/bfg-voice-agent](https://github.com/ajaydarisi/bfg-voice-agent) | NestJS 11 + native `ws`, own `package.json`, own `Dockerfile` | Render → `bfg-voice-agent.onrender.com`, single instance, region singapore |
 
-They are **separate npm projects**. `npm install` at the root does not install `voice-agent/`'s deps.
-Always `cd voice-agent` for its commands. The browser reaches the voice service via
-`NEXT_PUBLIC_VOICE_WS_URL`.
+The voice service used to live in `voice-agent/` here and was extracted in Aug 2026; task files
+below still cite `voice-agent/…` paths, which now mean paths inside that repo. Its commands run
+in a clone of it, not here. The browser reaches it via `NEXT_PUBLIC_VOICE_WS_URL`, and the two
+sides share only the wire protocol (`src/lib/voice/protocol.ts` ↔ its `src/common/protocol.ts`,
+hand-synced) and `VOICE_TOKEN_SECRET`.
 
 ## Hard rules (from CLAUDE.md — violating these fails review)
 

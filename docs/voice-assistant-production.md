@@ -35,7 +35,7 @@ For grounded voice turns, the browser-to-voice-service control vocabulary is `sp
 ## Runtime topology
 
 - **Next.js storefront:** serves the assistant UI, `/api/assistant/chat`, `/api/voice/token`, and self-hosted VAD assets under `/vad/`.
-- **Voice service:** the container in `voice-agent/`; accepts long-lived WebSockets at `/session` and exposes `/healthz` and `/readyz`.
+- **Voice service:** a separate repository and deployment, [ajaydarisi/bfg-voice-agent](https://github.com/ajaydarisi/bfg-voice-agent); accepts long-lived WebSockets at `/session` and exposes `/healthz` and `/readyz`.
 - **External providers:** Sarvam STT/TTS and Gemini for grounded answer generation. Conversation-only voice mode can also use Gemini or Sarvam as configured.
 
 The voice service must run on infrastructure that supports long-lived WebSockets. Put it behind TLS and expose it as `wss://.../session`. Configure the load balancer idle timeout above the service heartbeat interval and session idle limit.
@@ -53,7 +53,7 @@ Storefront:
 | `GEMINI_API_KEY` | Required for grounded generation and embeddings. |
 | `AI_HTTP_TIMEOUT_MS` | Optional, clamped to 5–30 seconds; default 12 seconds. |
 
-Voice service variables are documented in [`voice-agent/.env.example`](../voice-agent/.env.example), which is committed (the root `.gitignore` negates `.env*` for it) so the "copy it to `.env`" instruction in `common/env.ts` actually resolves. Production requires at minimum `SARVAM_API_KEY`, `VOICE_TOKEN_SECRET`, and exact comma-separated `ALLOWED_ORIGINS`. Set `GEMINI_API_KEY` when `LLM_PROVIDER=gemini` or when conversation mode is enabled. Leave `VOICE_ALLOW_CONVERSATION_MODE` unset in production — see Edge and capacity controls.
+Voice service variables are documented in that repository's committed `.env.example`, which the "copy it to `.env`" instruction in its `src/common/env.ts` resolves against. Production requires at minimum `SARVAM_API_KEY`, `VOICE_TOKEN_SECRET`, and exact comma-separated `ALLOWED_ORIGINS`. Set `GEMINI_API_KEY` when `LLM_PROVIDER=gemini` or when conversation mode is enabled. Leave `VOICE_ALLOW_CONVERSATION_MODE` unset in production — see Edge and capacity controls.
 
 Use a generated secret, for example:
 
@@ -75,11 +75,11 @@ npm run start
 
 `postinstall` copies the minimum VAD runtime into `public/vad/`; these generated files are intentionally ignored by Git.
 
-Voice service container:
+Voice service container, from a clone of [ajaydarisi/bfg-voice-agent](https://github.com/ajaydarisi/bfg-voice-agent):
 
 ```bash
-docker build -t bfg-voice-agent ./voice-agent
-docker run --rm -p 8080:8080 --env-file voice-agent/.env bfg-voice-agent
+docker build -t bfg-voice-agent .
+docker run --rm -p 8080:8080 --env-file .env bfg-voice-agent
 ```
 
 Deployment order:
@@ -134,8 +134,12 @@ npx tsc --noEmit
 npm run test:unit
 npm run build
 npx playwright test tests/e2e/assistant.spec.ts --project=chromium
+```
 
-cd voice-agent
+The voice service ships from its own repository and has its own release gate;
+run this in a clone of [ajaydarisi/bfg-voice-agent](https://github.com/ajaydarisi/bfg-voice-agent):
+
+```bash
 npm test
 npm run typecheck
 npm run build
