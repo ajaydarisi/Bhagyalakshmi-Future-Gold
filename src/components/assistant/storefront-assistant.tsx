@@ -3,6 +3,7 @@
 import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
 import { AssistantProductCard } from "@/components/assistant/assistant-product-card";
+import { VoiceCallDock } from "@/components/assistant/voice-call-dock";
 import { MessageResponse } from "@/components/ai-elements/message";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -456,6 +457,10 @@ export function StorefrontAssistant() {
   const {
     uiState: voiceState,
     sessionId: voiceSessionId,
+    // Only the dock renders these: inside the sheet the same content is already
+    // visible as conversation entries, but the dock has no conversation to show.
+    userText: voiceUserText,
+    assistantText: voiceAssistantText,
     errorCode: voiceErrorCode,
     muted: voiceMuted,
     toggleMute: toggleVoiceMute,
@@ -482,6 +487,10 @@ export function StorefrontAssistant() {
    *  TYPED request from being clobbered; keying it on the bare isSending flag
    *  also disabled every recovery control after a voice failure. */
   const [sendingSource, setSendingSource] = useState<"text" | "voice" | null>(null);
+  /** The dock can be hidden without ending the call, but a dismissal must never
+   *  outlive the current state — otherwise the customer permanently loses the
+   *  interrupt control for the rest of the session. */
+  const [dockDismissed, setDockDismissed] = useState(false);
   const [pendingNavigationOptions, setPendingNavigationOptions] =
     useState<PendingNavigationOptions | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -520,6 +529,10 @@ export function StorefrontAssistant() {
   useEffect(() => {
     isSendingRef.current = isSending;
   }, [isSending]);
+
+  useEffect(() => {
+    setDockDismissed(false);
+  }, [voiceState]);
 
   useEffect(() => {
     const code = voiceState === "mic_denied" ? "mic_denied" : voiceErrorCode;
@@ -697,8 +710,9 @@ export function StorefrontAssistant() {
       source,
       resolver: navigationResolution ?? "legacy",
     });
-    // Do not call handleOpenChange(false): it deliberately stops the active
-    // voice session, while a voice navigation acknowledgement must keep playing.
+    // setOpen, not handleOpenChange: navigating must not clear a pending spoken
+    // disambiguation. On a voice turn the sheet is already shut and the dock
+    // stays up, so the acknowledgement keeps playing over the new page.
     setOpen(false);
     router.push(navigation.href);
     return true;
@@ -838,8 +852,14 @@ export function StorefrontAssistant() {
 
     conversationRef.current = pendingConversation;
     setConversation(pendingConversation);
-    setInput("");
-    setOpen(true);
+    // A voice turn is fully self-contained in the dock: it must not take over the
+    // page with the sheet, and it must not clear a half-typed composer message.
+    // The turn is still appended to the conversation, so "View conversation" in
+    // the dock has the product cards and citations waiting.
+    if (source === "text") {
+      setInput("");
+      setOpen(true);
+    }
     trackEvent("assistant_message_sent", { pathname, locale });
 
     try {
@@ -1203,10 +1223,11 @@ export function StorefrontAssistant() {
     if (nextOpen && !open) {
       trackEvent("assistant_open", { pathname, locale });
     }
-    if (!nextOpen && voiceActive) {
-      stopVoice();
-    }
-    if (!nextOpen) {
+    // Closing the sheet no longer ends a live call: the dock takes over as the
+    // voice surface and carries its own Stop. Pending spoken disambiguation
+    // options must survive too, because the customer answers those by voice
+    // ("the first one") with the sheet shut.
+    if (!nextOpen && !voiceActive) {
       clearPendingNavigationOptions();
     }
     setOpen(nextOpen);
@@ -1222,10 +1243,9 @@ export function StorefrontAssistant() {
       return;
     }
 
-    if (!open) {
-      trackEvent("assistant_open", { pathname, locale });
-    }
-    setOpen(true);
+    // Deliberately does NOT open the sheet: the floating dock is the live voice
+    // surface, so the page stays visible while the assistant talks and navigates.
+    setDockDismissed(false);
     trackEvent("assistant_voice_start", { pathname, locale });
     void startVoice();
   }
@@ -1325,7 +1345,34 @@ export function StorefrontAssistant() {
 
   return (
     <>
-      <div className="fixed bottom-24 right-4 z-40 lg:bottom-6 lg:right-6">
+      <div className="fixed bottom-24 right-4 z-40 flex flex-col items-end lg:bottom-6 lg:right-6">
+        {/* Live voice surface. Hidden while the sheet is open so there is never a
+            second set of controls, and so it cannot fight the Sheet overlay for
+            stacking. Visible once the sheet closes — including the navigation
+            case, where the session deliberately keeps speaking. */}
+        {showVoiceActivity && !open && !dockDismissed && (
+          <VoiceCallDock
+            state={voiceState}
+            errorMessage={
+              voiceState === "error" ||
+              voiceState === "mic_denied" ||
+              Boolean(voiceErrorCode)
+                ? getVoiceErrorMessage()
+                : null
+            }
+            userText={voiceUserText}
+            assistantText={voiceAssistantText}
+            muted={voiceMuted}
+            canViewConversation={conversation.length > 0}
+            onToggleMute={toggleVoiceMute}
+            onInterrupt={interruptVoice}
+            onStop={stopVoice}
+            onRetry={handleVoiceToggle}
+            onViewConversation={() => setOpen(true)}
+            onDismiss={() => setDockDismissed(true)}
+          />
+        )}
+
         {/* attention pulse ring */}
         <span
           aria-hidden

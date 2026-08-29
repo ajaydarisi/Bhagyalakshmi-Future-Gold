@@ -45,6 +45,8 @@
 | T1-11 | iOS/Safari never enters `speaking`, so no Interrupt button | `T1-11-apple-playback-state.md` | medium | verified-code / unverified-premise | S |
 | **Tier 2 — abuse and cost** | | | | | |
 | T2 | 5 grouped items (session cap, audio metering, `mode=conversation`, `speak_reset` budget, `.env.example`) | `T2-abuse-and-cost.md` | medium | verified (adversarial) | S each |
+| **Tier 4 — surface** | | | | | |
+| T4 | Bring the voice agent out of the sidebar: floating call dock | `T4-voice-call-dock.md` | high | verified | M |
 | **Tier 3 — make it debuggable** | | | | | |
 | T3 | Structured turn latency, close-code attribution, cross-service correlation, TTS-leg tests | `T3-observability-and-tests.md` | medium | verified | M |
 

@@ -20,5 +20,7 @@
   "audioUnavailable": "The answer is shown, but audio playback is temporarily unavailable.",
   "notSupported": "Voice requires microphone support and a secure HTTPS connection.",
   "connectionError": "Could not reach the voice assistant. Check your connection and try again.",
-  "busy": "The assistant is busy right now. Please try again in a minute."
+  "busy": "The assistant is busy right now. Please try again in a minute.",
+  "viewConversation": "View conversation",
+  "dismiss": "Hide"
 }
