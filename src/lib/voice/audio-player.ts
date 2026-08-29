@@ -11,6 +11,7 @@ export class VoicePlayer {
   private streamEnded = false;
   private fallbackChunks: Uint8Array[] = [];
   private fallbackCtx: AudioContext | null = null;
+  private fallbackDecoding = false;
   private fallbackSource: AudioBufferSourceNode | null = null;
   private playbackFailed = false;
   private readonly useMse =
@@ -22,7 +23,14 @@ export class VoicePlayer {
   ) {}
 
   get playing(): boolean {
-    return this.audio ? !this.audio.paused && !this.audio.ended : this.fallbackSource !== null;
+    // Decoding counts as playing: on the fallback path (no MediaSource, i.e.
+    // Safari/iOS) audio is inevitable but not yet audible, and the caller uses
+    // this to decide whether the UI may leave "speaking" and whether barge-in
+    // should fire. Reporting false there hid the Interrupt button for the whole
+    // reply and dropped the UI to "listening" before a single sample was heard.
+    return this.audio
+      ? !this.audio.paused && !this.audio.ended
+      : this.fallbackDecoding || this.fallbackSource !== null;
   }
 
   beginUtterance(ctx: AudioContext): void {
@@ -79,9 +87,11 @@ export class VoicePlayer {
         offset += c.length;
       }
       this.fallbackChunks = [];
+      this.fallbackDecoding = true;
       void this.fallbackCtx
         .decodeAudioData(all.buffer.slice(0))
         .then((buffer) => {
+          this.fallbackDecoding = false;
           if (!this.fallbackCtx) return;
           const source = this.fallbackCtx.createBufferSource();
           source.buffer = buffer;
@@ -93,7 +103,10 @@ export class VoicePlayer {
           this.fallbackSource = source;
           source.start();
         })
-        .catch(() => this.handlePlaybackError());
+        .catch(() => {
+          this.fallbackDecoding = false;
+          this.handlePlaybackError();
+        });
     }
   }
 
@@ -101,6 +114,12 @@ export class VoicePlayer {
   stopAll(): void {
     this.pending = [];
     this.fallbackChunks = [];
+    this.fallbackDecoding = false;
+    // Nulling the context is what makes an in-flight decodeAudioData
+    // continuation bail (it early-returns on a null fallbackCtx), so a barge-in
+    // landing inside the decode window cannot start the cancelled utterance.
+    // beginUtterance re-assigns fallbackCtx immediately after calling stopAll.
+    this.fallbackCtx = null;
     if (this.audio) {
       this.audio.pause();
       URL.revokeObjectURL(this.audio.src);

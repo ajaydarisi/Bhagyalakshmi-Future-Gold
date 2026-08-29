@@ -359,6 +359,7 @@ function buildPrompt(args: {
   retrievedContext: RetrievedContextItem[];
   responseMode: GroundedResponseMode;
   pageContext?: AssistantPageContext | null;
+  spokenOutput?: boolean;
 }) {
   const localeInstruction =
     args.locale === "te"
@@ -372,6 +373,26 @@ function buildPrompt(args: {
     args.responseMode === "search_answer"
       ? "Give a concise shopping-oriented summary based only on the grounded catalog context."
       : "Act like a helpful shopping assistant, but stay grounded strictly in the provided context.";
+
+  // Voice turns are synthesized straight from this answer, so the shape of the
+  // text IS the shape of the speech. Rules mirror voice-agent/src/llm/
+  // system-prompt.ts, which governs the conversation-mode path — keep both in
+  // sync. The voice service also scrubs markdown at appendAssistantSpeech, but
+  // it cannot fix reply length or "₹25,000"; only the prompt can.
+  const spokenInstruction = args.spokenOutput
+    ? [
+        "This reply will be read aloud by a speech engine.",
+        "Use one to three short sentences, about 35 words maximum. One idea per reply. Ask at most one question.",
+        "Plain sentences only: no markdown, no bullet points, no numbered lists, no emojis, no parentheses, no quotation marks, no abbreviations, no URLs.",
+        "Write numbers and prices as words the way a person says them, never as digits with a currency symbol.",
+        "End every sentence with a period or a question mark, because the reply is split into sentences for synthesis.",
+        args.locale === "te"
+          ? "Use natural spoken Telugu (వాడుక భాష), the way a friendly shop assistant in Andhra actually talks, never formal written Telugu (గ్రాంథిక భాష). Address the customer as మీరు with the -అండి ending where it sounds natural."
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" ")
+    : "";
   const productInstruction =
     hasProductContext && args.responseMode === "assistant_reply"
       ? `If the user is asking for products, recommendations, comparisons, prices, rentals, or details about the current product, mention concrete product names from the retrieved product context.
@@ -414,7 +435,7 @@ Good prompt: "What materials do you use?"`;
   return `
 You are Bhagyalakshmi Future Gold's grounded catalog assistant.
 ${localeInstruction}
-${styleInstruction}
+${styleInstruction}${spokenInstruction ? `\n${spokenInstruction}` : ""}
 ${productInstruction}
 
 Only use the provided context. Do not invent products, prices, policies, availability, account details, or order status.
@@ -488,6 +509,8 @@ export async function generateAssistantGroundedReply(args: {
   pageContext?: AssistantPageContext | null;
   signal?: AbortSignal;
   stream?: AssistantReplyStreamCallbacks;
+  /** Voice turn: the answer is synthesized, so constrain it for speech. */
+  spokenOutput?: boolean;
 }): Promise<{
   reply: AssistantReply | null;
   meta: GroundedReplyGenerationMeta;

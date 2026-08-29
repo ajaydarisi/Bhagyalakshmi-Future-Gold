@@ -277,6 +277,15 @@ function buildProductsNavigation(query: string): AssistantNavigation | null {
     params.q = searchQuery;
   }
 
+  // The products page takes a relevance-ranked search branch whenever `q` is
+  // present, and that branch does not pass `sort` through. Emitting one anyway
+  // would put an ordering in the URL that silently does nothing — so drop it
+  // rather than imply "cheapest" was applied. Honouring sort inside search means
+  // teaching it the sale-vs-rental effective-price logic; tracked separately.
+  if (params.q && params.sort) {
+    delete params.sort;
+  }
+
   return serializeAssistantRoute("products", params);
 }
 

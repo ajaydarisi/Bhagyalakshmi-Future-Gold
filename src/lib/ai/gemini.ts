@@ -54,6 +54,9 @@ export async function embedText(
   options: {
     taskType: "RETRIEVAL_DOCUMENT" | "RETRIEVAL_QUERY";
     title?: string;
+    signal?: AbortSignal;
+    /** Voice turns: fail fast to keyword-only rather than retrying. */
+    singleAttempt?: boolean;
   }
 ) {
   const ai = getClient();
@@ -65,6 +68,7 @@ export async function embedText(
         taskType: options.taskType,
         title: options.title,
         outputDimensionality: EMBEDDING_DIMENSIONS,
+        abortSignal: options.signal,
       },
     });
 
@@ -78,9 +82,13 @@ export async function embedText(
 
   try {
     return await embed();
-  } catch {
-    // One retry: a failed query embedding silently degrades retrieval to
-    // keyword-only, which produces far worse grounding than a 1s delay.
+  } catch (error) {
+    // One retry: a failed query embedding degrades retrieval to keyword-only,
+    // which grounds far worse than a short delay. But the failure that matters
+    // is a TIMEOUT, and 2 x AI_HTTP_TIMEOUT_MS (24s default) does not fit inside
+    // a voice turn's 30s budget — so voice degrades instead of retrying. Hybrid
+    // search still returns FTS results with no embedding.
+    if (options.singleAttempt) throw error;
     return await embed();
   }
 }

@@ -1,4 +1,4 @@
-import { ROUTES, SORT_OPTIONS, STORE_MODE } from "@/lib/constants";
+import { MATERIALS, PRODUCT_TAGS, ROUTES, SORT_OPTIONS, STORE_MODE } from "@/lib/constants";
 import type {
   AssistantNavigation,
   AssistantNavigationDestination,
@@ -109,15 +109,44 @@ const boundedNavigationTextSchema = z
 
 const noAssistantRouteParamsSchema = z.object({}).strict();
 
+/** Comma-separated list where every entry must be in a closed catalog
+ *  vocabulary. Rejects unknown values so a navigation cannot look valid and
+ *  then render an empty grid; also rejects empty entries so the value
+ *  round-trips serialization byte-for-byte. */
+function catalogVocabularyListSchema(vocabulary: readonly string[]) {
+  return boundedNavigationTextSchema.refine(
+    (value) => {
+      const entries = value.split(",");
+      return entries.every((entry) => vocabulary.includes(entry));
+    },
+    { message: "Value is not in the catalog vocabulary" },
+  );
+}
+
+/** Same shape for the admin-managed category slugs, which are data not enums. */
+export function areKnownCategorySlugs(
+  value: string,
+  knownCategorySlugs: readonly string[],
+) {
+  return value.split(",").every((slug) => knownCategorySlugs.includes(slug));
+}
+
 const productFilterParamsSchema = z
   .object({
     q: boundedNavigationTextSchema.optional(),
     type: z.enum(["sale", "rental", "all"]).optional(),
     minPrice: z.number().int().positive().max(MAX_NAVIGATION_PRICE).optional(),
     maxPrice: z.number().int().positive().max(MAX_NAVIGATION_PRICE).optional(),
+    // A syntactically valid but meaningless value round-trips the byte-compare
+    // invariant perfectly and then lands the customer on an empty grid, so these
+    // are constrained to the real catalog vocabulary rather than free text.
+    // All three are comma-separated lists: the products page splits on "," and
+    // the deterministic resolver joins multi-selects that way.
+    // `category` is admin-managed data, so it is validated against slugs passed
+    // in by the caller (see knownCategorySlugs) instead of a compile-time enum.
     category: boundedNavigationTextSchema.optional(),
-    material: boundedNavigationTextSchema.optional(),
-    tag: boundedNavigationTextSchema.optional(),
+    material: catalogVocabularyListSchema(MATERIALS).optional(),
+    tag: catalogVocabularyListSchema(PRODUCT_TAGS).optional(),
     sort: z.enum(SORT_OPTIONS.map((option) => option.value) as [string, ...string[]]).optional(),
     page: z.number().int().positive().max(MAX_NAVIGATION_PAGE).optional(),
   })
@@ -600,6 +629,11 @@ export type AssistantRouteManifestOptions = {
 
 export type AssistantRouteSerializationOptions = {
   storeMode?: AssistantStoreMode;
+  /** Live `categories.slug` values. When supplied, a product-filter navigation
+   *  naming an unknown category is rejected instead of navigating to an empty
+   *  page. Omitted on the client, where the server already validated it and the
+   *  byte-compare guarantees the client is looking at the server's own value. */
+  knownCategorySlugs?: readonly string[];
 };
 
 function resolveStoreMode(storeMode?: AssistantStoreMode): AssistantStoreMode {
@@ -636,9 +670,20 @@ export function getAssistantRouteManifestEntry<RouteId extends AssistantRouteId>
 export function parseAssistantRouteParams<RouteId extends AssistantRouteId>(
   routeId: RouteId,
   params: unknown,
+  options: { knownCategorySlugs?: readonly string[] } = {},
 ): AssistantRouteParamsById[RouteId] | null {
   const parsed = ASSISTANT_ROUTE_PARAM_SCHEMAS[routeId].safeParse(params);
-  return parsed.success ? (parsed.data as AssistantRouteParamsById[RouteId]) : null;
+  if (!parsed.success) return null;
+
+  // Shared choke point: every navigation consumer inherits this check.
+  if (routeId === "products" && options.knownCategorySlugs) {
+    const category = (parsed.data as AssistantRouteParamsById["products"]).category;
+    if (category && !areKnownCategorySlugs(category, options.knownCategorySlugs)) {
+      return null;
+    }
+  }
+
+  return parsed.data as AssistantRouteParamsById[RouteId];
 }
 
 /**
@@ -654,7 +699,9 @@ export function serializeAssistantRoute<RouteId extends AssistantRouteId>(
   const route = getAssistantRouteManifestEntry(routeId);
   if (!route || !isAssistantRouteAvailable(route, options.storeMode)) return null;
 
-  const parsedParams = parseAssistantRouteParams(routeId, params);
+  const parsedParams = parseAssistantRouteParams(routeId, params, {
+    knownCategorySlugs: options.knownCategorySlugs,
+  });
   if (!parsedParams) return null;
 
   // TypeScript cannot retain the correlation between `.find()` and the route

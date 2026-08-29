@@ -1147,6 +1147,11 @@ export async function retrieveCatalogContext(args: {
   offset?: number;
   sourceTypes?: CatalogSourceType[];
   mode?: RetrievalMode;
+  signal?: AbortSignal;
+  /** Voice turn: skip the embedding retry so a slow Gemini cannot eat the
+   *  realtime budget. Hybrid search degrades to FTS, which is the right
+   *  trade when the alternative is the customer hearing nothing. */
+  singleAttemptEmbedding?: boolean;
 }): Promise<RetrievedCatalogContext> {
   const sourceTypes = args.sourceTypes ?? ["product"];
   const limit = args.limit ?? 12;
@@ -1203,6 +1208,8 @@ export async function retrieveCatalogContext(args: {
     try {
       queryEmbedding = await embedText(query, {
         taskType: "RETRIEVAL_QUERY",
+        signal: args.signal,
+        singleAttempt: args.singleAttemptEmbedding,
       });
     } catch (error) {
       console.error("[retrieveCatalogContext] Query embedding failed:", error);

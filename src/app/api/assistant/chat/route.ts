@@ -47,6 +47,7 @@ import {
   resolveAssistantLlmNavigation,
 } from "@/lib/assistant-llm-navigation";
 import { generateJson } from "@/lib/ai/gemini";
+import { getKnownCategorySlugs } from "@/lib/queries/categories";
 import { generateAssistantGroundedReply } from "@/lib/retrieval/answer";
 import {
   ensurePublicRetrievalDocuments,
@@ -686,6 +687,8 @@ async function getAssistantRetrievedItems(args: {
   isProductQuery: boolean;
   preferPriceAscending: boolean;
   productType?: ProductSearchFilters["type"];
+  signal?: AbortSignal;
+  singleAttemptEmbedding?: boolean;
 }) {
   if (!args.isProductQuery) {
     // Baseline store context is always present for non-product questions —
@@ -701,6 +704,8 @@ async function getAssistantRetrievedItems(args: {
         offset: 0,
         sourceTypes: ["product", "store_info", "faq", "legal"],
         mode: "assistant",
+        signal: args.signal,
+        singleAttemptEmbedding: args.singleAttemptEmbedding,
       }),
       getPublicRetrievalDocumentsByKeys([
         `store_info:${seedLocale}:overview`,
@@ -734,6 +739,8 @@ async function getAssistantRetrievedItems(args: {
       offset: 0,
       sourceTypes: ["product"],
       mode: "assistant",
+      signal: args.signal,
+      singleAttemptEmbedding: args.singleAttemptEmbedding,
     }),
     retrieveCatalogContext({
       query: args.query,
@@ -742,6 +749,8 @@ async function getAssistantRetrievedItems(args: {
       offset: 0,
       sourceTypes: ["store_info", "faq", "legal"],
       mode: "assistant",
+      signal: args.signal,
+      singleAttemptEmbedding: args.singleAttemptEmbedding,
     }),
   ]);
 
@@ -851,9 +860,18 @@ async function handleAssistantChat(
     const payload = body as {
       locale?: unknown;
       source?: unknown;
+      voiceSessionId?: unknown;
       pageContext?: unknown;
       messages?: unknown;
     };
+    // Opaque correlation id minted by useVoiceSession and also sent to the voice
+    // service, so one turn can be traced across the two services. Shape-checked
+    // because it lands in logs.
+    const voiceSessionId =
+      typeof payload.voiceSessionId === "string" &&
+      /^[0-9a-f-]{36}$/i.test(payload.voiceSessionId)
+        ? payload.voiceSessionId
+        : undefined;
     const requestedLocale = payload.locale === "te" ? "te" : "en";
     const pageContext = parsePageContext(payload.pageContext);
     const messages = parseMessages(payload.messages);
@@ -882,21 +900,42 @@ async function handleAssistantChat(
       );
     }
 
+    const isVoiceTurn = payload.source === "voice";
+
     // Voice clean-up may improve wording, but it must never decide the
     // response language: that belongs to the customer’s original transcript.
+    // languageSourceMessage is frozen here for that one purpose — do not reuse
+    // it for matching, which wants the cleaned-up text.
     const languageSourceMessage = latestUserMessage;
     const responseLocale = detectAssistantLanguage(
       languageSourceMessage,
       requestedLocale,
     );
+
+    // Refine BEFORE the navigation resolvers run. They are the most literal
+    // consumers of the transcript — exact-phrase regexes and a route-ID model
+    // call — so they are the ones that suffer most from raw ASR noise.
+    if (isVoiceTurn) {
+      const refined = await refineAssistantVoicePrompt(latestUserMessage, signal);
+      if (refined !== latestUserMessage) {
+        latestUserMessage = refined;
+        const lastUserIndex = messages
+          .map((message) => message.role)
+          .lastIndexOf("user");
+        if (lastUserIndex >= 0) {
+          messages[lastUserIndex] = { role: "user", content: refined };
+        }
+      }
+    }
+
     const dynamicNavigation = await resolveAssistantDynamicNavigation({
-      query: languageSourceMessage,
+      query: latestUserMessage,
       locale: responseLocale,
     });
     const navigation =
       dynamicNavigation?.type === "navigation"
         ? dynamicNavigation.navigation
-        : resolveAssistantNavigation(languageSourceMessage);
+        : resolveAssistantNavigation(latestUserMessage);
 
     // Deterministic navigation stays the no-model fast path. Any later model
     // fallback selects only a manifest route ID and typed parameters; it can
@@ -940,14 +979,18 @@ async function handleAssistantChat(
     }
 
     const shouldTryLlmNavigation = isAssistantLlmNavigationRequest(
-      languageSourceMessage,
+      latestUserMessage,
     );
     let llmNavigationMissReason: string | null = null;
     if (shouldTryLlmNavigation) {
       const llmNavigation = await resolveAssistantLlmNavigationWithTimeout({
-        query: languageSourceMessage,
+        query: latestUserMessage,
         locale: responseLocale,
         signal,
+        // Cached list, so this is a ~free guard against the model naming a
+        // category that does not exist and stranding the customer on an empty
+        // grid. Failure to load degrades to the previous behaviour.
+        knownCategorySlugs: await getKnownCategorySlugs().catch(() => undefined),
       });
 
       if (llmNavigation.type === "navigation") {
@@ -971,19 +1014,6 @@ async function handleAssistantChat(
       }
 
       llmNavigationMissReason = llmNavigation.reason;
-    }
-
-    if (payload.source === "voice") {
-      const refined = await refineAssistantVoicePrompt(latestUserMessage, signal);
-      if (refined !== latestUserMessage) {
-        latestUserMessage = refined;
-        const lastUserIndex = messages
-          .map((message) => message.role)
-          .lastIndexOf("user");
-        if (lastUserIndex >= 0) {
-          messages[lastUserIndex] = { role: "user", content: refined };
-        }
-      }
     }
 
     const retrievalLocale = responseLocale;
@@ -1038,11 +1068,19 @@ async function handleAssistantChat(
       isProductQuery,
       preferPriceAscending,
       productType: productFilters?.type,
+      signal,
+      singleAttemptEmbedding: isVoiceTurn,
     });
 
+    // Grounded navigation deliberately runs on EVERY llm-navigation miss,
+    // including `model_miss`. shouldTryLlmNavigation already required an explicit
+    // navigation verb, so a request reaching here said "take me to"/"show me" —
+    // navigating is the right answer even when the model could not pick a route.
+    // Plain questions never get here. Pinned by
+    // tests/unit/assistant-chat-navigation-fallback.test.ts.
     if (shouldTryLlmNavigation) {
       const groundedNavigation = resolveAssistantGroundedNavigation({
-        query: languageSourceMessage,
+        query: latestUserMessage,
         locale: responseLocale,
         retrievedContext: firstItems,
         pageContext,
@@ -1106,6 +1144,7 @@ async function handleAssistantChat(
       pageContext,
       signal,
       stream,
+      spokenOutput: isVoiceTurn,
     });
 
     if (firstAttempt.reply) {
@@ -1120,7 +1159,13 @@ async function handleAssistantChat(
         locale: responseLocale,
         responseLocale,
         retrievalLocale,
+        source: payload.source ?? "text",
+        voiceSessionId,
         fallbackReason: null,
+        // A suppressed grounded attempt must stay visible: if this correlates
+        // with customers immediately re-asking "take me there", the refusal
+        // partition in isAssistantLlmNavigationRefusal is too aggressive.
+        llmNavigationMissReason,
         retrievalCount: firstItems.length,
         sourceTypeMix: buildSourceTypeMix(
           firstItems.map((item) => item.sourceType)
@@ -1195,6 +1240,8 @@ async function handleAssistantChat(
         isProductQuery,
         preferPriceAscending,
         productType: productFilters?.type,
+        signal,
+        singleAttemptEmbedding: isVoiceTurn,
       });
       const seenFallbackSourceKeys = new Set<string>();
       finalItemsForFallback = [...secondItems, ...firstItems].filter((item) => {
@@ -1212,6 +1259,7 @@ async function handleAssistantChat(
         pageContext,
         signal,
         stream,
+        spokenOutput: isVoiceTurn,
       });
 
       if (secondAttempt.reply) {

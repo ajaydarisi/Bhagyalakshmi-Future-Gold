@@ -455,6 +455,7 @@ export function StorefrontAssistant() {
   const { items: cartItems, itemCount } = useCart();
   const {
     uiState: voiceState,
+    sessionId: voiceSessionId,
     errorCode: voiceErrorCode,
     muted: voiceMuted,
     toggleMute: toggleVoiceMute,
@@ -477,6 +478,10 @@ export function StorefrontAssistant() {
     () => loadStoredConversation()
   );
   const [isSending, setIsSending] = useState(false);
+  /** Which kind of request is in flight. The lockout below exists to protect a
+   *  TYPED request from being clobbered; keying it on the bare isSending flag
+   *  also disabled every recovery control after a voice failure. */
+  const [sendingSource, setSendingSource] = useState<"text" | "voice" | null>(null);
   const [pendingNavigationOptions, setPendingNavigationOptions] =
     useState<PendingNavigationOptions | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -493,6 +498,9 @@ export function StorefrontAssistant() {
     voiceState === "speaking";
   const showVoiceActivity =
     voiceEnabled && voiceState !== "idle";
+  /** Only a typed request may lock the mic. A stale VOICE request is exactly
+   *  what the customer is trying to escape when they tap the mic again. */
+  const isSendingText = isSending && sendingSource !== "voice";
 
   const starterPrompts = useMemo(
     () => [
@@ -646,6 +654,7 @@ export function StorefrontAssistant() {
     activeAssistantRequestRef.current = null;
     isSendingRef.current = false;
     setIsSending(false);
+    setSendingSource(null);
     updateConversation((current) =>
       current.filter(
         (entry) => entry.id !== active.userEntryId && entry.id !== active.assistantEntryId
@@ -788,6 +797,7 @@ export function StorefrontAssistant() {
     }
     isSendingRef.current = true;
     setIsSending(true);
+    setSendingSource(source);
 
     const userEntryId = generateEntryId();
     const assistantEntryId = generateEntryId();
@@ -844,6 +854,8 @@ export function StorefrontAssistant() {
           // response language is derived independently from the customer query.
           locale,
           source,
+          // Correlates this turn with the voice service's own logs.
+          voiceSessionId,
           messages: requestMessages,
           pageContext: buildPageContext(),
         }),
@@ -999,6 +1011,7 @@ export function StorefrontAssistant() {
         activeAssistantRequestRef.current = null;
         isSendingRef.current = false;
         setIsSending(false);
+        setSendingSource(null);
       }
     }
   }
@@ -1040,6 +1053,7 @@ export function StorefrontAssistant() {
     );
 
     setIsSending(true);
+    setSendingSource("text");
     try {
       const response = await fetch("/api/assistant/chat", {
         method: "POST",
@@ -1174,6 +1188,7 @@ export function StorefrontAssistant() {
     } finally {
       isSendingRef.current = false;
       setIsSending(false);
+      setSendingSource(null);
     }
   }
 
@@ -1203,7 +1218,7 @@ export function StorefrontAssistant() {
       trackEvent("assistant_voice_stop", { pathname, locale });
       return;
     }
-    if (isSendingRef.current) {
+    if (isSendingRef.current && activeAssistantRequestRef.current?.source !== "voice") {
       return;
     }
 
@@ -1245,6 +1260,12 @@ export function StorefrontAssistant() {
       finishVoiceSpeaking(utteranceId);
     } else if (speechStarted) {
       finishVoiceSpeaking(utteranceId);
+    } else {
+      // The grounded request failed before producing any text, so we never sent
+      // speak_start and the service is still holding this turn in `thinking`
+      // behind its 30s response timer. Release it now instead of making the
+      // customer wait out a timeout that then misreports the cause.
+      interruptVoice();
     }
   }
 
@@ -1334,7 +1355,7 @@ export function StorefrontAssistant() {
               size="icon"
               aria-label={voiceActive ? voiceT("stop") : voiceT("start")}
               aria-pressed={voiceActive}
-              disabled={!hydrated || (isSending && !voiceActive)}
+              disabled={!hydrated || (isSendingText && !voiceActive)}
               data-testid="assistant-voice-launcher"
               className={cn(
                 "h-11 w-11 rounded-l-none rounded-r-full border-l border-black/15 shadow-none hover:shadow-none",
@@ -1693,6 +1714,24 @@ export function StorefrontAssistant() {
                         )}
                       </div>
                     )}
+
+                    {/* The failed states had no working control at all: mute and
+                        interrupt only render while live, and both mic buttons are
+                        disabled while a request is in flight. startVoice() tears
+                        down the previous session first, so this is safe to spam. */}
+                    {(voiceState === "error" || voiceState === "mic_denied") && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleVoiceToggle}
+                        >
+                          <Mic className="size-3" />
+                          {voiceT("retry")}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1721,7 +1760,7 @@ export function StorefrontAssistant() {
                         size="icon"
                         aria-label={voiceActive ? voiceT("stop") : voiceT("start")}
                         aria-pressed={voiceActive}
-                        disabled={isSending && !voiceActive}
+                        disabled={isSendingText && !voiceActive}
                         onClick={handleVoiceToggle}
                       >
                         {voiceState === "connecting" ? (

@@ -167,6 +167,9 @@ export async function resolveAssistantLlmNavigation(
     locale?: string;
     storeMode?: AssistantStoreMode;
     signal?: AbortSignal;
+    /** Live categories.slug values. Without them a model-invented category
+     *  passes validation and the customer lands on an empty grid. */
+    knownCategorySlugs?: readonly string[];
   },
   dependencies: AssistantLlmNavigationDependencies = {},
 ): Promise<AssistantLlmNavigationResolution> {
@@ -215,7 +218,10 @@ export async function resolveAssistantLlmNavigation(
   const navigation = serializeAssistantRoute(
     decision.data.routeId,
     decision.data.params,
-    { storeMode: args.storeMode },
+    {
+      storeMode: args.storeMode,
+      knownCategorySlugs: args.knownCategorySlugs,
+    },
   );
   const sanitized = navigation ? sanitizeAssistantNavigation(navigation) : null;
   if (!sanitized) return miss("invalid_model_output");

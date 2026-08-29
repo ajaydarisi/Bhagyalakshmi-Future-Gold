@@ -41,6 +41,12 @@ export function useVoiceSession({
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
+  /** Opaque per-session id, sent to the voice service AND with each grounded
+   *  chat request so one customer turn can be traced across the two services the
+   *  split topology introduces. Deliberately not the auth token's jti: that is
+   *  the replay key and is used once at socket setup. */
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
@@ -182,6 +188,9 @@ export function useVoiceSession({
     serverStateRef.current = "listening";
     mutedRef.current = false;
     setMuted(false);
+    const voiceSessionId = crypto.randomUUID();
+    sessionIdRef.current = voiceSessionId;
+    setSessionId(voiceSessionId);
     setErrorCode(null);
     setUserText("");
     setAssistantText("");
@@ -279,6 +288,9 @@ export function useVoiceSession({
       socketUrl.searchParams.set("token", token);
       if (mode !== "conversation") socketUrl.searchParams.set("mode", mode);
       socketUrl.searchParams.set("lang", language);
+      if (sessionIdRef.current) {
+        socketUrl.searchParams.set("sid", sessionIdRef.current);
+      }
       const ws = new WebSocket(socketUrl);
       wsRef.current = ws;
       ws.binaryType = "arraybuffer";
@@ -369,6 +381,14 @@ export function useVoiceSession({
                   ? `${previous} ${msg.text}`
                   : msg.text,
               );
+              // Server-initiated speech (watchdog re-prompts) never sends a
+              // `transcript`, so this is the only frame that can keep our
+              // counter aligned with the server's. Without it, interrupt()
+              // sends a stale id, the server discards it as stale, and the
+              // canned line restarts instead of stopping. Assigned AFTER the
+              // updater above so its append-vs-replace check still sees the
+              // pre-adoption value.
+              activeUtteranceRef.current = msg.utteranceId;
             }
             break;
           case "audio_reset":
@@ -458,8 +478,33 @@ export function useVoiceSession({
 
   useEffect(() => teardown, [teardown]);
 
+  /** iOS and the Capacitor WebViews suspend the AudioContext on background; the
+   *  capture worklet then stops producing frames while the socket and the UI both
+   *  still look healthy, and with no uplink audio there are no VAD events, so the
+   *  STT watchdog cannot rescue it either. Resume on the same signals the rest of
+   *  the app already uses for WebView wake-up (capacitor-init dispatches
+   *  bfg:app-resume). ctxRef is nulled on teardown, so this is inert when idle. */
+  useEffect(() => {
+    const resumeAudio = () => {
+      const ctx = ctxRef.current;
+      if (ctx?.state === "suspended") void ctx.resume();
+    };
+    const onVisibilityChange = () => {
+      if (!document.hidden) resumeAudio();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("bfg:app-resume", resumeAudio);
+    window.addEventListener("focus", resumeAudio);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("bfg:app-resume", resumeAudio);
+      window.removeEventListener("focus", resumeAudio);
+    };
+  }, []);
+
   return {
     uiState,
+    sessionId,
     userText,
     assistantText,
     errorCode,
