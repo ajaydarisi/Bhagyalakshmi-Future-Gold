@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "bfg-design-system/**",
     // Design handoff prototype (standalone JSX mockups — not app code).
     "design_handoff_mobile_storefront/**",
+    // Generated third-party VAD runtime copied by postinstall.
+    "public/vad/**",
   ]),
 ]);
 

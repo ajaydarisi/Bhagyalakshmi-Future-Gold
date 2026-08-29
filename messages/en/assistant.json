@@ -20,6 +20,7 @@
   "topMatches": "Top matches",
   "sources": "Sources",
   "followUp": "You can also ask:",
+  "navigationOptions": "Choose a destination:",
   "handoffTitle": "Need human help?",
   "handoffDescription": "For order-specific or detailed support, message the store directly on WhatsApp.",
   "handoffButton": "Chat on WhatsApp",
@@ -30,5 +31,34 @@
   "noGrounding": "I’m not confident enough to answer that from the current catalog and store information.",
   "generationError": "I couldn’t respond reliably right now. Please try again.",
   "error": "I couldn’t respond right now. Please try again.",
-  "emptyMessage": "Ask me a question to get started."
+  "emptyMessage": "Ask me a question to get started.",
+  "navigation": {
+    "opening": "Opening {destination}.",
+    "destinations": {
+      "home": "the home page",
+      "products": "products",
+      "search": "search",
+      "cart": "your cart",
+      "checkout": "checkout",
+      "wishlist": "your wishlist",
+      "account": "your account",
+      "orders": "your orders",
+      "addresses": "your saved addresses",
+      "about": "the about page",
+      "visit": "the store visit page",
+      "terms": "terms and conditions",
+      "privacy": "the privacy policy",
+      "login": "login",
+      "signup": "sign up",
+      "forgot_password": "password recovery",
+      "product_detail": "the product details",
+      "order_detail": "your order details",
+      "checkout_confirmation": "your order confirmation"
+    },
+    "chooseProduct": "I found a few matching products. Choose one to open.",
+    "chooseOrder": "I found a few matching orders. Choose one to open.",
+    "chooseDestination": "I found a few possible destinations. Choose one to open.",
+    "chooseOption": "Say or select first, second, or third:",
+    "noOrders": "I could not find a matching order. Opening your orders."
+  }
 }

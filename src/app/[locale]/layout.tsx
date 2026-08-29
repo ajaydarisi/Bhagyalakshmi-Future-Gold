@@ -2,7 +2,13 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { StorefrontAssistant } from "@/components/assistant/storefront-assistant";
+import { NavigationOmnibox } from "@/components/shared/navigation-omnibox";
+import { CartProvider } from "@/components/cart/cart-provider";
+import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/shared/theme-provider";
+import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
+import { NetworkProvider } from "@/hooks/use-network";
 import { Toaster } from "@/components/ui/sonner";
 import { routing } from "@/i18n/routing";
 import { SetHtmlLang } from "@/components/shared/set-html-lang";
@@ -143,8 +149,18 @@ export default async function LocaleLayout({
       >
         <OnboardingScreen />
         <AuthProvider>
-          <NavProgress />
-          {children}
+          <QueryProvider>
+            <NetworkProvider>
+              <CartProvider>
+                <WishlistProvider>
+                  <NavProgress />
+                  {children}
+                  <NavigationOmnibox />
+                  <StorefrontAssistant />
+                </WishlistProvider>
+              </CartProvider>
+            </NetworkProvider>
+          </QueryProvider>
         </AuthProvider>
         <Toaster />
       </ThemeProvider>

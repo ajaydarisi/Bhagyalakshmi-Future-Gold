@@ -45,6 +45,7 @@ A full-stack jewelry e-commerce platform built with Next.js 16, React 19, and Su
 - **Dark/Light Theme** — System-aware theme toggle via next-themes
 - **Responsive Design** — Mobile-first with adaptive grids, mobile filter sheets, and hamburger navigation
 - **Rental Products** — Support for rental pricing, deposits, and max rental days
+- **Grounded Streaming Voice Shopping Assistant** — Interactive English/Telugu voice turns wait for the customer to finish, stream grounded answer text and sentence-level TTS, support barge-in, and retain the same product imagery and citations as typed Ask AI; see the [production guide](docs/voice-assistant-production.md)
 
 ### Store Modes
 
@@ -109,7 +110,7 @@ supabase/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+
 - npm, pnpm, or yarn
 - A [Supabase](https://supabase.com) project
 - A [Razorpay](https://razorpay.com) account (for payments)

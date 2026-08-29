@@ -2,17 +2,12 @@ import { Suspense } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { BottomNav } from "@/components/layout/bottom-nav";
-import { StorefrontAssistant } from "@/components/assistant/storefront-assistant";
-import { CartProvider } from "@/components/cart/cart-provider";
-import { WishlistProvider } from "@/components/wishlist/wishlist-provider";
 import { PushTokenLinker } from "@/components/shared/push-token-linker";
 import { OfflineBanner } from "@/components/shared/offline-banner";
 import { PrefetchProvider } from "@/components/shared/prefetch-provider";
 import { ScrollToTop } from "@/components/shared/scroll-to-top";
 import { PullToRefresh } from "@/components/shared/pull-to-refresh";
 import { BfgAnimate } from "@/components/shared/bfg-animate";
-import { NetworkProvider } from "@/hooks/use-network";
-import { QueryProvider } from "@/components/providers/query-provider";
 
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { getTopCategories } from "@/lib/queries";
@@ -30,29 +25,20 @@ export default async function StoreLayout({
   const user = await getAuthUser(supabaseClient);
 
   return (
-    <QueryProvider>
-      <NetworkProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <div className="flex min-h-screen flex-col">
-              {user && <PushTokenLinker userId={user.id} />}
-              <PrefetchProvider />
-              <BfgAnimate />
-              <Suspense fallback={null}>
-                <ScrollToTop />
-              </Suspense>
-              <OfflineBanner />
-              <Header categories={categories} />
-              <PullToRefresh>
-                <main className="flex-1 pb-20 lg:pb-0">{children}</main>
-              </PullToRefresh>
-              <Footer categories={categories} />
-              <StorefrontAssistant />
-              <BottomNav />
-            </div>
-          </WishlistProvider>
-        </CartProvider>
-      </NetworkProvider>
-    </QueryProvider>
+    <div className="flex min-h-screen flex-col">
+      {user && <PushTokenLinker userId={user.id} />}
+      <PrefetchProvider />
+      <BfgAnimate />
+      <Suspense fallback={null}>
+        <ScrollToTop />
+      </Suspense>
+      <OfflineBanner />
+      <Header categories={categories} />
+      <PullToRefresh>
+        <main className="flex-1 pb-20 lg:pb-0">{children}</main>
+      </PullToRefresh>
+      <Footer categories={categories} />
+      <BottomNav />
+    </div>
   );
 }

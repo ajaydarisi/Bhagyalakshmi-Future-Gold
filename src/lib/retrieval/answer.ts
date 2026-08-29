@@ -1,4 +1,4 @@
-import { generateJson } from "@/lib/ai/gemini";
+import { generateJson, streamJson } from "@/lib/ai/gemini";
 import {
   ASSISTANT_CONTEXT_LIMIT,
   ASSISTANT_MAX_ASSISTANT_MESSAGE_CHARS,
@@ -55,6 +55,10 @@ const searchGroundedReplySchema: z.ZodType<SearchGroundedReplyModel> = z.object(
   followUpPrompt: z.string().nullable().optional(),
 });
 
+// Field order matters: Gemini's schema-constrained streaming emits properties
+// in schema order. The answer must come FIRST — it is the part we stream, and
+// forcing the model to commit to citations before composing anything (with
+// thinking disabled) makes it bail out with empty output.
 const assistantGroundedReplySchema: z.ZodType<AssistantGroundedReplyModel> = z.object({
   answer: z.string().optional(),
   citations: z
@@ -74,6 +78,11 @@ const assistantGroundedReplySchema: z.ZodType<AssistantGroundedReplyModel> = z.o
     )
     .optional(),
 });
+
+export interface AssistantReplyStreamCallbacks {
+  onAnswerDelta: (delta: string) => void;
+  onAnswerReset: () => void;
+}
 
 function sanitizePromptText(value: string | null | undefined, maxLength: number) {
   if (!value) {
@@ -350,9 +359,12 @@ function buildPrompt(args: {
   retrievedContext: RetrievedContextItem[];
   responseMode: GroundedResponseMode;
   pageContext?: AssistantPageContext | null;
+  spokenOutput?: boolean;
 }) {
   const localeInstruction =
-    args.locale === "te" ? "Reply in Telugu." : "Reply in English.";
+    args.locale === "te"
+      ? "Reply only in Telugu, using Telugu script for the answer. Natural shop English words like gold, design, rental, order, gram, and delivery are allowed when Telugu speakers would normally use them."
+      : "Reply only in English.";
   const hasProductContext = args.retrievedContext.some(
     (item) => item.sourceType === "product"
   );
@@ -361,6 +373,27 @@ function buildPrompt(args: {
     args.responseMode === "search_answer"
       ? "Give a concise shopping-oriented summary based only on the grounded catalog context."
       : "Act like a helpful shopping assistant, but stay grounded strictly in the provided context.";
+
+  // Voice turns are synthesized straight from this answer, so the shape of the
+  // text IS the shape of the speech. Rules mirror src/llm/system-prompt.ts in
+  // github.com/ajaydarisi/bfg-voice-agent, which governs the conversation-mode
+  // path — keep both in sync across the two repos. The voice service also
+  // scrubs markdown at appendAssistantSpeech, but
+  // it cannot fix reply length or "₹25,000"; only the prompt can.
+  const spokenInstruction = args.spokenOutput
+    ? [
+        "This reply will be read aloud by a speech engine.",
+        "Use one to three short sentences, about 35 words maximum. One idea per reply. Ask at most one question.",
+        "Plain sentences only: no markdown, no bullet points, no numbered lists, no emojis, no parentheses, no quotation marks, no abbreviations, no URLs.",
+        "Write numbers and prices as words the way a person says them, never as digits with a currency symbol.",
+        "End every sentence with a period or a question mark, because the reply is split into sentences for synthesis.",
+        args.locale === "te"
+          ? "Use natural spoken Telugu (వాడుక భాష), the way a friendly shop assistant in Andhra actually talks, never formal written Telugu (గ్రాంథిక భాష). Address the customer as మీరు with the -అండి ending where it sounds natural."
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" ")
+    : "";
   const productInstruction =
     hasProductContext && args.responseMode === "assistant_reply"
       ? `If the user is asking for products, recommendations, comparisons, prices, rentals, or details about the current product, mention concrete product names from the retrieved product context.
@@ -403,7 +436,7 @@ Good prompt: "What materials do you use?"`;
   return `
 You are Bhagyalakshmi Future Gold's grounded catalog assistant.
 ${localeInstruction}
-${styleInstruction}
+${styleInstruction}${spokenInstruction ? `\n${spokenInstruction}` : ""}
 ${productInstruction}
 
 Only use the provided context. Do not invent products, prices, policies, availability, account details, or order status.
@@ -475,6 +508,10 @@ export async function generateAssistantGroundedReply(args: {
   locale: string;
   retrievedContext: RetrievedContextItem[];
   pageContext?: AssistantPageContext | null;
+  signal?: AbortSignal;
+  stream?: AssistantReplyStreamCallbacks;
+  /** Voice turn: the answer is synthesized, so constrain it for speech. */
+  spokenOutput?: boolean;
 }): Promise<{
   reply: AssistantReply | null;
   meta: GroundedReplyGenerationMeta;
@@ -494,10 +531,79 @@ export async function generateAssistantGroundedReply(args: {
     ...args,
     responseMode: "assistant_reply",
   });
-  const { parsed, meta } = await generateJsonWithRetry(
-    prompt,
-    assistantGroundedReplySchema
+  const availableSourceKeys = new Set(
+    args.retrievedContext.map((item) => item.sourceKey),
   );
+  let emittedAnswer = "";
+
+  const emitPartialAnswer = (partial: unknown) => {
+    if (!args.stream || !partial || typeof partial !== "object") return;
+    const candidate = partial as AssistantGroundedReplyModel;
+    // Citations now arrive AFTER the answer (schema order), so deltas cannot
+    // wait for them. If the final reply is rejected (no valid citations), the
+    // route retracts streamed text via answer_reset before the fallback.
+    if (typeof candidate.answer !== "string") return;
+
+    const nextAnswer = candidate.answer
+      .replace(/^\s+/, "")
+      .slice(0, ASSISTANT_MAX_ASSISTANT_MESSAGE_CHARS);
+    if (!nextAnswer) return;
+    if (!nextAnswer.startsWith(emittedAnswer)) {
+      args.stream.onAnswerReset();
+      emittedAnswer = "";
+    }
+    const delta = nextAnswer.slice(emittedAnswer.length);
+    if (delta) {
+      emittedAnswer = nextAnswer;
+      args.stream.onAnswerDelta(delta);
+    }
+  };
+
+  let parsed: AssistantGroundedReplyModel | null = null;
+  let meta: GroundedReplyGenerationMeta = {
+    jsonRetryCount: 0,
+    jsonRetryFailed: false,
+    droppedFollowUpSuggestions: 0,
+  };
+
+  if (args.stream) {
+    try {
+      parsed = await streamJson({
+        prompt,
+        schema: assistantGroundedReplySchema,
+        signal: args.signal,
+        onPartial: emitPartialAnswer,
+      });
+      emitPartialAnswer(parsed);
+    } catch {
+      if (args.signal?.aborted) {
+        return { reply: null, meta: { ...meta, jsonRetryFailed: true } };
+      }
+      if (emittedAnswer) {
+        args.stream.onAnswerReset();
+        emittedAnswer = "";
+      }
+      try {
+        parsed = await streamJson({
+          prompt,
+          schema: assistantGroundedReplySchema,
+          signal: args.signal,
+          onPartial: emitPartialAnswer,
+        });
+        emitPartialAnswer(parsed);
+        meta = { ...meta, jsonRetryCount: 1 };
+      } catch {
+        meta = { ...meta, jsonRetryCount: 1, jsonRetryFailed: true };
+      }
+    }
+  } else {
+    const generated = await generateJsonWithRetry(
+      prompt,
+      assistantGroundedReplySchema,
+    );
+    parsed = generated.parsed;
+    meta = generated.meta;
+  }
 
   if (!parsed) {
     return {
@@ -526,7 +632,7 @@ export async function generateAssistantGroundedReply(args: {
   const { items: followUpSuggestions, droppedCount } =
     validateAssistantFollowUpSuggestions(
       parsed.followUpSuggestions,
-      new Set(args.retrievedContext.map((item) => item.sourceKey))
+      availableSourceKeys,
     );
 
   return {

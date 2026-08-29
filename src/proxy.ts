@@ -1,14 +1,14 @@
 import createIntlMiddleware from "next-intl/middleware";
+import type { NextRequest } from "next/server";
 import { routing } from "@/i18n/routing";
 import { updateSession } from "@/lib/supabase/middleware";
-import type { NextRequest } from "next/server";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip i18n for admin, API, and preview routes
+  // Skip i18n for admin, API, and preview routes.
   if (
     pathname.startsWith("/.well-known") ||
     pathname.startsWith("/admin") ||
@@ -19,15 +19,15 @@ export async function middleware(request: NextRequest) {
     return await updateSession(request);
   }
 
-  // Run next-intl middleware first (handles locale detection, redirects, rewrites)
+  // Preserve locale routing headers/cookies while refreshing the session.
   const intlResponse = intlMiddleware(request);
-
-  // Then run Supabase session update, passing the intl response to preserve its headers/cookies
   return await updateSession(request, intlResponse);
 }
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sitemap.xml|robots.txt|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    // Public files must bypass locale routing. AudioWorklet modules reject a
+    // localized redirect or 404.
+    "/((?!_next/static|_next/image|.*\\..*).*)",
   ],
 };

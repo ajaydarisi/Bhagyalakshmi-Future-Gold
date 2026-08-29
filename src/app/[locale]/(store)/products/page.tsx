@@ -383,6 +383,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       products = filteredProducts.slice(0, PRODUCTS_PER_PAGE);
       count = filteredProducts.length;
     } else {
+      // NOTE: `sort` is deliberately not forwarded here. This branch is a
+      // relevance-ranked hybrid search, and ordering it by price would need the
+      // sale-vs-rental effective-price logic the filter branch has. The
+      // assistant therefore stops emitting `sort` alongside `q`
+      // (assistant-navigation.ts) so the URL never implies an ordering that is
+      // not applied. See tasks/voice-robustness/T1-10-search-sort-ignored.md.
       const response = await searchProducts({
         query: search,
         locale,

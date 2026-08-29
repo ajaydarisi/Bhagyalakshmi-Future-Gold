@@ -63,7 +63,7 @@ export function AssistantProductCard({
     <Link
       href={ROUTES.product(product.slug)}
       onClick={onClick}
-      className="group flex items-start gap-3 rounded-xl border bg-background/80 p-3 transition-colors hover:border-[var(--border-gold)] hover:bg-accent/30"
+      className="group flex w-full min-w-0 items-start gap-3 overflow-hidden rounded-xl border bg-background/80 p-3 transition-colors hover:border-[var(--border-gold)] hover:bg-accent/30"
       data-assistant-product-card
       data-assistant-product-slug={product.slug}
     >

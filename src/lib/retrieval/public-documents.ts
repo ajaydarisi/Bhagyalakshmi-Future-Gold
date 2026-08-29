@@ -11,6 +11,10 @@ import {
   ROUTES,
   SHIPPING_COST,
 } from "@/lib/constants";
+import {
+  serializeAssistantRoute,
+  type AssistantRouteId,
+} from "@/lib/assistant-route-manifest";
 import type { Json } from "@/types/database";
 import type { CatalogSourceType } from "@/types/search";
 
@@ -62,6 +66,192 @@ const PRIVACY_TEXT_SECTION_KEYS = [
 ] as const;
 
 type SupportedPublicLocale = "en" | "te";
+
+type StaticRouteDocument = {
+  id: AssistantRouteId;
+  title: string;
+  content: string;
+};
+
+/**
+ * These are deliberately retrieval documents rather than a second route
+ * authority. The assistant route manifest remains canonical and supplies each
+ * href at build time; these documents only give hybrid retrieval a concise,
+ * bilingual description of the customer pages it can ground. Keeping them in
+ * the existing `store_info` source type avoids a schema migration and lets
+ * the existing public-document sync keep them fresh.
+ */
+const STATIC_ROUTE_DOCUMENTS: Record<
+  SupportedPublicLocale,
+  readonly StaticRouteDocument[]
+> = {
+  en: [
+    {
+      id: "home",
+      title: "Home",
+      content: "Home page with featured jewellery and new arrivals.",
+    },
+    {
+      id: "products",
+      title: "Products catalog",
+      content:
+        "Browse all jewellery. Filter the catalog by category, material, tag, price, and sale or rental availability.",
+    },
+    {
+      id: "search",
+      title: "Product search",
+      content: "Search the current jewellery catalog by product name, style, or material.",
+    },
+    {
+      id: "cart",
+      title: "Shopping cart",
+      content: "Review products selected for purchase or rental in the shopping cart.",
+    },
+    {
+      id: "checkout",
+      title: "Checkout and payment",
+      content: "Enter delivery details and pay securely online for the current cart.",
+    },
+    {
+      id: "wishlist",
+      title: "Wishlist",
+      content: "View jewellery products saved as favourites.",
+    },
+    {
+      id: "account",
+      title: "My account",
+      content: "Manage the customer profile, account information, and account settings.",
+    },
+    {
+      id: "orders",
+      title: "My orders",
+      content: "View order history and the status of customer orders.",
+    },
+    {
+      id: "addresses",
+      title: "Saved addresses",
+      content: "Manage delivery addresses saved to the customer account.",
+    },
+    {
+      id: "about",
+      title: "About Bhagyalakshmi Future Gold",
+      content: "Read the store story, quality promise, frequently asked questions, and business information.",
+    },
+    {
+      id: "visit",
+      title: "Visit the store",
+      content: "Find the Chirala store location, directions, contact details, and opening hours.",
+    },
+    {
+      id: "terms",
+      title: "Terms and conditions",
+      content: "Read terms covering products, pricing, orders, payments, shipping, returns, and rentals.",
+    },
+    {
+      id: "privacy",
+      title: "Privacy policy",
+      content: "Read how customer information is collected, used, protected, retained, and controlled.",
+    },
+    {
+      id: "login",
+      title: "Log in",
+      content: "Sign in to an existing customer account.",
+    },
+    {
+      id: "signup",
+      title: "Create an account",
+      content: "Create a new customer account to save addresses, orders, and favourites.",
+    },
+    {
+      id: "forgot_password",
+      title: "Password recovery",
+      content: "Request a password reset for a customer account.",
+    },
+  ],
+  te: [
+    {
+      id: "home",
+      title: "హోమ్",
+      content: "ఫీచర్డ్ నగలు మరియు కొత్త డిజైన్లతో హోమ్ పేజీ.",
+    },
+    {
+      id: "products",
+      title: "ఉత్పత్తుల కాటలాగ్",
+      content:
+        "అన్ని నగలను చూడండి. వర్గం, మెటీరియల్, ట్యాగ్, ధర, అమ్మకం లేదా అద్దె ఆధారంగా ఫిల్టర్ చేయండి.",
+    },
+    {
+      id: "search",
+      title: "ఉత్పత్తి శోధన",
+      content: "ఉత్పత్తి పేరు, స్టైల్ లేదా మెటీరియల్‌తో ప్రస్తుత కాటలాగ్‌ను వెతకండి.",
+    },
+    {
+      id: "cart",
+      title: "షాపింగ్ కార్ట్",
+      content: "కొనుగోలు లేదా అద్దెకు ఎంచుకున్న ఉత్పత్తులను కార్ట్‌లో చూడండి.",
+    },
+    {
+      id: "checkout",
+      title: "చెక్అవుట్ మరియు చెల్లింపు",
+      content: "డెలివరీ వివరాలు ఇచ్చి ప్రస్తుత కార్ట్‌కు ఆన్‌లైన్‌లో సురక్షితంగా చెల్లించండి.",
+    },
+    {
+      id: "wishlist",
+      title: "విష్‌లిస్ట్",
+      content: "ఇష్టమైనవిగా సేవ్ చేసిన నగల ఉత్పత్తులను చూడండి.",
+    },
+    {
+      id: "account",
+      title: "నా ఖాతా",
+      content: "కస్టమర్ ప్రొఫైల్, ఖాతా సమాచారం మరియు సెట్టింగ్‌లను నిర్వహించండి.",
+    },
+    {
+      id: "orders",
+      title: "నా ఆర్డర్లు",
+      content: "ఆర్డర్ చరిత్ర మరియు కస్టమర్ ఆర్డర్ల స్థితిని చూడండి.",
+    },
+    {
+      id: "addresses",
+      title: "సేవ్ చేసిన చిరునామాలు",
+      content: "కస్టమర్ ఖాతాలో సేవ్ చేసిన డెలివరీ చిరునామాలను నిర్వహించండి.",
+    },
+    {
+      id: "about",
+      title: "భాగ్యలక్ష్మి ఫ్యూచర్ గోల్డ్ గురించి",
+      content: "స్టోర్ కథ, నాణ్యత హామీ, తరచుగా అడిగే ప్రశ్నలు మరియు వ్యాపార సమాచారం చదవండి.",
+    },
+    {
+      id: "visit",
+      title: "స్టోర్‌ను సందర్శించండి",
+      content: "చీరాల స్టోర్ లొకేషన్, దారులు, సంప్రదింపు వివరాలు మరియు పని వేళలను చూడండి.",
+    },
+    {
+      id: "terms",
+      title: "నిబంధనలు మరియు షరతులు",
+      content: "ఉత్పత్తులు, ధరలు, ఆర్డర్లు, చెల్లింపులు, షిప్పింగ్, రిటర్న్స్ మరియు అద్దె నిబంధనలు చదవండి.",
+    },
+    {
+      id: "privacy",
+      title: "గోప్యతా విధానం",
+      content: "కస్టమర్ సమాచారాన్ని ఎలా సేకరిస్తారు, ఉపయోగిస్తారు, రక్షిస్తారు మరియు నియంత్రిస్తారో చదవండి.",
+    },
+    {
+      id: "login",
+      title: "లాగిన్",
+      content: "ఇప్పటికే ఉన్న కస్టమర్ ఖాతాలోకి సైన్ ఇన్ అవ్వండి.",
+    },
+    {
+      id: "signup",
+      title: "ఖాతా తెరవండి",
+      content: "చిరునామాలు, ఆర్డర్లు మరియు ఇష్టమైన ఉత్పత్తులను సేవ్ చేయడానికి కొత్త కస్టమర్ ఖాతాను తెరవండి.",
+    },
+    {
+      id: "forgot_password",
+      title: "పాస్‌వర్డ్ రికవరీ",
+      content: "కస్టమర్ ఖాతాకు పాస్‌వర్డ్ రీసెట్‌ను అభ్యర్థించండి.",
+    },
+  ],
+};
 
 export interface PublicCatalogSummaryProduct {
   id: string;
@@ -176,11 +366,17 @@ function buildStoreOverviewDocument(locale: SupportedPublicLocale) {
       ? `${APP_NAME} స్టోర్ అవలోకనం`
       : `${APP_NAME} Store Overview`;
 
+  const owner =
+    locale === "te"
+      ? `యజమాని (ఓనర్ / ప్రొప్రయిటర్): దరిసి భాగ్యలక్ష్మి (${BUSINESS_INFO.proprietor.name}). ${APP_NAME} స్టోర్ మరియు ఈ వెబ్సైట్‌ను ఆమె నిర్వహిస్తారు.`
+      : `Owner (Proprietor): ${BUSINESS_INFO.proprietor.name}. The ${APP_NAME} store and this website are owned and run by ${BUSINESS_INFO.proprietor.name}.`;
+
   const content = [
     `${about.label}: ${about.tagline}`,
     about.mission,
     about.storyShort,
     about.qualityProcess,
+    owner,
     `${about.address}: ${address}`,
     `${about.phone}: ${BUSINESS_INFO.phone}`,
     `${about.email}: ${BUSINESS_INFO.email}`,
@@ -201,6 +397,80 @@ function buildStoreOverviewDocument(locale: SupportedPublicLocale) {
       sectionKey: "store-info",
       summaryKind: "overview",
     },
+  });
+}
+
+function buildSiteGuideDocument(locale: SupportedPublicLocale) {
+  const title =
+    locale === "te"
+      ? `${APP_NAME} వెబ్సైట్ గైడ్ మరియు సైట్‌మ్యాప్`
+      : `${APP_NAME} website guide and sitemap`;
+
+  const content =
+    locale === "te"
+      ? [
+          `ఈ వెబ్సైట్ (${APP_NAME}) లోని ముఖ్యమైన పేజీలు:`,
+          `హోమ్ (${ROUTES.home}): ఫీచర్డ్ జ్యువెలరీ మరియు కొత్త డిజైన్లు.`,
+          `ఉత్పత్తులు (${ROUTES.products}): వర్గం, ధర, మెటీరియల్ ఫిల్టర్లతో పూర్తి కాటలాగ్. ప్రతి ఉత్పత్తికి సొంత వివరాల పేజీ ఉంటుంది.`,
+          `సెర్చ్ (${ROUTES.search}): ఉత్పత్తులను వెతకవచ్చు.`,
+          `కార్ట్ (${ROUTES.cart}) మరియు చెక్అవుట్ (${ROUTES.checkout}): ఎంచుకున్న వస్తువులను చూసి Razorpay ద్వారా ఆన్‌లైన్‌లో సురక్షితంగా చెల్లించవచ్చు.`,
+          `విష్‌లిస్ట్ (${ROUTES.wishlist}): నచ్చిన ఉత్పత్తులను సేవ్ చేసుకోవచ్చు.`,
+          `అకౌంట్ (${ROUTES.account}): ప్రొఫైల్, సేవ్ చేసిన చిరునామాలు, మరియు ఆర్డర్ హిస్టరీ (${ROUTES.accountOrders}).`,
+          `మా గురించి (${ROUTES.about}): స్టోర్ కథ, యజమాని వివరాలు, FAQ, మరియు వ్యాపార సమాచారం.`,
+          `స్టోర్ సందర్శన (${ROUTES.visit}): చీరాలలోని స్టోర్ లొకేషన్, మ్యాప్, మరియు పని వేళలు.`,
+          `చట్టపరమైనవి: నిబంధనలు (${ROUTES.termsAndConditions}) మరియు ప్రైవసీ పాలసీ (${ROUTES.privacyPolicy}).`,
+          `లాగిన్ (${ROUTES.login}) మరియు సైన్అప్ (${ROUTES.signup}) తో అకౌంట్ ప్రారంభించవచ్చు.`,
+        ].join("\n")
+      : [
+          `Main pages on this ${APP_NAME} website:`,
+          `Home (${ROUTES.home}): featured jewellery and new arrivals.`,
+          `Products (${ROUTES.products}): the full catalog with category, price, and material filters. Every product has its own detail page.`,
+          `Search (${ROUTES.search}): search across the catalog.`,
+          `Cart (${ROUTES.cart}) and Checkout (${ROUTES.checkout}): review selected items and pay securely online via Razorpay.`,
+          `Wishlist (${ROUTES.wishlist}): save favourite products.`,
+          `Account (${ROUTES.account}): profile, saved addresses, and order history (${ROUTES.accountOrders}).`,
+          `About (${ROUTES.about}): the store story, owner details, FAQ, and business information.`,
+          `Visit (${ROUTES.visit}): store location in Chirala with map and opening hours.`,
+          `Legal: terms and conditions (${ROUTES.termsAndConditions}) and privacy policy (${ROUTES.privacyPolicy}).`,
+          `Login (${ROUTES.login}) and signup (${ROUTES.signup}) to create an account.`,
+        ].join("\n");
+
+  return createRetrievalDocument({
+    sourceType: "store_info",
+    sourceKey: `store_info:${locale}:site-guide`,
+    locale,
+    title,
+    content,
+    metadata: {
+      href: ROUTES.home,
+      page: ROUTES.home,
+      sectionKey: "site-guide",
+      summaryKind: "site-guide",
+    },
+  });
+}
+
+function buildStaticRouteDocuments(locale: SupportedPublicLocale) {
+  return STATIC_ROUTE_DOCUMENTS[locale].flatMap((route) => {
+    const navigation = serializeAssistantRoute(route.id, {});
+    if (!navigation) return [];
+
+    return [
+      createRetrievalDocument({
+        sourceType: "store_info",
+        sourceKey: `store_info:${locale}:route:${route.id}`,
+        locale,
+        title: route.title,
+        content: route.content,
+        metadata: {
+          href: navigation.href,
+          page: navigation.href,
+          sectionKey: "route",
+          summaryKind: "route",
+          routeId: route.id,
+        },
+      }),
+    ];
   });
 }
 
@@ -541,6 +811,8 @@ export function buildPublicRetrievalDocuments(
 ) {
   return locales.flatMap((locale) => [
     buildStoreOverviewDocument(locale),
+    buildSiteGuideDocument(locale),
+    ...buildStaticRouteDocuments(locale),
     buildMaterialsSummaryDocument(locale, products),
     buildCatalogCoverageDocument(locale, products),
     buildShoppingOptionsDocument(locale, products),

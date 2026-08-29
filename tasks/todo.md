@@ -1,49 +1,26 @@
-# Task Log
+# Voice agent deployment
 
-## Dedicated Rental Flow (v2) — DONE 2026-07-03
+- [x] Inspect the voice-agent runtime, required environment variables, repository branch, and existing Render resources.
+- [x] Create the Render voice web service with production configuration; `SARVAM_API_KEY` remains pending manual entry in Render.
+- [x] Verify the Render health/readiness endpoints and WebSocket service URL after `SARVAM_API_KEY` is added.
+- [ ] Add `NEXT_PUBLIC_VOICE_WS_URL` to the Vercel production environment and trigger/verify the storefront deployment; the connected dashboard currently requires sign-in.
+- [x] Record deployment URLs, verification results, and any follow-up configuration in the review section.
 
-Design approved 2026-07-02 (D1 allow mixed carts · D2 sale/rental flags mutually exclusive · D3 daily pricing · D4 deposit out of scope · D5 booked→active→returned, overdue derived · D6 extensions/late fees out of scope).
+## Review
 
-### Implementation
-- [x] Migration 011/012: rental order fields, increment_product_stock RPC, self-block fix in getBookedRanges
-- [x] productSchema: is_sale/is_rental mutually exclusive (rental never sold)
-- [x] lib/rental-availability.ts: getBookedRanges, maxConcurrentBooked (per-day peak), isRentalOverdue, countsAsBooked
-- [x] createOrder: availability check per rental line + order_type + rental pricing
-- [x] verifyPayment + webhook: pending→paid as fulfillment lock; rental lines skip stock; rental_status='booked'; coupon increment
-- [x] updateOrderStatus: guards + delivered→active, cancelled/refunded restore sale stock via RPC
-- [x] markRentalReturned admin action
-- [x] GET /api/rentals/availability + RentalDatesDialog
-- [x] Admin UI for rentals, customer order views, i18n
-- [x] tests/rental-logic-check.ts
+Render service created: `bfg-voice-agent` (`srv-d9nghanqj5pc73erlsqg`), URL `https://bfg-voice-agent.onrender.com`, branch `redesign/bfg-design-system`, region `singapore`. The initial build failure was fixed by setting `NPM_CONFIG_PRODUCTION=false` so `npm ci` retains TypeScript build dependencies under `NODE_ENV=production`. Render is live; health/readiness and signed WebSocket smoke checks pass. Vercel environment update is pending authenticated dashboard access.
 
-### Review / evidence
-- tsc clean; eslint clean.
-- tests pass. Live checks on Prod.
-- Accepted: concurrent checkout race (pre-payment); soft-holds via pending.
+# Voice agent robustness
 
-## Follow-up: storage lockdown, leaked-password UX, design tokenization + security (2026-07)
+Full implementation plan lives in [`tasks/voice-robustness/`](voice-robustness/00-INDEX.md) — 17 files,
+one per task, each with verified root cause, exact edit, acceptance criteria and verification commands.
+Start at `00-INDEX.md`.
 
-### (a) Storage bucket listing lockdown — DONE
-- [x] migrations 008-010: drop broad public SELECT policies on product-images & public-downloads; storage.sql update
-- [x] applied to BFG Prod + verified
-
-### (b) Leaked-password protection — CODE DONE / TOGGLE PENDING
-- [x] signup-form + reset-password-form: map weak_password error -> friendly message + i18n
-- [ ] (MANUAL) enable in Supabase Dashboard Auth policies
-
-### (c) Design tokenization + contrast — DONE
-- [x] gold rgb tokens, muted-foreground contrast
-
-### (d) Security hardening follow-ups (RLS, RPCs, admin auth, payment binding)
-- [x] requireAdmin() extracted + used on all admin actions + ai routes
-- [x] device token binding to session only
-- [x] payment verify uses tx lookup + ownership check
-- [x] search_path pinned on functions; RLS tweaks; new RPCs (increment stock)
-- [x] migrations 008_security_hardening, 009_followup, 010_storage
-
-### Review
-- Migrations applied; advisor items addressed.
-- tsc / eslint clean.
-
-## Notes
-- See also CLAUDE.md, tasks/codebase-analysis.md for ongoing items.
+- [x] **Tier 0** (voice is broken now): native mic permission · STT clean-close recovery · AudioContext resume
+- [x] **Tier 1** (customer-visible; T1-4 withdrawn as a false positive — see its task file): filter-value validation · spoken-output prompt · navigation on refined
+      transcript · grounded-nav override · early-failure strand · error-state recovery · canned-utterance
+      barge-in · localized re-prompt · embedding retry budget · search sort · Apple playback state
+- [x] **Tier 2** (abuse/cost): per-client session cap · audio metering · gate `mode=conversation` ·
+      `speak_reset` budget · `.env.example`
+- [x] **Tier 3** (debuggability): structured turn latency · disconnect attribution · cross-service
+      correlation · TTS-leg tests
