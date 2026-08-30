@@ -22,6 +22,7 @@
   "whatsappMessage": "Hi, is this available?",
   "whatsappRentalMessage": "Hi, is this available for rent?",
   "rentalDateTitle": "Select Rental Dates",
+  "rentalDateDescription": "Choose the dates you need this set for. We will send the enquiry to the store on WhatsApp.",
   "rentalStartDate": "Start Date",
   "rentalEndDate": "End Date",
   "sendOnWhatsapp": "Send on WhatsApp",
