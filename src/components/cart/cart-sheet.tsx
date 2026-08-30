@@ -32,7 +32,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="mx-auto flex h-[90vh] max-w-lg flex-col rounded-t-[1.5rem] pb-[env(safe-area-inset-bottom)]"
+        className="mx-auto flex h-[90vh] max-w-lg flex-col rounded-t-[1.5rem] pb-[var(--safe-area-inset-bottom)]"
       >
         {/* Drag handle */}
         <div className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-[var(--border-strong)]" />

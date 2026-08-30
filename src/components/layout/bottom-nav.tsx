@@ -87,7 +87,7 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border-sand)] bg-[var(--surface-card)]/90 backdrop-blur-lg lg:hidden pb-[env(safe-area-inset-bottom)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border-sand)] bg-[var(--surface-card)]/90 backdrop-blur-lg lg:hidden pb-[var(--safe-area-inset-bottom)]">
         <div className="flex h-16 items-center px-1">
           {tabs.map((tab) => {
             const active = isActive(tab.key, tab.href);

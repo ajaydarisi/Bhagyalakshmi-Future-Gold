@@ -57,7 +57,7 @@ export function MobileDetailBar({ product, productName }: MobileDetailBarProps) 
   return (
     <div
       className="fixed inset-x-0 z-40 border-t border-[var(--border-sand)] bg-[var(--surface-card)]/90 px-4 py-3 backdrop-blur-lg md:hidden"
-      style={{ bottom: "calc(4rem + env(safe-area-inset-bottom))" }}
+      style={{ bottom: "calc(4rem + var(--safe-area-inset-bottom))" }}
     >
       {displayState.showCartAction ? (
         <div className="flex flex-col gap-2">

@@ -56,7 +56,7 @@ export default async function AdminLayout({
           <AdminHeader userName={profile?.full_name || "Admin"} userEmail={user.email || ""} />
           <AdminSidebar />
           <div className="min-h-[100dvh] lg:pl-64">
-            <div className="pt-[calc(3.5rem+env(safe-area-inset-top))]">
+            <div className="pt-[calc(3.5rem+var(--safe-area-inset-top))]">
               <AdminMobileNav />
               <main>
                 <div className="container max-w-7xl p-4 sm:p-6">{children}</div>

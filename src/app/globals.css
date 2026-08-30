@@ -405,6 +405,20 @@
 }
 
 @layer base {
+  /* One safe-area token for every surface, because the two platforms report
+     insets differently. iOS and the web fill these from env(). Android 16 makes
+     edge-to-edge mandatory, and there Capacitor's SystemBars plugin sets the
+     same custom properties inline on <html> — an inline style outranks this
+     rule, so the injected value wins without any platform branching here.
+     Never read env(safe-area-inset-*) directly: Android WebView reports 0 for
+     it, which is exactly why Capacitor ships the injection. */
+  :root {
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  }
+
   * {
     @apply border-border outline-ring/50;
     scrollbar-width: thin;
@@ -433,8 +447,8 @@
   body {
     @apply bg-body-background text-foreground;
     font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading), ui-serif, Georgia, serif;

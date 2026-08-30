@@ -113,7 +113,7 @@ export function Header({ categories }: { categories: NavCategory[] }) {
     <>
       {/* Announcement bar */}
       {!isMobile && (<div
-        className="flex items-center justify-center gap-2 px-4 py-1.5 text-center text-2xs uppercase tracking-[0.18em] text-ivory-100"
+        className="flex items-center justify-center gap-2 px-4 py-1.5 pt-[calc(0.375rem+var(--safe-area-inset-top))] text-center text-2xs uppercase tracking-[0.18em] text-ivory-100"
         style={{ background: "var(--grad-ink)" }}
       >
         {IS_ONLINE ? (
@@ -129,7 +129,15 @@ export function Header({ categories }: { categories: NavCategory[] }) {
       </div>
       )}
 
-      <header className="sticky top-0 z-50 w-full border-b border-[var(--border-sand)] bg-[var(--surface-card)]/90 backdrop-blur supports-backdrop-filter:bg-[var(--surface-card)]/70">
+      {/* API 36 forces edge-to-edge, so the sticky header sits under the status
+          bar unless it pads for it. Only when the announcement bar is absent —
+          otherwise that bar is the topmost element and already carries the inset. */}
+      <header
+        className={cn(
+          "sticky top-0 z-50 w-full border-b border-[var(--border-sand)] bg-[var(--surface-card)]/90 backdrop-blur supports-backdrop-filter:bg-[var(--surface-card)]/70",
+          isMobile && "pt-[var(--safe-area-inset-top)]",
+        )}
+      >
         <div className="container mx-auto flex h-14 lg:h-18 items-center justify-between px-4">
           {/* Left: Mobile menu + Logo */}
           <div className="flex items-center gap-3">

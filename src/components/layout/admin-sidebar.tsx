@@ -117,7 +117,7 @@ export function AdminHeader({ userName, userEmail }: AdminHeaderProps) {
   }
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 pt-[env(safe-area-inset-top)]">
+    <header className="fixed inset-x-0 top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 pt-[var(--safe-area-inset-top)]">
       <div className="flex h-14 items-center justify-between px-4">
         <Link href="/admin" className="flex items-center gap-2">
           <Logo layout="horizontal" size="sm" />
@@ -159,7 +159,7 @@ export function AdminHeader({ userName, userEmail }: AdminHeaderProps) {
 
 export function AdminSidebar() {
   return (
-    <aside className="fixed bottom-0 left-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-40 hidden w-64 shrink-0 flex-col border-r bg-card lg:flex">
+    <aside className="fixed bottom-0 left-0 top-[calc(3.5rem+var(--safe-area-inset-top))] z-40 hidden w-64 shrink-0 flex-col border-r bg-card lg:flex">
       <AdminNav />
     </aside>
   );

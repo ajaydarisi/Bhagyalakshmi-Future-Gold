@@ -70,7 +70,7 @@ export function NavProgress() {
   return (
     <div
       className="fixed top-0 left-0 right-0 z-[60] h-[2.5px]"
-      style={{ paddingTop: "env(safe-area-inset-top)" }}
+      style={{ paddingTop: "var(--safe-area-inset-top)" }}
     >
       <div
         className={`h-full bg-gold-500 ${
