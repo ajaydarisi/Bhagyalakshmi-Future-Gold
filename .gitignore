@@ -55,3 +55,4 @@ playwright-report
 test-results
 design_handoff_mobile_storefront
 .playwright-mcp
+.gstack/
