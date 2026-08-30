@@ -79,4 +79,10 @@
          getUserMedia rejects before the user is ever asked. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- RECORD_AUDIO implies android.hardware.microphone as REQUIRED, which made
+         Play drop 21 mic-less devices (tablets, TV boxes) that the previous
+         release supported. Voice is an enhancement, not the product: the store
+         browses and sells fine without it, and use-voice-session.ts already
+         degrades to not_supported / no_mic. So declare it optional. -->
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 </manifest>
