@@ -73,7 +73,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Voice assistant mic. Capacitor's BridgeWebChromeClient maps the WebView's
-         AUDIO_CAPTURE request onto this permission; undeclared, Android denies it
-         with no dialog and getUserMedia rejects before the user is ever asked. -->
+         AUDIO_CAPTURE request onto BOTH of these and grants the request only if
+         every one comes back granted. An undeclared permission can never be
+         granted, so omitting either denies the mic with no dialog and
+         getUserMedia rejects before the user is ever asked. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 </manifest>
