@@ -31,7 +31,14 @@ android {
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
-            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+             //
+             // `vad` and `images` are dead weight in the bundle: capacitor.config.ts
+             // always sets server.url, so the WebView fetches every asset from
+             // bfg.darisi.in and never reads assets/public. They were 10.7 MB of a
+             // 14.6 MB bundle. offline.html (the errorPath, and the only local asset
+             // that IS loaded) is self-contained, so nothing here references them.
+             // Revisit if the app ever ships a bundled offline-first webDir.
+            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:!vad:!images'
         }
     }
     buildTypes {
