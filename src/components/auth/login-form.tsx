@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSearchParams, useRouter as useNextRouter } from "next/navigation";
 import { useRouter } from "@/i18n/routing";
+import { isAbsoluteRedirectPath } from "@/i18n/config";
 import { Link } from "@/i18n/routing";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,9 +41,9 @@ export function LoginForm() {
   const router = useRouter();
   const nextRouter = useNextRouter();
   const searchParams = useSearchParams();
-  // The middleware sets `redirect` to the full original pathname (already
-  // locale-prefixed for store routes, bare for unlocalized routes like
-  // /admin). Only allow same-origin relative paths.
+  // `redirect` arrives either locale-prefixed (from the proxy) or
+  // locale-stripped (the wishlist/header/footer buttons pass usePathname()).
+  // Only allow same-origin relative paths.
   const rawRedirect = searchParams.get("redirect");
   const redirectTo =
     rawRedirect?.startsWith("/") && !rawRedirect.startsWith("//")
@@ -75,9 +76,15 @@ export function LoginForm() {
     trackEvent("login", { method: "email" });
     toast.success(t("successToast"));
     if (redirectTo) {
-      // Use the plain router: the i18n router would prepend the locale
-      // again (e.g. /admin -> /en/admin) and hit a 404.
-      nextRouter.push(redirectTo);
+      if (isAbsoluteRedirectPath(redirectTo)) {
+        // Already complete. The i18n router would prepend the locale again
+        // (/admin -> /en/admin) and hit a 404.
+        nextRouter.push(redirectTo);
+      } else {
+        // Locale-stripped store path. The plain router would resolve it
+        // against the default locale and strand a Telugu customer in English.
+        router.push(redirectTo);
+      }
     } else {
       router.push("/");
     }
