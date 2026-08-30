@@ -24,7 +24,6 @@ import {
 import { readAssistantStream } from "@/lib/assistant-stream";
 import { STORE_MODE } from "@/lib/constants";
 import { trackEvent } from "@/lib/gtag";
-import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "@/i18n/routing";
 import type {
   AssistantNavigation,
@@ -36,8 +35,6 @@ import { useLocale } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type OmniboxCopy = {
-  launcher: string;
-  launcherHint: string;
   title: string;
   description: string;
   placeholder: string;
@@ -63,8 +60,6 @@ type OmniboxCandidate = {
 
 const COPY: Record<"en" | "te", OmniboxCopy> = {
   en: {
-    launcher: "Navigate",
-    launcherHint: "Ask or jump anywhere",
     title: "Navigate the store",
     description:
       "Describe where you want to go, or choose a familiar storefront destination.",
@@ -80,8 +75,6 @@ const COPY: Record<"en" | "te", OmniboxCopy> = {
     noResult: "I couldn’t find a safe destination for that request.",
   },
   te: {
-    launcher: "నావిగేట్",
-    launcherHint: "అడగండి లేదా నేరుగా వెళ్లండి",
     title: "స్టోర్‌లో నావిగేట్ చేయండి",
     description:
       "మీరు ఎక్కడికి వెళ్లాలనుకుంటున్నారో చెప్పండి లేదా పరిచయమైన స్టోర్ గమ్యస్థానాన్ని ఎంచుకోండి.",
@@ -151,17 +144,14 @@ function getAssistantReplyNavigation(reply: AssistantReply) {
   return sanitizeAssistantNavigation(reply.navigation);
 }
 
-interface NavigationOmniboxProps {
-  /** Keep the launcher adjacent to, not in place of, conventional navigation. */
-  className?: string;
-}
-
 /**
- * A global customer-navigation launcher. It uses the manifest for quick
- * destinations, the deterministic resolver for command-shaped input, and the
- * existing assistant API only when richer resolution is necessary.
+ * A global customer-navigation dialog, opened with Ctrl/Cmd+K. It uses the
+ * manifest for quick destinations, the deterministic resolver for
+ * command-shaped input, and the existing assistant API only when richer
+ * resolution is necessary. There is deliberately no floating launcher — the
+ * shortcut is the only entry point.
  */
-export function NavigationOmnibox({ className }: NavigationOmniboxProps) {
+export function NavigationOmnibox() {
   const locale = useLocale();
   const activeLocale = locale === "te" ? "te" : "en";
   const copy = getLocaleCopy(locale);
@@ -375,36 +365,6 @@ export function NavigationOmnibox({ className }: NavigationOmniboxProps) {
 
   return (
     <>
-      <div
-        className={cn(
-          "fixed bottom-24 left-4 z-40 lg:bottom-6 lg:left-6",
-          className,
-        )}
-      >
-        <button
-          type="button"
-          className="group flex min-h-11 items-center gap-2 rounded-full border border-[var(--border-gold)] bg-[var(--surface-card)] px-3.5 text-left text-sm font-medium text-text-primary shadow-[0_8px_30px_rgb(51_35_22/0.18)] transition hover:-translate-y-0.5 hover:bg-[rgb(var(--gold-rgb)/0.08)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          aria-label={copy.launcher}
-          aria-keyshortcuts="Control+K Meta+K"
-          onClick={() => handleOpenChange(true)}
-        >
-          <span className="flex size-7 items-center justify-center rounded-full bg-gold-500 text-[var(--text-on-gold)]">
-            <Compass className="size-4" aria-hidden />
-          </span>
-          <span className="hidden min-w-0 sm:flex sm:flex-col">
-            <span>{copy.launcher}</span>
-            <span className="text-2xs font-normal text-text-secondary">
-              {copy.launcherHint}
-            </span>
-          </span>
-          <kbd className="hidden rounded border bg-muted px-1.5 py-0.5 font-sans text-2xs text-muted-foreground md:inline">
-            ⌘K
-          </kbd>
-        </button>
-      </div>
-
       <CommandDialog
         open={open}
         onOpenChange={handleOpenChange}
