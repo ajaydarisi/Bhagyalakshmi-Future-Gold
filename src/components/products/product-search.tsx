@@ -54,6 +54,11 @@ export function ProductSearch({ open, onOpenChange }: ProductSearchProps) {
 
   return (
     <CommandDialog
+      // Without these, the sr-only header falls back to shadcn's stock
+      // "Command Palette" / "Search for a command to run..." — English on both
+      // locales, and describing something this dialog is not.
+      title={t("dialogTitle")}
+      description={t("dialogDescription")}
       open={open}
       onOpenChange={(nextOpen) => {
         if (!nextOpen) {

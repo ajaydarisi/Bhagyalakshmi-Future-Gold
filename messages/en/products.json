@@ -80,6 +80,8 @@
     "increaseQuantity": "Increase quantity"
   },
   "search": {
+    "dialogTitle": "Search products",
+    "dialogDescription": "Type to search the jewellery catalogue. Results appear as you type.",
     "placeholder": "Search for jewellery...",
     "searching": "Searching...",
     "noResults": "No products found.",
