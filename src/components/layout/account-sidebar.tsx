@@ -3,15 +3,15 @@
 import { Link, usePathname } from "@/i18n/routing";
 import { User, Package, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, isOnlineOnlyRoute } from "@/lib/constants";
 import { getVisibleStoreLinks } from "@/lib/offline-store-ui";
 import { useTranslations } from "next-intl";
 
 const allAccountLinks = [
-  { href: ROUTES.account, labelKey: "profile" as const, icon: User, onlineOnly: false },
-  { href: ROUTES.accountOrders, labelKey: "orders" as const, icon: Package, onlineOnly: true },
-  { href: ROUTES.accountAddresses, labelKey: "addresses" as const, icon: MapPin, onlineOnly: true },
-];
+  { href: ROUTES.account, labelKey: "profile" as const, icon: User },
+  { href: ROUTES.accountOrders, labelKey: "orders" as const, icon: Package },
+  { href: ROUTES.accountAddresses, labelKey: "addresses" as const, icon: MapPin },
+].map((link) => ({ ...link, onlineOnly: isOnlineOnlyRoute(link.href) }));
 
 const accountLinks = getVisibleStoreLinks(allAccountLinks);
 

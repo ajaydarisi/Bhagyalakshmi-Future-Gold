@@ -1,15 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { locales } from "@/i18n/config";
+import { isOnlineOnlyRoute } from "@/lib/constants";
 
 const STORE_MODE = (process.env.NEXT_PUBLIC_STORE_MODE || "ONLINE").toUpperCase();
-
-const OFFLINE_DISABLED_ROUTES = [
-  "/cart",
-  "/checkout",
-  "/account/orders",
-  "/account/addresses",
-];
 
 // Strip locale prefix from pathname for route matching
 function stripLocale(pathname: string): string {
@@ -73,17 +67,13 @@ export async function updateSession(
   const { pathname } = request.nextUrl;
   const strippedPath = stripLocale(pathname);
 
-  // In OFFLINE mode, redirect disabled routes to home
-  if (STORE_MODE === "OFFLINE") {
-    const isDisabled = OFFLINE_DISABLED_ROUTES.some(
-      (route) =>
-        strippedPath === route || strippedPath.startsWith(route + "/")
-    );
-    if (isDisabled) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/";
-      return NextResponse.redirect(url);
-    }
+  // In OFFLINE mode, redirect online-only routes to the locale-aware home page
+  if (STORE_MODE === "OFFLINE" && isOnlineOnlyRoute(strippedPath)) {
+    const url = request.nextUrl.clone();
+    const localePrefix = pathname.replace(strippedPath, "");
+    url.pathname = `${localePrefix}/`;
+    url.search = "";
+    return NextResponse.redirect(url);
   }
 
   // Let server actions handle their own auth (they return structured errors)

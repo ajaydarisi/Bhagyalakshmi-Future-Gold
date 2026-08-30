@@ -132,6 +132,23 @@ export const ROUTES = {
   adminNotifications: "/admin/notifications",
 } as const;
 
+// Routes that only make sense when the store is in ONLINE mode. Single source
+// of truth shared by the middleware route guard and the storefront nav gating,
+// so adding an online-only route blocks it in both places at once.
+// Paths are locale-stripped (no /te prefix) to match middleware's stripLocale().
+export const ONLINE_ONLY_ROUTES = [
+  ROUTES.cart,
+  ROUTES.checkout,
+  ROUTES.accountOrders,
+  ROUTES.accountAddresses,
+] as const;
+
+export function isOnlineOnlyRoute(strippedPath: string): boolean {
+  return ONLINE_ONLY_ROUTES.some(
+    (route) => strippedPath === route || strippedPath.startsWith(route + "/")
+  );
+}
+
 export const NOTIFICATION_TYPES = [
   { value: "custom", label: "Custom Message" },
   { value: "promotion", label: "Promotion" },
