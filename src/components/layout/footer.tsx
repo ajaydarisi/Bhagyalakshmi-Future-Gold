@@ -212,11 +212,13 @@ export function Footer({ categories }: { categories: NavCategory[] }) {
 
         <div className="mt-12 border-t border-white/10 pt-6 text-center text-sm gap-3 flex flex-col sm:flex-row sm:justify-between items-center text-[var(--text-on-dark)]/60 tracking-wide">
           <p>&copy; {new Date().getFullYear()} {tCommon("appName")}. {t("allRightsReserved")}</p>
+          {/* The Ask AI dock is fixed to the bottom-right corner, so the row end
+              is not free space — the right margin keeps the wordmark clear of it. */}
           <a
             href="https://darisi.in"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-0.5 text-[var(--text-on-dark)]/50 hover:text-[var(--text-on-dark)]/80 transition-colors"
+            className="flex items-center gap-2 text-[var(--text-on-dark)]/50 hover:text-[var(--text-on-dark)]/80 transition-colors sm:mr-52"
           >
             {locale === "en" && t("poweredBy")}
             <Image src="/logos/darisi.svg" alt="DARISI" width={88} height={25} />
