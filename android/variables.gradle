@@ -1,7 +1,10 @@
 ext {
     minSdkVersion = 23
     compileSdkVersion = 36
-    targetSdkVersion = 35
+    // Play requires targeting within one year of the latest release. API 36 also
+    // makes edge-to-edge mandatory — see res/values/styles.xml and the
+    // --safe-area-inset-* tokens in globals.css.
+    targetSdkVersion = 36
     androidxActivityVersion = '1.9.2'
     androidxAppCompatVersion = '1.7.0'
     androidxCoordinatorLayoutVersion = '1.2.0'
