@@ -13,8 +13,18 @@ const NO_STORE_HEADERS = {
 // library needed.
 const b64u = (s: string | Buffer) => Buffer.from(s).toString("base64url");
 
-// ponytail: instance-local rate limit (10/min/IP); move to a shared store if
-// the voice feature ever outgrows one serverless instance's traffic.
+// ponytail: instance-local rate limit; move to a shared store if the voice
+// feature ever outgrows one serverless instance's traffic.
+//
+// The budget is per IP, and an IP is not a customer: local dev collapses every
+// tab onto 127.0.0.1, and in production a carrier NAT puts a whole town behind
+// one address (the voice-agent's own per-client cap calls this out and sizes
+// for it). One voice attempt costs up to 2 mints — the start plus the bounded
+// reconnect — so a tight budget locks out real users after a handful of taps.
+// Concurrency is capped by the voice-agent (2 live sessions per client, and
+// each token is single-use via its jti); a mint is one HMAC, so this only has
+// to bound spam.
+const MINTS_PER_MINUTE = 60;
 const hits = new Map<string, { n: number; t: number }>();
 
 export async function POST(request: Request) {
@@ -49,7 +59,7 @@ export async function POST(request: Request) {
   if (hits.size > 5000) hits.clear();
   const h = hits.get(ip);
   if (h && now - h.t < 60_000) {
-    if (++h.n > 10) {
+    if (++h.n > MINTS_PER_MINUTE) {
       return NextResponse.json(
         { error: "rate_limited" },
         {
