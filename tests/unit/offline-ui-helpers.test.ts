@@ -64,8 +64,11 @@ describe('offline UI helpers', () => {
     });
 
     expect(constraints.endDateMin.toISOString()).toBe(startDate.toISOString());
+    // maxRentalDays is an inclusive count (getRentalDays returns diff + 1), so
+    // 5 days from the 10th ends on the 14th. Offering the 15th would let the
+    // picker propose a 6-day period that checkout then rejects.
     expect(constraints.endDateMax?.toISOString()).toBe(
-      new Date('2026-03-15T00:00:00.000Z').toISOString()
+      new Date('2026-03-14T00:00:00.000Z').toISOString()
     );
   });
 
