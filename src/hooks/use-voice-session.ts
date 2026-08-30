@@ -274,7 +274,11 @@ export function useVoiceSession({
           cache: "no-store",
           signal: tokenAbort.signal,
         });
-        if (!response.ok) throw new Error(String(response.status));
+        // A throttled mint is a capacity answer, not a network one — reported as
+        // "check your connection" it sends the customer to debug their wifi.
+        if (!response.ok) {
+          throw new Error(response.status === 429 ? "rate_limited" : String(response.status));
+        }
         const body = (await response.json()) as { token?: unknown };
         if (typeof body.token !== "string" || !body.token) throw new Error("invalid token");
         token = body.token;
@@ -435,7 +439,9 @@ export function useVoiceSession({
       if (generation !== generationRef.current || stoppingRef.current) return;
       const code = error instanceof DOMException && error.name === "AbortError"
         ? "token_timeout"
-        : "token_failed";
+        : error instanceof Error && error.message === "rate_limited"
+          ? "busy"
+          : "token_failed";
       fail(code, generation);
     }
   }, [fail, interrupt, language, mode, releaseResources, stop, stopAfterTranscript, teardown]);
